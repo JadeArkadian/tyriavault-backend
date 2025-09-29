@@ -1,9 +1,0 @@
-# Requirements for the FastAPI application
-fastapi==0.118.0
-uvicorn==0.37.0
-pydantic==2.11.9
-python-dotenv==1.1.1
-httpx==0.28.1
-
-# Requirements for testing
-pytest==8.4.2
