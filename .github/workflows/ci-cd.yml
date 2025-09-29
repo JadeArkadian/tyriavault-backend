@@ -77,7 +77,7 @@ jobs:
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
-           render deploy service --service-id ${{ env.MASTER_SERVICE_ID }}
+           render deploys create ${{ vars.MASTER_SERVICE_ID }} -o json --confirm
 #          else
 #            render deploy service --service-id <DEVELOP_SERVICE_ID>
 #          fi
