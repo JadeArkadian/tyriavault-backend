@@ -71,14 +71,13 @@ jobs:
 
       - name: Install Render CLI
         run: |
-          curl -fsSL https://cli.render.com/install.sh | sh
+          curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
 
       - name: Deploy to Render
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
-          if [[ "${GITHUB_REF}" == "refs/heads/master" ]]; then
-            render deploy service --service-id ${{ env.MASTER_SERVICE_ID }}
+           render deploy service --service-id ${{ env.MASTER_SERVICE_ID }}
 #          else
 #            render deploy service --service-id <DEVELOP_SERVICE_ID>
 #          fi
