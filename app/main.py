@@ -7,7 +7,7 @@ api = FastAPI(
     version=settings.PROJECT_VERSION,
 )
 
-print(settings.SECRET_KEY)
+print(settings.DATABASE_URL)
 
 # Include the API router with a versioned prefix
 api.include_router(api_router, prefix="/api/v1")
