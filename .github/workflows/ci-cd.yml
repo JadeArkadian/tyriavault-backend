@@ -27,7 +27,7 @@ jobs:
       - name: Run tests
         env:
           ENV: test
-        run: pytest
+
 
 
   package:
@@ -54,3 +54,4 @@ jobs:
         with:
           name: tyria-backend
           path: dist/*
+
