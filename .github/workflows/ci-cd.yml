@@ -25,6 +25,8 @@ jobs:
         run: pip install .
 
       - name: Run tests
+        env:
+          ENV: test
         run: pytest
 
 

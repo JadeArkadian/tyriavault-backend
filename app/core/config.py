@@ -1,7 +1,14 @@
+import os
+
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+env_file = ".env"
+if os.getenv("ENV") == "test":
+    env_file = ".env.test"
+
 load_dotenv()
+
 
 class Settings(BaseSettings):
     """
@@ -10,12 +17,13 @@ class Settings(BaseSettings):
     """
 
     ## TODO: get these from pyproject.toml
-    PROJECT_NAME:str = "TyriaVault Backend ⚔️"
+    PROJECT_NAME: str = "TyriaVault Backend ⚔️"
     PROJECT_VERSION: str = "0.1.0"
     DATABASE_URL: str
     SECRET_KEY: str
+    GW2_API_KEY: str
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=env_file, env_file_encoding="utf-8")
 
 
 settings = Settings()
