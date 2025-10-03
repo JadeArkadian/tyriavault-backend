@@ -3,9 +3,9 @@ import httpx
 BASE_URL = "https://api.guildwars2.com/v2"
 
 class GW2Client:
-    def __init__(self, api_key: str | None = None):
+    def __init__(self, timeout: float = 10.0, api_key: str | None = None):
         self.api_key = api_key
-        self.client = httpx.Client(base_url=BASE_URL, timeout=10.0)
+        self.client = httpx.Client(base_url=BASE_URL, timeout=timeout)
 
     def _headers(self):
         if self.api_key:
