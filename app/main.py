@@ -22,4 +22,3 @@ def startup_event():
     gw2 = GW2Client(api_key=settings.GW2_API_KEY)
     test = gw2.get_account()
     print(test)
-    
