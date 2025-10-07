@@ -25,6 +25,8 @@ jobs:
         run: pip install .
 
       - name: Run tests
+        env:
+          ENV: test
         run: pytest
 
 
@@ -52,32 +54,3 @@ jobs:
         with:
           name: tyria-backend
           path: dist/*
-
-
-#  deploy:
-#    runs-on: ubuntu-latest
-#    needs: package
-##    if: github.ref == 'refs/heads/master'
-##    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
-#    steps:
-#      - name: Checkout repo
-#        uses: actions/checkout@v5
-#
-#      - name: Download artifacts
-#        uses: actions/download-artifact@v5
-#        with:
-#          name: tyria-backend
-#          path: dist/
-#
-#      - name: Install Render CLI
-#        run: |
-#          curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
-#
-#      - name: Deploy to Render
-#        env:
-#          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-#        run: |
-#           render deploys create ${{ vars.MASTER_SERVICE_ID }} -o json --confirm
-##          else
-##            render deploy service --service-id <DEVELOP_SERVICE_ID>
-##          fi
