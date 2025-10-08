@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     SECRET_KEY: str
     GW2_API_KEY: str
+    FRONTEND_URL: str
 
     model_config = SettingsConfigDict(env_file=env_file, env_file_encoding="utf-8")
 
