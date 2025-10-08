@@ -24,6 +24,7 @@ api.add_middleware(
 
 api.include_router(api_router, prefix="/api/v1")
 
+
 @api.on_event("startup")
 def startup_event():
     print("Turn On")
