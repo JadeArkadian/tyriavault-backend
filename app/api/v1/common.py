@@ -1,7 +1,8 @@
 import httpx
 from fastapi import APIRouter, Response, HTTPException
 from fastapi.params import Header, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependency import get_db
 from app.db.model import ApiKeys
@@ -23,9 +24,9 @@ def status():
 
 
 @router.get("/tokeninfo", summary="Provides info about the API key", response_description="API Key info")
-def check_token_info(
+async def check_token_info(
         authorization: str = Header(..., description="Authorization header: Bearer <API_KEY>"),
-        db: Session = Depends(get_db)):
+        db: AsyncSession = Depends(get_db)):
     """
     Validates the provided API key and retrieves its information.
     If the key is not found in the local database, it checks with the Guild Wars 2 API.
@@ -46,23 +47,24 @@ def check_token_info(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    token_info = db.query(ApiKeys).filter(ApiKeys.api_key == token).first()
+    result = await db.execute(select(ApiKeys).filter(ApiKeys.api_key == token))
+    token_info = result.scalars().first()
 
     # No token found in DB -> check if it's valid with GW2 API
     if token_info is None:
         gw2 = GW2Client(api_key=token)
-        token_info = _get_token_info_from_api(gw2)
-        if token_info and token_info["permissions"] is not None:
+        token_info_from_api = await _get_token_info_from_api(gw2)
+        if token_info_from_api and token_info_from_api["permissions"] is not None:
             # Store the valid token in the database
             new_api_key = ApiKeys(
                 api_key=token,
-                permissions=token_info.get("permissions", []),
+                permissions=token_info_from_api.get("permissions", []),
                 game_account_id=None
             )
 
             db.add(new_api_key)
-            db.commit()
-            db.refresh(new_api_key)
+            await db.commit()
+            await db.refresh(new_api_key)
             token_info = new_api_key
 
     return token_info
@@ -78,9 +80,9 @@ def _split_bearer_token(authorization: str) -> str:
         raise ValueError("Invalid authorization header format")
 
 
-def _get_token_info_from_api(gw2: GW2Client):
+async def _get_token_info_from_api(gw2: GW2Client):
     try:
-        return gw2.token_info()
+        return await gw2.token_info()
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 401:
             raise HTTPException(status_code=401, detail="Missing or invalid token.")
