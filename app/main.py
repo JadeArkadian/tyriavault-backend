@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import api_router
 from app.core.config import settings
@@ -10,6 +11,17 @@ api = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.PROJECT_VERSION,
 )
+
+origins = [settings.FRONTEND_URL]
+
+api.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
 api.include_router(api_router, prefix="/api/v1")
 
 
@@ -19,6 +31,3 @@ def startup_event():
     print(settings.DATABASE_URL)
     # creates tables if not present
     Base.metadata.create_all(bind=engine)
-    # gw2 = GW2Client(api_key=settings.GW2_API_KEY)
-    # test = gw2.get_account()
-    # print(test)
