@@ -41,6 +41,10 @@ LOGGING_CONFIG = {
             "encoding": "utf-8",
         },
     },
+    "root": {
+        "handlers": ["file"],
+        "level": settings.LOG_LEVEL,
+    },
     "loggers": {
         "uvicorn": {
             "handlers": ["default", "file"],
@@ -48,12 +52,14 @@ LOGGING_CONFIG = {
             "propagate": False,
         },
         "uvicorn.error": {
-            "handlers": ["default", "file"],
+            "handlers": ["file"],
             "level": settings.LOG_LEVEL,
+            "propagate": False,
         },
         "uvicorn.access": {
-            "handlers": ["default", "file"],
+            "handlers": ["file"],
             "level": settings.LOG_LEVEL,
+            "propagate": False,
         },
     },
 }
