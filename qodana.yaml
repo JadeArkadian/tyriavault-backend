@@ -8,3 +8,8 @@ profile:
   name: qodana.recommended
 include:
   - name: CheckDependencyLicenses
+bootstrap: |+
+  set -eu
+  # For Python projects
+  pip install --upgrade pip build
+  pip install .

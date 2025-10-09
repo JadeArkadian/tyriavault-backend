@@ -21,23 +21,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
           fetch-depth: 0
 
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - name: 🛠️ Install build tools
-        run: pip install --upgrade pip build
-
-      - name: ⬇️ Install project dependencies
-        run: |
-          pip install poetry
-          poetry install
-
       - name: '🔎 Qodana Scan'
         uses: JetBrains/qodana-action@v2025.2
-        with:
-          pr-mode: false
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_174571135 }}
           QODANA_ENDPOINT: 'https://qodana.cloud'
