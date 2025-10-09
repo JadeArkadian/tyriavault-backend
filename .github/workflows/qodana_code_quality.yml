@@ -26,6 +26,21 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: 🧾 Run tests with coverage
+        env:
+          ENV: test
+        run: |
+          pip install --upgrade pip build
+          pip install .
+          coverage run -m pytest
+          coverage xml -o .qodana/code-coverage/coverage.xml
+
+      - name: ️📂 Archive coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: py-coverage-data
+          path: .qodana/code-coverage
+
       - name: '🔎 Qodana Scan'
         uses: JetBrains/qodana-action@v2025.2
         with:
