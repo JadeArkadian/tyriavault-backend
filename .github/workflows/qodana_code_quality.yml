@@ -33,5 +33,6 @@ jobs:
             --linter,qodana-python-community,
             --within-docker,false
         env:
+          ENV: test
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_174571135 }}
           QODANA_ENDPOINT: 'https://qodana.cloud'
