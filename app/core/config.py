@@ -20,9 +20,9 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "TyriaVault Backend ⚔️"
     PROJECT_VERSION: str = "0.1.0"
     DATABASE_URL: str
-    SECRET_KEY: str
     GW2_API_KEY: str
     FRONTEND_URL: str
+    WORLDS_CRAWLER_TIME: str = "05:00"
 
     model_config = SettingsConfigDict(env_file=env_file, env_file_encoding="utf-8")
 

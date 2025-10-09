@@ -1,4 +1,4 @@
-import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -17,8 +17,8 @@ from app.gw2.client import startup_gw2_client, shutdown_gw2_client
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    print("Turn On")
-    print(settings.DATABASE_URL)
+    logging.info("Turn On")
+    logging.debug(settings.DATABASE_URL)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     await startup_gw2_client()
@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
 
     yield
     # Shutdown
-    print("Turn Off")
+    logging.info("Turn Off")
     await shutdown_gw2_client()
     scheduler.shutdown()
 
@@ -47,16 +47,20 @@ def run_worlds_crawler_startup():
 
 def schedule_worlds_crawler_daily():
     scheduler = AsyncIOScheduler()
+    from app.core.config import settings
 
-    def schedule_crawler():
-        async def run():
-            async for db in get_db():
-                await update_worlds_incremental(db)
-                break
+    # Parse the time from settings
+    hour_str, minute_str = settings.WORLDS_CRAWLER_TIME.split(":")
+    hour = int(hour_str)
+    minute = int(minute_str)
+    logging.info(f"Worlds crawler scheduled to be executed at: {settings.WORLDS_CRAWLER_TIME}")
 
-        asyncio.create_task(run())
+    async def run():
+        async for db in get_db():
+            await update_worlds_incremental(db)
+            break
 
-    scheduler.add_job(schedule_crawler, 'cron', hour=22, minute=29)
+    scheduler.add_job(run, 'cron', hour=hour, minute=minute)
     scheduler.start()
     return scheduler
 
