@@ -1,4 +1,4 @@
-name: Qodana
+name: SonarQube
 
 on:
   workflow_run:
@@ -18,7 +18,6 @@ jobs:
       - name: 🧭 Checkout repository
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
           fetch-depth: 0
 
       - name: 🐍 Set up Python 3.13
@@ -33,21 +32,16 @@ jobs:
           pip install --upgrade pip build
           pip install .
           coverage run -m pytest
-          coverage xml -o .qodana/code-coverage/coverage.xml
+          coverage xml -o .coverage-reports/coverage.xml
 
       - name: ️📂 Archive coverage data
         uses: actions/upload-artifact@v4
         with:
           name: py-coverage-data
-          path: .qodana/code-coverage
+          path: .coverage-reports/coverage.xml
 
-      - name: '🔎 Qodana Scan'
-        uses: JetBrains/qodana-action@v2025.2
-        with:
-          args: |
-            --linter,qodana-python-community,
-            --within-docker,false
+      - name: '🔎 SonarQube Scan'
+        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602
         env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           ENV: test
-          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_174571135 }}
-          QODANA_ENDPOINT: 'https://qodana.cloud'
