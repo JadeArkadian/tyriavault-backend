@@ -32,7 +32,7 @@ jobs:
           pip install --upgrade pip build
           pip install .
           coverage run -m pytest
-          coverage xml -o .coverage-reports/coverage.xml
+          coverage xml -o .coverage-reports/coverage-backend.xml
 
       - name: ️📂 Archive coverage data
         uses: actions/upload-artifact@v4
