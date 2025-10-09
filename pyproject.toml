@@ -17,7 +17,7 @@ dependencies = [
     "pytest-mock==3.15.1",
     "pytest==8.4.2"
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 
 authors = [
     { name = "Jade Arkadian" }
@@ -29,7 +29,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 keywords = ["gw2", "tyria", "vault", "backend", "api"]
 classifiers = [
-    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
     "Framework :: FastAPI"
 ]
