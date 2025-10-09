@@ -1,0 +1,37 @@
+name: Qodana
+
+on:
+  workflow_run:
+    workflows: [ "CI Pipeline" ]
+    branches: [ "master" ]
+    types:
+      - completed
+
+jobs:
+  qodana:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: write
+    steps:
+      - name: 🧭 Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
+          fetch-depth: 0
+
+      - name: 🐍 Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: '🔎 Qodana Scan'
+        uses: JetBrains/qodana-action@v2025.2
+        with:
+          args: |
+            --linter,qodana-python-community,
+            --within-docker,false
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_174571135 }}
+          QODANA_ENDPOINT: 'https://qodana.cloud'

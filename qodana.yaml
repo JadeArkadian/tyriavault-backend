@@ -1,0 +1,15 @@
+####################################################################################################################
+# WARNING: Do not store sensitive information in this file, as its contents will be included in the Qodana report. #
+####################################################################################################################
+
+version: "1.0"
+linter: jetbrains/qodana-python-community:2025.2
+profile:
+  name: qodana.recommended
+include:
+  - name: CheckDependencyLicenses
+bootstrap: |+
+  set -eu
+  # For Python projects
+  pip install --upgrade pip build
+  pip install .

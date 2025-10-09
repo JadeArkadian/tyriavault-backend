@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI Pipeline
 
 on:
   push:
@@ -29,29 +29,3 @@ jobs:
           ENV: test
         run: pytest
         continue-on-error: true
-
-
-  package:
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/master'
-    steps:
-      - name: 🧭 Checkout repository
-        uses: actions/checkout@v5
-
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - name: 🛠️ Install build tools
-        run: pip install --upgrade pip build
-
-      - name: 🧱 Build package
-        run: python -m build
-
-      - name: 📤 Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: tyria-backend
-          path: dist/*
