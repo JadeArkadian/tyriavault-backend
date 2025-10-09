@@ -1,11 +1,11 @@
 name: Qodana
+
 on:
-  workflow_dispatch:
-  pull_request:
-  push:
-    branches: # Specify your branches here
-      - develop
-      - master
+  workflow_run:
+    workflows: [ "CI Pipeline" ]
+    branches: [ "master" ]
+    types:
+      - completed
 
 jobs:
   qodana:
@@ -21,7 +21,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
           fetch-depth: 0
 
-      - name: Set up Python 3.13
+      - name: 🐍 Set up Python 3.13
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
