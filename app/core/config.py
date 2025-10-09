@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     GW2_API_KEY: str
     FRONTEND_URL: str
     WORLDS_CRAWLER_TIME: str = "05:00"
+    LOG_LEVEL: str = "DEBUG"
 
     model_config = SettingsConfigDict(env_file=env_file, env_file_encoding="utf-8")
 

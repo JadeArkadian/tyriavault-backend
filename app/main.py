@@ -1,5 +1,6 @@
-import logging
+import os
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
@@ -7,18 +8,22 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import api_router
 from app.core.config import settings
+from app.core.logging import logger
 from app.crawlers.worlds_crawler import update_worlds_incremental
 from app.db.dependency import get_db
 from app.db.model import Base
 from app.db.session import engine
 from app.gw2.client import startup_gw2_client, shutdown_gw2_client
 
+log_filename = f"tyriavault_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+log_filepath = os.path.join(os.path.dirname(__file__), log_filename)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    logging.info("Turn On")
-    logging.debug(settings.DATABASE_URL)
+    logger.info("Turn On")
+    logger.debug(settings.DATABASE_URL)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     await startup_gw2_client()
@@ -31,7 +36,7 @@ async def lifespan(app: FastAPI):
 
     yield
     # Shutdown
-    logging.info("Turn Off")
+    logger.info("Turn Off")
     await shutdown_gw2_client()
     scheduler.shutdown()
 
@@ -53,7 +58,7 @@ def schedule_worlds_crawler_daily():
     hour_str, minute_str = settings.WORLDS_CRAWLER_TIME.split(":")
     hour = int(hour_str)
     minute = int(minute_str)
-    logging.info(f"Worlds crawler scheduled to be executed at: {settings.WORLDS_CRAWLER_TIME}")
+    logger.info(f"Worlds crawler scheduled to be executed at: {settings.WORLDS_CRAWLER_TIME}")
 
     async def run():
         async for db in get_db():
