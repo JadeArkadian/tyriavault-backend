@@ -15,11 +15,24 @@ jobs:
       pull-requests: write
       checks: write
     steps:
-      - uses: actions/checkout@v3
+      - name: 🧭 Checkout repository
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
-          fetch-depth: 0  # a full history is required for pull request analysis
-      - name: 'Qodana Scan'
+          fetch-depth: 0
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: 🛠️ Install build tools
+        run: pip install --upgrade pip build
+
+      - name: ⬇️ Install project dependencies
+        run: pip install .
+
+      - name: '🔎 Qodana Scan'
         uses: JetBrains/qodana-action@v2025.2
         with:
           pr-mode: false
