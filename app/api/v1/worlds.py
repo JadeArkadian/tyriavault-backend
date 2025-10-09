@@ -21,7 +21,7 @@ async def get_worlds(db: AsyncSession = Depends(get_db)):
     # No worlds on DB? -> check if the token is valid with GW2 API
     if worlds_info is None or not worlds_info:
         gw2 = GW2Client()
-        worlds_info_from_api = await _get_worlds_info_from_api(gw2)
+        worlds_info_from_api = await get_worlds_info_from_api(gw2)
         if worlds_info_from_api is not None:
             # Store the worlds in the database
             for world in worlds_info_from_api:
@@ -32,7 +32,7 @@ async def get_worlds(db: AsyncSession = Depends(get_db)):
     return worlds_info
 
 
-async def _get_worlds_info_from_api(gw2: GW2Client):
+async def get_worlds_info_from_api(gw2: GW2Client):
     try:
         results = await asyncio.gather(
             gw2.get_worlds(lang="en"),
