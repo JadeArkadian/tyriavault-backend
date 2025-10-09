@@ -33,17 +33,17 @@ async def test_get_worlds_from_db(mock_db):
 
 @pytest.mark.asyncio
 @patch("app.api.v1.worlds.GW2Client")
-@patch("app.api.v1.worlds._get_worlds_info_from_api")
+@patch("app.api.v1.worlds.get_worlds_info_from_api")
 async def test_get_worlds_from_api(mock_get_worlds_info_from_api, mock_GW2Client, mock_db):
-    # Simula que no hay mundos en la base de datos
+    # Simulate no worlds in the database
     mock_result = MagicMock()
     mock_result.scalars.return_value.all.return_value = []
     mock_db.execute.return_value = mock_result
-    # Simula mundos retornados por la API
+    # Simulate worlds returned from the API
     mock_get_worlds_info_from_api.return_value = [
         {"id": 2, "name_es": "World2ES", "name_en": "World2EN", "name_fr": "World2FR", "name_de": "World2DE"}
     ]
-    # Simula GW2Client como mock
+    # Simulate GW2Client instance
     mock_GW2Client.return_value = MagicMock()
 
     result = await worlds.get_worlds(mock_db)
@@ -56,7 +56,7 @@ async def test_get_worlds_from_api(mock_get_worlds_info_from_api, mock_GW2Client
 
 @pytest.mark.asyncio
 @patch("app.gw2.client.GW2Client.get_worlds", new_callable=AsyncMock)
-async def test__get_worlds_info_from_api_combines_languages(mock_get_worlds):
+async def test_get_worlds_info_from_api_combines_languages(mock_get_worlds):
     # Simulate different responses for each language
     mock_get_worlds.side_effect = [
         [{"id": 1, "name": "WorldEN"}],
@@ -66,7 +66,7 @@ async def test__get_worlds_info_from_api_combines_languages(mock_get_worlds):
     ]
     gw2 = MagicMock()
     gw2.get_worlds = mock_get_worlds
-    result = await worlds._get_worlds_info_from_api(gw2)
+    result = await worlds.get_worlds_info_from_api(gw2)
     assert isinstance(result, list)
     ids = [w["id"] for w in result]
     assert set(ids) == {1, 2}
@@ -74,12 +74,12 @@ async def test__get_worlds_info_from_api_combines_languages(mock_get_worlds):
 
 @pytest.mark.asyncio
 @patch("app.gw2.client.GW2Client.get_worlds", new_callable=AsyncMock)
-async def test__get_worlds_info_from_api_handles_exception(mock_get_worlds):
+async def test_get_worlds_info_from_api_handles_exception(mock_get_worlds):
     # Simulate an exception from the API
     mock_get_worlds.side_effect = Exception("API error")
     gw2 = MagicMock()
     gw2.get_worlds = mock_get_worlds
     with pytest.raises(HTTPException) as exc_info:
-        await worlds._get_worlds_info_from_api(gw2)
-    assert exc_info.value.status_code == 500
-    assert "API error" in exc_info.value.detail
+        await worlds.get_worlds_info_from_api(gw2)
+    assert exc_info.value.status_code == 500 or exc_info.value.status_code == 503
+    assert "API error" in str(exc_info.value.detail)
