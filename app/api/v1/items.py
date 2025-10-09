@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Response
 
-router = APIRouter(prefix="/account", tags=["account"])
+router = APIRouter(prefix="/items", tags=["items"])
+
 
 @router.get("/", summary="Returns cached items", response_description="Cached Items")
 def items_cached_list():

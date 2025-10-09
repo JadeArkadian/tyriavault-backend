@@ -4,6 +4,7 @@ from fastapi.params import Header, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.utils import split_bearer_token
 from app.db.dependency import get_db
 from app.db.model import ApiKeys
 from app.gw2.client import GW2Client
@@ -43,7 +44,7 @@ async def check_token_info(
     """
 
     try:
-        token = _split_bearer_token(authorization)
+        token = split_bearer_token(authorization)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -68,16 +69,6 @@ async def check_token_info(
             token_info = new_api_key
 
     return token_info
-
-
-def _split_bearer_token(authorization: str) -> str:
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError("Invalid authentication scheme")
-        return token
-    except ValueError:
-        raise ValueError("Invalid authorization header format")
 
 
 async def _get_token_info_from_api(gw2: GW2Client):
