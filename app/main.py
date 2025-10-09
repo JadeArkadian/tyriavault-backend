@@ -19,6 +19,13 @@ log_filename = f"tyriavault_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 log_filepath = os.path.join(os.path.dirname(__file__), log_filename)
 
 
+async def run_worlds_crawler_job():
+    print("Running worlds crawler job")
+    async for db in get_db():
+        await update_worlds_incremental(db)
+        break
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -31,8 +38,10 @@ async def lifespan(app: FastAPI):
     # execute the worlds crawler once at startup
     await run_worlds_crawler_startup()
 
-    # Schedule the worlds crawler to run daily at 5:00 AM
-    scheduler = schedule_worlds_crawler_daily()
+    # Schedule the worlds crawler to run cada 2880 minutos (48h)
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(run_worlds_crawler_job, 'interval', minutes=2880)
+    scheduler.start()
 
     yield
     # Shutdown
@@ -48,26 +57,6 @@ def run_worlds_crawler_startup():
             break
 
     return _run()
-
-
-def schedule_worlds_crawler_daily():
-    scheduler = AsyncIOScheduler()
-    from app.core.config import settings
-
-    # Parse the time from settings
-    hour_str, minute_str = settings.WORLDS_CRAWLER_TIME.split(":")
-    hour = int(hour_str)
-    minute = int(minute_str)
-    logger.info(f"Worlds crawler scheduled to be executed at: {settings.WORLDS_CRAWLER_TIME}")
-
-    async def run():
-        async for db in get_db():
-            await update_worlds_incremental(db)
-            break
-
-    scheduler.add_job(run, 'cron', hour=hour, minute=minute)
-    scheduler.start()
-    return scheduler
 
 
 # Setting up FastApi and our services
