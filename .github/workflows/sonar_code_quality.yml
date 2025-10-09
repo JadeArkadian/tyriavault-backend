@@ -8,7 +8,7 @@ on:
       - completed
 
 jobs:
-  qodana:
+  sonar:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: py-coverage-data
-          path: .coverage-reports/coverage.xml
+          path: .coverage-reports/coverage-backend.xml
 
       - name: '🔎 SonarQube Scan'
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602
