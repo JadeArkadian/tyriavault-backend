@@ -1,0 +1,33 @@
+name: CD Pipeline
+
+on:
+  workflow_run:
+    workflows: [ "CI Pipeline" ]
+    branches: [ "master" ]
+    types:
+      - completed
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' &&  github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: 🧭 Checkout repository
+        uses: actions/checkout@v5
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: 🛠️ Install build tools
+        run: pip install --upgrade pip build
+
+      - name: 🧱 Build package
+        run: python -m build
+
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tyria-backend
+          path: dist/*
