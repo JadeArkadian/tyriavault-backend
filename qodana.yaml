@@ -13,3 +13,6 @@ bootstrap: |+
   # For Python projects
   pip install --upgrade pip build
   pip install .
+  # Execute test suite with coverage
+  coverage run -m pytest
+  coverage xml
