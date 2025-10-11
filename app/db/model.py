@@ -62,15 +62,16 @@ class Dyes(Base):
     __tablename__ = 'dyes'
     __table_args__ = (
         PrimaryKeyConstraint('id', name='pk_dyes'),
-        {'schema': 'schema_tyriavault'}
+        {'comment': 'Dyes existing in the game', 'schema': 'schema_tyriavault'}
     )
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name_es: Mapped[str] = mapped_column(String(90), nullable=False)
-    name_fr: Mapped[str] = mapped_column(String(90), nullable=False)
-    name_en: Mapped[str] = mapped_column(String(90), nullable=False)
-    name_de: Mapped[str] = mapped_column(String(90), nullable=False)
-    color: Mapped[str] = mapped_column(CHAR(14), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, comment='Id assigned by the GW2 API')
+    name_es: Mapped[str] = mapped_column(String(90), nullable=False, comment='Name in spanish')
+    name_fr: Mapped[str] = mapped_column(String(90), nullable=False, comment='Name in french')
+    name_en: Mapped[str] = mapped_column(String(90), nullable=False, comment='Name in english')
+    name_de: Mapped[str] = mapped_column(String(90), nullable=False, comment='Name in german')
+    color: Mapped[str] = mapped_column(CHAR(14), nullable=False,
+                                       comment='Color in rgb format like "[RRR,GGG,BBB]" being RRR GGG and BBB parseable integer numbers')
 
     bank: Mapped[list['Bank']] = relationship('Bank', foreign_keys='[Bank.dye01_id]', back_populates='dye01')
     bank_: Mapped[list['Bank']] = relationship('Bank', foreign_keys='[Bank.dye02_id]', back_populates='dye02')
@@ -120,9 +121,7 @@ class Professions(Base):
         {'schema': 'schema_tyriavault'}
     )
 
-    id: Mapped[int] = mapped_column(Integer,
-                                    Identity(start=0, increment=1, minvalue=0, maxvalue=2147483647, cycle=False,
-                                             cache=1), primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name_es: Mapped[str] = mapped_column(String(100), nullable=False)
     name_fr: Mapped[str] = mapped_column(String(100), nullable=False)
     name_en: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -138,9 +137,7 @@ class Races(Base):
         {'schema': 'schema_tyriavault'}
     )
 
-    id: Mapped[int] = mapped_column(Integer,
-                                    Identity(start=0, increment=1, minvalue=0, maxvalue=2147483647, cycle=False,
-                                             cache=1), primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name_es: Mapped[str] = mapped_column(String(100), nullable=False)
     name_fr: Mapped[str] = mapped_column(String(100), nullable=False)
     name_en: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -153,16 +150,18 @@ class Rarities(Base):
     __tablename__ = 'rarities'
     __table_args__ = (
         PrimaryKeyConstraint('id', name='pk_rarities'),
-        {'schema': 'schema_tyriavault'}
+        {'comment': 'Existing item rarities of the game. Very unlikely to change.',
+         'schema': 'schema_tyriavault'}
     )
 
-    id: Mapped[int] = mapped_column(Integer,
-                                    Identity(start=0, increment=1, minvalue=0, maxvalue=2147483647, cycle=False,
-                                             cache=1), primary_key=True)
-    name_es: Mapped[str] = mapped_column(String(100), nullable=False)
-    name_fr: Mapped[str] = mapped_column(String(100), nullable=False)
-    name_en: Mapped[str] = mapped_column(String(100), nullable=False)
-    name_de: Mapped[str] = mapped_column(String(100), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True,
+                                    comment='The id of the rarity. Assigned (manually) by TyriaVault')
+    name_es: Mapped[str] = mapped_column(String(80), nullable=False)
+    name_fr: Mapped[str] = mapped_column(String(80), nullable=False)
+    name_en: Mapped[str] = mapped_column(String(80), nullable=False)
+    name_de: Mapped[str] = mapped_column(String(80), nullable=False)
+    color: Mapped[str] = mapped_column(CHAR(14), nullable=False,
+                                       comment='The representing color tied to the rarity. For example, ascended gear is pink')
 
     items_cache: Mapped[list['ItemsCache']] = relationship('ItemsCache', back_populates='rarity')
 
@@ -171,7 +170,9 @@ class Worlds(Base):
     __tablename__ = 'worlds'
     __table_args__ = (
         PrimaryKeyConstraint('id', name='pk_worlds'),
-        {'schema': 'schema_tyriavault'}
+        {'comment': 'The worlds (or servers) of the game. Content may change... or '
+                    'not.. who knows',
+         'schema': 'schema_tyriavault'}
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, comment='Id of the world -> supplied by the GW2 API')
@@ -231,19 +232,27 @@ class ItemsCache(Base):
         {'schema': 'schema_tyriavault'}
     )
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    name_es: Mapped[str] = mapped_column(String(200), nullable=False)
-    name_fr: Mapped[str] = mapped_column(String(200), nullable=False)
-    name_en: Mapped[str] = mapped_column(String(200), nullable=False)
-    name_de: Mapped[str] = mapped_column(String(200), nullable=False)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, comment='The item ID, given by the GW2 API')
+    name_es: Mapped[str] = mapped_column(String(200), nullable=False, comment='Name in spanish')
+    name_fr: Mapped[str] = mapped_column(String(200), nullable=False, comment='Name in french')
+    name_en: Mapped[str] = mapped_column(String(200), nullable=False, comment='Name in english')
+    name_de: Mapped[str] = mapped_column(String(200), nullable=False, comment='Name in german')
     item_type_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    rarity_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    rarity_id: Mapped[int] = mapped_column(Integer, nullable=False, comment='The rarity of the item')
     last_fetched: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False,
-                                                            server_default=text('CURRENT_TIMESTAMP'))
-    icon: Mapped[Optional[str]] = mapped_column(Text)
-    item_level: Mapped[Optional[int]] = mapped_column(Integer)
-    vendor_value: Mapped[Optional[int]] = mapped_column(Integer, server_default=text('0'))
-    flags: Mapped[Optional[dict]] = mapped_column(JSONB)
+                                                            server_default=text('CURRENT_TIMESTAMP'),
+                                                            comment='Last time the data of this item was fetched from the API')
+    chat_link: Mapped[str] = mapped_column(String, nullable=False, comment='String with the ingame chat link')
+    icon: Mapped[Optional[str]] = mapped_column(Text, comment='Icon URL')
+    required_level: Mapped[Optional[int]] = mapped_column(Integer,
+                                                          comment='The minimum level required level to use this item')
+    vendor_value: Mapped[Optional[int]] = mapped_column(Integer, server_default=text('0'),
+                                                        comment='The value in coins when selling to a vendor. (Can be non-zero even when the item has the NoSell flag.)')
+    flags: Mapped[Optional[dict]] = mapped_column(JSONB, comment='Flags applying to the item.')
+    description_es: Mapped[Optional[str]] = mapped_column(Text, comment='Description in spanish')
+    description_fr: Mapped[Optional[str]] = mapped_column(Text, comment='Description in french')
+    description_en: Mapped[Optional[str]] = mapped_column(Text, comment='Description in english')
+    description_de: Mapped[Optional[str]] = mapped_column(Text, comment='Description in german')
 
     item_type: Mapped['ItemTypes'] = relationship('ItemTypes', back_populates='items_cache')
     rarity: Mapped['Rarities'] = relationship('Rarities', back_populates='items_cache')
@@ -259,7 +268,8 @@ class ApiKeys(Base):
         PrimaryKeyConstraint('id', name='pk_api_keys'),
         Index('idx_api_keys', 'game_account_id'),
         Index('unq_api_keys', 'api_key', unique=True),
-        {'schema': 'schema_tyriavault'}
+        {'comment': 'Api keys used to consume the gw2 api services',
+         'schema': 'schema_tyriavault'}
     )
 
     id: Mapped[int] = mapped_column(Integer,
@@ -384,12 +394,12 @@ class UnlockedDyes(Base):
                              name='fk_unlocked_dyes_game_accounts'),
         PrimaryKeyConstraint('id', name='pk_unlocked_dyes'),
         UniqueConstraint('game_account_id', 'dye_id', name='unq_unlocked_dyes'),
-        {'schema': 'schema_tyriavault'}
+        {'comment': 'Unlocked dyes for a given account', 'schema': 'schema_tyriavault'}
     )
 
-    id: Mapped[int] = mapped_column(Integer,
-                                    Identity(start=0, increment=1, minvalue=0, maxvalue=2147483647, cycle=False,
-                                             cache=1), primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, Identity(start=0, increment=1, minvalue=0, maxvalue=9223372036854775807,
+                                                         cycle=False, cache=1), primary_key=True,
+                                    comment='Id autogenerated by TyrianAccount')
     game_account_id: Mapped[int] = mapped_column(Integer, nullable=False)
     dye_id: Mapped[int] = mapped_column(Integer, nullable=False)
 
@@ -407,7 +417,8 @@ class Wallet(Base):
         PrimaryKeyConstraint('id', name='pk_wallet'),
         UniqueConstraint('currency_id', 'game_account_id', name='unq_wallet'),
         Index('idx_wallet', 'game_account_id'),
-        {'comment': 'Table holding info about every currency holded by a game_account',
+        {'comment': 'Table holding info about every currency holded by a game_account. '
+                    'AKA the account wallet',
          'schema': 'schema_tyriavault'}
     )
 
@@ -460,7 +471,8 @@ class UnlockedEmotes(Base):
         PrimaryKeyConstraint('id', name='pk_emotes'),
         UniqueConstraint('game_account_id', 'emote_id', name='unq_unlocked_emotes'),
         Index('idx_unlocked_emotes', 'game_account_id'),
-        {'schema': 'schema_tyriavault'}
+        {'comment': 'Unlocked emotes for a given game account',
+         'schema': 'schema_tyriavault'}
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(start=0, increment=1, minvalue=0, maxvalue=9223372036854775807,
