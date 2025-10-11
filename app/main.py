@@ -10,6 +10,7 @@ from app.api.v1 import api_router
 from app.core.config import settings
 from app.core.logging import logger
 from app.crawlers.worlds_crawler import update_worlds_incremental
+from app.db.data.seeding import seed_data
 from app.db.dependency import get_db
 from app.db.model import Base
 from app.db.session import engine
@@ -33,6 +34,12 @@ async def lifespan(app: FastAPI):
     logger.debug(settings.DATABASE_URL)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Seed almost invariable data
+    async for db in get_db():
+        await seed_data(db)
+        break
+
     await startup_gw2_client()
 
     # execute the worlds crawler once at startup
