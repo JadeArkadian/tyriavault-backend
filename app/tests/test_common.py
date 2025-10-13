@@ -22,7 +22,7 @@ def test_status():
 async def test_check_token_info_token_in_db():
     mock_db = AsyncMock(spec=AsyncSession)
     mock_token = "valid_token"
-    mock_api_key = ApiKeys(api_key=mock_token, permissions=["account"], game_account_id=None)
+    mock_api_key = ApiKeys(api_key=mock_token, permissions=["account"], game_account_uuid=None)
     mock_result = MagicMock()
     mock_result.scalars.return_value.first.return_value = mock_api_key
     mock_db.execute.return_value = mock_result

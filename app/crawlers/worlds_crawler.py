@@ -2,13 +2,14 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.worlds import get_worlds_info_from_api
+from app.core.logging import logger
 from app.db.model import Worlds
 from app.gw2.client import GW2Client
 
 
 async def update_worlds_incremental(db: AsyncSession):
     gw2 = GW2Client()
-    print("Start updating worlds incremental")
+    logger.info("Start updating worlds incremental")
 
     # Query worlds from GW2 API
     worlds_info_from_api = await get_worlds_info_from_api(gw2)
@@ -32,7 +33,7 @@ async def update_worlds_incremental(db: AsyncSession):
             db_world = worlds_db[world_id]
             # If any name has changed, update the record
             if any(getattr(db_world, k) != v for k, v in names.items()):
-                print(f"Updating world: {world_id}")
+                logger.debug(f"Updating world: {world_id}")
                 await db.execute(
                     update(Worlds)
                     .where(Worlds.id == world_id)
@@ -40,7 +41,7 @@ async def update_worlds_incremental(db: AsyncSession):
                 )
         else:
             # Insert new world
-            print(f"inserting new world: {world_id}")
+            logger.debug(f"inserting new world: {world_id}")
             db.add(Worlds(id=world_id, **names))
     await db.commit()
-    print("End updating worlds incremental")
+    logger.info("End updating worlds incremental")
