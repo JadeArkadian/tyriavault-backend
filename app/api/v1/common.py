@@ -60,7 +60,7 @@ async def check_token_info(
             new_api_key = ApiKeys(
                 api_key=token,
                 permissions=token_info_from_api.get("permissions", []),
-                game_account_id=None
+                game_account_uuid=None
             )
 
             db.add(new_api_key)
