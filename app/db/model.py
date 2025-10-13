@@ -332,37 +332,6 @@ class Bank(Base):
     item: Mapped[Optional['ItemsCache']] = relationship('ItemsCache', back_populates='bank')
 
 
-class Bank(Base):
-    __tablename__ = 'bank'
-    __table_args__ = (
-        ForeignKeyConstraint(['dye01_id'], ['schema_tyriavault.dyes.id'], name='fk_bank_dyes'),
-        ForeignKeyConstraint(['dye02_id'], ['schema_tyriavault.dyes.id'], name='fk_bank_dyes_0'),
-        ForeignKeyConstraint(['dye03_id'], ['schema_tyriavault.dyes.id'], name='fk_bank_dyes_1'),
-        ForeignKeyConstraint(['dye04_id'], ['schema_tyriavault.dyes.id'], name='fk_bank_dyes_2'),
-        ForeignKeyConstraint(['item_id'], ['schema_tyriavault.items_cache.id'], ondelete='SET NULL', onupdate='CASCADE',
-                             name='fk_bank_items_cache'),
-        PrimaryKeyConstraint('id', name='pk_bank'),
-        UniqueConstraint('game_account_id', name='unq_bank_game_account_id'),
-        {'schema': 'schema_tyriavault'}
-    )
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    game_account_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    item_id: Mapped[Optional[int]] = mapped_column(BigInteger)
-    dye01_id: Mapped[Optional[int]] = mapped_column(Integer)
-    dye02_id: Mapped[Optional[int]] = mapped_column(Integer)
-    dye03_id: Mapped[Optional[int]] = mapped_column(Integer)
-    dye04_id: Mapped[Optional[int]] = mapped_column(Integer)
-    stack_count: Mapped[Optional[int]] = mapped_column(Integer)
-    charges: Mapped[Optional[int]] = mapped_column(Integer)
-
-    dye01: Mapped[Optional['Dyes']] = relationship('Dyes', foreign_keys=[dye01_id], back_populates='bank')
-    dye02: Mapped[Optional['Dyes']] = relationship('Dyes', foreign_keys=[dye02_id], back_populates='bank_')
-    dye03: Mapped[Optional['Dyes']] = relationship('Dyes', foreign_keys=[dye03_id], back_populates='bank1')
-    dye04: Mapped[Optional['Dyes']] = relationship('Dyes', foreign_keys=[dye04_id], back_populates='bank2')
-    item: Mapped[Optional['ItemsCache']] = relationship('ItemsCache', back_populates='bank')
-
-
 class Characters(Base):
     __tablename__ = 'characters'
     __table_args__ = (

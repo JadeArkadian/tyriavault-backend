@@ -102,38 +102,6 @@
 				<fk_column name="item_id" pk="id" />
 			</fk>
 		</table>
-		<table name="bank" prior="ba" >
-			<column name="id" type="integer" mandatory="y" />
-			<column name="game_account_id" type="integer" mandatory="y" />
-			<column name="item_id" type="bigint" />
-			<column name="stack_count" type="integer" />
-			<column name="charges" type="integer" />
-			<column name="dye01_id" prior="dyes" type="integer" />
-			<column name="dye02_id" type="integer" />
-			<column name="dye03_id" type="integer" />
-			<column name="dye04_id" type="integer" />
-			<index name="pk_bank" unique="PRIMARY_KEY" >
-				<column name="id" />
-			</index>
-			<index name="unq_bank_game_account_id" unique="UNIQUE_KEY" >
-				<column name="game_account_id" />
-			</index>
-			<fk name="fk_bank_items_cache" to_schema="schema_tyriavault" to_table="items_cache" delete_action="setNull" update_action="cascade" >
-				<fk_column name="item_id" pk="id" />
-			</fk>
-			<fk name="fk_bank_dyes" to_schema="schema_tyriavault" to_table="dyes" >
-				<fk_column name="dye01_id" pk="id" />
-			</fk>
-			<fk name="fk_bank_dyes_0" to_schema="schema_tyriavault" to_table="dyes" >
-				<fk_column name="dye02_id" pk="id" />
-			</fk>
-			<fk name="fk_bank_dyes_1" to_schema="schema_tyriavault" to_table="dyes" >
-				<fk_column name="dye03_id" pk="id" />
-			</fk>
-			<fk name="fk_bank_dyes_2" to_schema="schema_tyriavault" to_table="dyes" >
-				<fk_column name="dye04_id" pk="id" />
-			</fk>
-		</table>
 		<table name="characters" prior="charact" generator_rows="225" >
 			<column name="id" type="integer" length="32" mandatory="y" >
 				<identity><![CDATA[GENERATED  BY DEFAULT AS IDENTITY]]></identity>
