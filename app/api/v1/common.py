@@ -4,6 +4,7 @@ from fastapi.params import Header, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.v1.responses.common_responses import TokenInfoResponse
 from app.core.utils import split_bearer_token
 from app.db.dependency import get_db
 from app.db.model import ApiKeys
@@ -13,7 +14,7 @@ router = APIRouter(prefix="/common", tags=["common"])
 
 
 @router.get("/status", summary="Health Check", response_description="Service is alive")
-def status():
+def status() -> Response:
     """
     Health check endpoint to verify if the service is running.
     :return:
@@ -27,7 +28,7 @@ def status():
 @router.get("/tokeninfo", summary="Provides info about the API key", response_description="API Key info")
 async def check_token_info(
         authorization: str = Header(..., description="Authorization header: Bearer <API_KEY>"),
-        db: AsyncSession = Depends(get_db)):
+        db: AsyncSession = Depends(get_db)) -> TokenInfoResponse:
     """
     Validates the provided API key and retrieves its information.
     If the key is not found in the local database, it checks with the Guild Wars 2 API.
@@ -68,7 +69,7 @@ async def check_token_info(
             await db.refresh(new_api_key)
             token_info = new_api_key
 
-    return token_info
+    return TokenInfoResponse.map_response(token_info)
 
 
 async def _get_token_info_from_api(gw2: GW2Client):

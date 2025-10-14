@@ -4,6 +4,7 @@ from fastapi.params import Header, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.v1.responses.account_responses import AccountInfoResponse
 from app.core.utils import split_bearer_token
 from app.db.dependency import get_db
 from app.db.model import GameAccounts, ApiKeys
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/account", tags=["account"])
 @router.get("/", summary="Account summary", response_description="Account details")
 async def account_details(
         authorization: str = Header(..., description="Authorization header: Bearer <API_KEY>"),
-        db: AsyncSession = Depends(get_db)):
+        db: AsyncSession = Depends(get_db)) -> AccountInfoResponse:
     try:
         token = split_bearer_token(authorization)
     except ValueError as e:
@@ -24,7 +25,7 @@ async def account_details(
     # First we look in the DB if we have an account associated with this token
     result = await db.execute(
         select(GameAccounts)
-        .join(ApiKeys, GameAccounts.id == ApiKeys.game_account_id)
+        .join(ApiKeys, GameAccounts.uuid == ApiKeys.game_account_uuid)
         .filter(ApiKeys.api_key == token)
     )
     game_account = result.scalars().first()
@@ -37,10 +38,11 @@ async def account_details(
             # Store the valid account in the database
             new_game_account = GameAccounts(
                 account_name=game_account_info_from_api.get("name"),
-                world=game_account_info_from_api.get("world"),
                 creation_date=game_account_info_from_api.get("created"),
                 fractal_level=game_account_info_from_api.get("fractal_level"),
-                last_modified=game_account_info_from_api.get("last_modified"),
+                uuid=game_account_info_from_api.get("id"),
+                world_id=game_account_info_from_api.get("world"),
+                content_access=game_account_info_from_api.get("access")
             )
 
             db.add(new_game_account)
@@ -48,7 +50,8 @@ async def account_details(
             await db.refresh(new_game_account)
             game_account = new_game_account
 
-    return game_account
+    print(AccountInfoResponse.map_response(game_account))
+    return AccountInfoResponse.map_response(game_account)
 
 
 async def _get_account_info_from_api(gw2: GW2Client):

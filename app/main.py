@@ -30,7 +30,7 @@ async def run_worlds_crawler_job():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    logger.info("Turn On")
+    logger.info("Turning On...")
     logger.debug(settings.DATABASE_URL)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -50,9 +50,10 @@ async def lifespan(app: FastAPI):
     scheduler.add_job(run_worlds_crawler_job, 'interval', minutes=2880)
     scheduler.start()
 
+    logger.info("Server is up and running!")
     yield
     # Shutdown
-    logger.info("Turn Off")
+    logger.info("Turning Off...")
     await shutdown_gw2_client()
     scheduler.shutdown()
 
