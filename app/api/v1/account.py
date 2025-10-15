@@ -1,8 +1,11 @@
+from datetime import datetime
+
 import httpx
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Header, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.api.v1.responses.account_responses import AccountInfoResponse
 from app.core.utils import split_bearer_token
@@ -25,6 +28,7 @@ async def account_details(
     # First we look in the DB if we have an account associated with this token
     result = await db.execute(
         select(GameAccounts)
+        .options(selectinload(GameAccounts.world))
         .join(ApiKeys, GameAccounts.uuid == ApiKeys.game_account_uuid)
         .filter(ApiKeys.api_key == token)
     )
@@ -50,7 +54,18 @@ async def account_details(
             await db.refresh(new_game_account)
             game_account = new_game_account
 
-    print(AccountInfoResponse.map_response(game_account))
+            # Update the API key to link with this account
+            api_key_obj = await db.execute(
+                select(ApiKeys).filter(ApiKeys.api_key == token)
+            )
+            api_key_instance = api_key_obj.scalars().first()
+            if api_key_instance:
+                api_key_instance.game_account_uuid = new_game_account.uuid
+                api_key_instance.last_time_checked = datetime.now()
+                db.add(api_key_instance)
+                await db.commit()
+                await db.refresh(api_key_instance)
+
     return AccountInfoResponse.map_response(game_account)
 
 

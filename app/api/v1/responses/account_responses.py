@@ -25,19 +25,12 @@ class AccountInfoResponse(BaseModel):
             creation_date=game_account.creation_date,
             fractal_level=game_account.fractal_level,
             last_modified=game_account.last_modified,
-            content_access=game_account.content_access
+            content_access=game_account.content_access,
+            world_name={
+                "es": game_account.world.name_es if game_account.world else None,
+                "en": game_account.world.name_en if game_account.world else None,
+                "fr": game_account.world.name_fr if game_account.world else None,
+                "de": game_account.world.name_de if game_account.world else None
+            }
         )
-
-        world_name_mapped = {
-            "es": mapped.world_name.name_es,
-            "en": mapped.world_name.name_en,
-            "fr": mapped.world_name.name_fr,
-            "de": mapped.world_name.name_de
-        }
-
-        mapped.world_name = world_name_mapped
         return mapped
-
-
-
-
