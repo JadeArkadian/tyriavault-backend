@@ -14,16 +14,20 @@ def cache_key_builder(func: Callable[..., Any], namespace: str = "default", *, r
     if kwargs is None:
         kwargs = {}
 
+    query_part = ""
+    if request is not None:
+        query_part = request.url.query
+
     try:
         auth = kwargs.get("authorization", "")
-        if not auth and request:
+        if not auth and request is not None:
             auth = request.headers.get("authorization", "")
         token = split_bearer_token(auth)
         token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()[:16] if token else "no_token"
-        return f"{namespace}:{request.url.query}:{func.__name__}:{token_hash}"
-    except RuntimeError | ValueError:
-        # Fallback to a generic key if something goes wrong
-        return f"{namespace}:{request.url.query}:{func.__name__}:unknown"
+        return f"{namespace}:{query_part}:{func.__name__}:{token_hash}"
+    except (RuntimeError, ValueError):
+        # Fallback to a generic key if token extraction fails
+        return f"{namespace}:{query_part}:{func.__name__}:unknown"
 
 
 async def init_cache() -> None:
