@@ -29,7 +29,7 @@ async def test_check_token_info_token_in_db():
 
     with patch("app.core.utils.split_bearer_token", return_value=mock_token):
         result = await check_token_info(authorization="Bearer valid_token", db=mock_db)
-        assert result == mock_api_key
+        assert result.api_key == mock_api_key.api_key
         assert result.permissions == mock_api_key.permissions
         assert result.game_account_uuid == mock_api_key.game_account_uuid
 
