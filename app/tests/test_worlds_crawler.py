@@ -27,7 +27,7 @@ async def test_update_worlds_incremental_insert_new_world():
         'name_en': 'World EN',
         'name_de': 'Welt DE'
     }]
-    # Mock para result.scalars().all() -> []
+    # Mock for no existing worlds in DB
     mock_result = MagicMock()
     mock_scalars = MagicMock()
     mock_scalars.all.return_value = []

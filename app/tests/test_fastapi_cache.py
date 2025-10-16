@@ -53,7 +53,7 @@ async def test_tokeninfo_cache_hits_and_misses():
             resp2 = await ac.get("/api/v1/common/tokeninfo", headers={"Authorization": f"Bearer {token}"})
             assert resp2.status_code == 200
             data2 = resp2.json()
-            assert data2 == data1  # respuesta proviene de caché
+            assert data2 == data1  # response from cache should be identical
 
     # Asserts
     # token_info only called once (the first time, cache miss)
