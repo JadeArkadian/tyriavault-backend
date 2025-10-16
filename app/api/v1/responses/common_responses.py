@@ -11,7 +11,7 @@ from app.db.model import ApiKeys
 class TokenInfoResponse(BaseModel):
     api_key: str
     permissions: List[str]
-    last_time_checked: datetime
+    last_time_checked: Optional[datetime] = None
     game_account_uuid: Optional[UUID]
 
     @classmethod
@@ -22,6 +22,3 @@ class TokenInfoResponse(BaseModel):
             last_time_checked=api_key.last_time_checked,
             game_account_uuid=api_key.game_account_uuid
         )
-
-
-

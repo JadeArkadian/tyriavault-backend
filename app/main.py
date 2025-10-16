@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import api_router
+from app.core.cache import init_cache
 from app.core.config import settings
 from app.core.logging import logger
 from app.crawlers.worlds_crawler import update_worlds_incremental
@@ -44,6 +45,9 @@ async def lifespan(app: FastAPI):
 
     # execute the worlds crawler once at startup
     await run_worlds_crawler_startup()
+
+    # Initialize the TTL cache
+    await init_cache()
 
     # Schedule the worlds crawler to run cada 2880 minutos (48h)
     scheduler = AsyncIOScheduler()

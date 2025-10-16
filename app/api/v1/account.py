@@ -3,11 +3,14 @@ from datetime import datetime
 import httpx
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Header, Depends
+from fastapi_cache.decorator import cache
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.v1.responses.account_responses import AccountInfoResponse
+from app.core import settings
+from app.core.cache import cache_key_builder
 from app.core.utils import split_bearer_token
 from app.db.dependency import get_db
 from app.db.model import GameAccounts, ApiKeys
@@ -17,6 +20,7 @@ router = APIRouter(prefix="/account", tags=["account"])
 
 
 @router.get("/", summary="Account summary", response_description="Account details")
+@cache(expire=settings.CACHE_TTL_SECONDS, namespace="account", key_builder=cache_key_builder)
 async def account_details(
         authorization: str = Header(..., description="Authorization header: Bearer <API_KEY>"),
         db: AsyncSession = Depends(get_db)) -> AccountInfoResponse:
