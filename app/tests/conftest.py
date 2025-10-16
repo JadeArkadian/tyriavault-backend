@@ -5,6 +5,12 @@ from fastapi_cache.backends.inmemory import InMemoryBackend
 
 @pytest.fixture(scope="session", autouse=True)
 def init_cache_session():
-    """Inicializa FastAPICache una sola vez para toda la sesión de tests."""
-    # Inicializamos directamente; si se llama dos veces FastAPICache simplemente sobrescribe backend y prefix.
     FastAPICache.init(InMemoryBackend(), prefix="tyriavault")
+
+
+@pytest.fixture(autouse=True)
+def clear_dependency_overrides():
+    from app.main import api
+    api.dependency_overrides = {}
+    yield
+    api.dependency_overrides = {}
