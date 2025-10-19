@@ -10,6 +10,9 @@ from app.db.model import Worlds
 @pytest.mark.asyncio
 async def test_update_worlds_incremental_no_api_data():
     mock_db = AsyncMock()
+    mock_db.add = MagicMock()
+    mock_db.commit = AsyncMock()
+    mock_db.execute = AsyncMock()
     with patch('app.crawlers.worlds_crawler.get_worlds_info_from_api', new=AsyncMock(return_value=[])), \
             patch('app.crawlers.worlds_crawler.GW2Client'):
         await update_worlds_incremental(mock_db)
@@ -20,6 +23,9 @@ async def test_update_worlds_incremental_no_api_data():
 @pytest.mark.asyncio
 async def test_update_worlds_incremental_insert_new_world():
     mock_db = AsyncMock()
+    mock_db.add = MagicMock()
+    mock_db.commit = AsyncMock()
+    mock_db.execute = AsyncMock()
     mock_worlds_api = [{
         'id': 1,
         'name_es': 'Mundo ES',
@@ -27,7 +33,7 @@ async def test_update_worlds_incremental_insert_new_world():
         'name_en': 'World EN',
         'name_de': 'Welt DE'
     }]
-    # Mock para result.scalars().all() -> []
+    # Mock for no existing worlds in DB
     mock_result = MagicMock()
     mock_scalars = MagicMock()
     mock_scalars.all.return_value = []
@@ -50,6 +56,9 @@ async def test_update_worlds_incremental_insert_new_world():
 @pytest.mark.asyncio
 async def test_update_worlds_incremental_update_existing_world():
     mock_db = AsyncMock()
+    mock_db.add = MagicMock()
+    mock_db.commit = AsyncMock()
+    mock_db.execute = AsyncMock()
     mock_worlds_api = [{
         'id': 2,
         'name_es': 'Nuevo ES',
@@ -85,6 +94,9 @@ async def test_update_worlds_incremental_update_existing_world():
 @pytest.mark.asyncio
 async def test_update_worlds_incremental_no_update_needed():
     mock_db = AsyncMock()
+    mock_db.add = MagicMock()
+    mock_db.commit = AsyncMock()
+    mock_db.execute = AsyncMock()
     mock_worlds_api = [{
         'id': 3,
         'name_es': 'Igual ES',

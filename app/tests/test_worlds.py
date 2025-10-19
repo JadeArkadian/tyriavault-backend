@@ -11,6 +11,9 @@ from app.db.model import Worlds
 @pytest_asyncio.fixture
 def mock_db():
     db = AsyncMock()
+    db.add = MagicMock()
+    db.commit = AsyncMock()
+    db.execute = AsyncMock()
     return db
 
 

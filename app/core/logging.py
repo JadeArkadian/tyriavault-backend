@@ -42,7 +42,7 @@ LOGGING_CONFIG = {
         },
     },
     "root": {
-        "handlers": ["file"],
+        "handlers": ["default", "file"],
         "level": settings.LOG_LEVEL,
     },
     "loggers": {
