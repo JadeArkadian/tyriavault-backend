@@ -9,7 +9,7 @@ from app.api.v1.common import status, check_token_info
 from app.db.model import ApiKeys
 
 
-# Test para status()
+# Testing status service
 def test_status():
     response = status()
     assert response.status_code == 200
@@ -17,7 +17,7 @@ def test_status():
     assert response.media_type == "text/plain"
 
 
-# Test para check_token_info: token válido en la base de datos
+# Testing tokeninfo service: token is present in the database
 @pytest.mark.asyncio
 async def test_check_token_info_token_in_db():
     mock_db = AsyncMock(spec=AsyncSession)
@@ -29,10 +29,12 @@ async def test_check_token_info_token_in_db():
 
     with patch("app.core.utils.split_bearer_token", return_value=mock_token):
         result = await check_token_info(authorization="Bearer valid_token", db=mock_db)
-        assert result == mock_api_key
+        assert result.api_key == mock_api_key.api_key
+        assert result.permissions == mock_api_key.permissions
+        assert result.game_account_uuid == mock_api_key.game_account_uuid
 
 
-# Test para check_token_info: token no está en la base de datos, pero es válido en GW2 API
+# Testing tokeninfo service: token not in DB but valid in GW2 API
 @pytest.mark.asyncio
 async def test_check_token_info_token_not_in_db_but_valid_in_api():
     mock_db = AsyncMock(spec=AsyncSession)
@@ -53,7 +55,7 @@ async def test_check_token_info_token_not_in_db_but_valid_in_api():
         assert result.permissions == ["account"]
 
 
-# Test para check_token_info: formato de token inválido
+# Testing tokeninfo service: invalid token format in Authorization header
 @pytest.mark.asyncio
 async def test_check_token_info_invalid_token_format():
     mock_db = AsyncMock(spec=AsyncSession)
@@ -64,7 +66,7 @@ async def test_check_token_info_invalid_token_format():
         assert "Invalid authorization header format" in exc.value.detail
 
 
-# Test para check_token_info: token inválido en GW2 API (401)
+# Testing tokeninfo service: invalid token according to GW2 API
 @pytest.mark.asyncio
 async def test_check_token_info_invalid_token_gw2():
     mock_db = AsyncMock(spec=AsyncSession)
@@ -72,7 +74,7 @@ async def test_check_token_info_invalid_token_gw2():
     mock_result = MagicMock()
     mock_result.scalars.return_value.first.return_value = None
     mock_db.execute.return_value = mock_result
-    # Simula httpx.HTTPStatusError como lo haría GW2Client.token_info
+    # Simulate HTTP 401 error from GW2 API
     mock_response = MagicMock()
     mock_response.status_code = 401
     mock_response.text = "Missing or invalid token."
@@ -85,7 +87,7 @@ async def test_check_token_info_invalid_token_gw2():
         assert exc.value.status_code == 401
 
 
-# Test para check_token_info: error de conexión a la API GW2 (simula RequestError)
+# Testing tokeninfo service: connection error to GW2 API
 @pytest.mark.asyncio
 async def test_check_token_info_gw2_request_error():
     mock_db = AsyncMock(spec=AsyncSession)
@@ -102,7 +104,7 @@ async def test_check_token_info_gw2_request_error():
         assert exc.value.status_code == 503
 
 
-# Test para check_token_info: excepción genérica en la API GW2
+# Testing tokeninfo service: unexpected exception from GW2 API
 @pytest.mark.asyncio
 async def test_check_token_info_gw2_generic_exception():
     mock_db = AsyncMock(spec=AsyncSession)
