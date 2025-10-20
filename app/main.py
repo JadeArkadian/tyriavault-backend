@@ -75,7 +75,8 @@ def run_worlds_crawler_startup():
 api = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.PROJECT_VERSION,
-    lifespan=lifespan
+    lifespan=lifespan,
+    redirect_slashes=False
 )
 
 origins = [settings.FRONTEND_URL]

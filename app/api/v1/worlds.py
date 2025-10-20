@@ -6,6 +6,7 @@ from fastapi.params import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.v1.responses.worlds_reponse import WorldsResponse
 from app.db.dependency import get_db
 from app.db.model import Worlds
 from app.gw2.client import GW2Client
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/worlds", tags=["worlds"])
 
 
 @router.get("/", summary="Provides info about worlds", response_description="Worlds info")
-async def get_worlds(db: AsyncSession = Depends(get_db)):
+async def get_worlds(db: AsyncSession = Depends(get_db)) -> list[WorldsResponse]:
     result = await db.execute(select(Worlds))
     worlds_info = result.scalars().all()
 
@@ -29,7 +30,7 @@ async def get_worlds(db: AsyncSession = Depends(get_db)):
             await db.commit()
             worlds_info = worlds_info_from_api
 
-    return worlds_info
+    return [WorldsResponse.map_response(world) for world in worlds_info]
 
 
 async def get_worlds_info_from_api(gw2: GW2Client):

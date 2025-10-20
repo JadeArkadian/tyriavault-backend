@@ -5,7 +5,7 @@ from fastapi_cache.decorator import cache
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.responses.common_responses import TokenInfoResponse
+from app.api.v1.responses.common_response import TokenInfoResponse
 from app.core.cache import cache_key_builder
 from app.core.config import settings
 from app.core.utils import split_bearer_token
