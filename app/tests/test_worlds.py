@@ -246,7 +246,7 @@ async def test_get_worlds_info_from_api_request_error():
         await get_worlds_info_from_api(mock_gw2_client)
 
     assert exc_info.value.status_code == 503
-    assert "Conection failure" in str(exc_info.value.detail)
+    assert "Connection failure" in str(exc_info.value.detail)
 
 
 @pytest.mark.asyncio

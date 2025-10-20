@@ -7,6 +7,7 @@ from fastapi_cache.decorator import cache
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.v1.responses.currencies_response import CurrenciesResponse
 from app.core import settings
 from app.core.cache import cache_key_builder
 from app.db.dependency import get_db
@@ -17,8 +18,8 @@ router = APIRouter(prefix="/currencies", tags=["currencies"])
 
 
 @router.get("/", summary="Provides info about currencies", response_description="Currencies info")
-@cache(expire=settings.CACHE_TTL_SECONDS, namespace="account", key_builder=cache_key_builder)
-async def get_currencies(db: AsyncSession = Depends(get_db)):
+@cache(expire=settings.CACHE_TTL_SECONDS, namespace="currencies", key_builder=cache_key_builder)
+async def get_currencies(db: AsyncSession = Depends(get_db)) -> list[CurrenciesResponse]:
     result = await db.execute(select(Currencies))
     currencies_info = result.scalars().all()
 
@@ -36,10 +37,10 @@ async def get_currencies(db: AsyncSession = Depends(get_db)):
             await db.commit()
             currencies_info = currencies_info_from_api
 
-    return currencies_info
+    return [CurrenciesResponse.map_response(currency) for currency in currencies_info]
 
 
-async def get_currencies_info_from_api(gw2: GW2Client):
+async def get_currencies_info_from_api(gw2: GW2Client) -> list[dict]:
     try:
         results = await asyncio.gather(
             gw2.get_currencies(lang="en"),
@@ -61,10 +62,10 @@ async def get_currencies_info_from_api(gw2: GW2Client):
         return list(combined_currencies.values())
 
     except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text) from e
 
     except httpx.RequestError as e:
-        raise HTTPException(status_code=503, detail=f"Conection failure: {str(e)}")
+        raise HTTPException(status_code=503, detail=f"Connection failure: {str(e)}") from e
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}") from e

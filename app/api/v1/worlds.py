@@ -18,7 +18,7 @@ router = APIRouter(prefix="/worlds", tags=["worlds"])
 
 
 @router.get("/", summary="Provides info about worlds", response_description="Worlds info")
-@cache(expire=settings.CACHE_TTL_SECONDS, namespace="account", key_builder=cache_key_builder)
+@cache(expire=settings.CACHE_TTL_SECONDS, namespace="worlds", key_builder=cache_key_builder)
 async def get_worlds(db: AsyncSession = Depends(get_db)) -> list[WorldsResponse]:
     result = await db.execute(select(Worlds))
     worlds_info = result.scalars().all()
@@ -39,7 +39,7 @@ async def get_worlds(db: AsyncSession = Depends(get_db)) -> list[WorldsResponse]
     return [WorldsResponse.map_response(world) for world in worlds_info]
 
 
-async def get_worlds_info_from_api(gw2: GW2Client):
+async def get_worlds_info_from_api(gw2: GW2Client) -> list[dict]:
     try:
         results = await asyncio.gather(
             gw2.get_worlds(lang="en"),
@@ -60,10 +60,10 @@ async def get_worlds_info_from_api(gw2: GW2Client):
         return list(combined_worlds.values())
 
     except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text) from e
 
     except httpx.RequestError as e:
-        raise HTTPException(status_code=503, detail=f"Conection failure: {str(e)}")
+        raise HTTPException(status_code=503, detail=f"Connection failure: {str(e)}") from e
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}") from e

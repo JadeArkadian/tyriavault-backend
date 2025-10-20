@@ -14,10 +14,10 @@ class WorldsResponse(BaseModel):
         mapped = WorldsResponse(
             id=world.id,
             name={
-                "es": world.name_es if world else None,
-                "en": world.name_en if world else None,
-                "fr": world.name_fr if world else None,
-                "de": world.name_de if world else None
+                "es": world.name_es,
+                "en": world.name_en,
+                "fr": world.name_fr,
+                "de": world.name_de
             }
         )
         return mapped
