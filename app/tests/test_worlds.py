@@ -28,10 +28,10 @@ async def test_get_worlds_from_db(mock_db):
     result = await worlds.get_worlds(mock_db)
     assert len(result) == 1
     assert result[0].id == world_obj.id
-    assert result[0].name_es == world_obj.name_es
-    assert result[0].name_en == world_obj.name_en
-    assert result[0].name_fr == world_obj.name_fr
-    assert result[0].name_de == world_obj.name_de
+    assert result[0].name["es"] == world_obj.name_es
+    assert result[0].name["en"] == world_obj.name_en
+    assert result[0].name["fr"] == world_obj.name_fr
+    assert result[0].name["de"] == world_obj.name_de
 
 
 @pytest.mark.asyncio
@@ -51,7 +51,7 @@ async def test_get_worlds_from_api(mock_get_worlds_info_from_api, mock_GW2Client
 
     result = await worlds.get_worlds(mock_db)
     assert result == [
-        {"id": 2, "name_es": "World2ES", "name_en": "World2EN", "name_fr": "World2FR", "name_de": "World2DE"}
+        {'id': 2, 'name': {'es': 'World2ES', 'en': 'World2EN', 'fr': 'World2FR', 'de': 'World2DE'}}
     ]
     mock_db.add.assert_called()
     mock_db.commit.assert_awaited()

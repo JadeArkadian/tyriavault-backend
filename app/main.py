@@ -10,6 +10,7 @@ from app.api.v1 import api_router
 from app.core.cache import init_cache
 from app.core.config import settings
 from app.core.logging import logger
+from app.crawlers.currencies_crawler import update_currencies_incremental
 from app.crawlers.worlds_crawler import update_worlds_incremental
 from app.db.data.seeding import seed_data
 from app.db.dependency import get_db
@@ -25,6 +26,12 @@ async def run_worlds_crawler_job():
     print("Running worlds crawler job")
     async for db in get_db():
         await update_worlds_incremental(db)
+        break
+
+async def run_currencies_crawler_job():
+    print("Running currencies crawler job")
+    async for db in get_db():
+        await update_currencies_incremental(db)
         break
 
 
@@ -43,15 +50,17 @@ async def lifespan(app: FastAPI):
 
     await startup_gw2_client()
 
-    # execute the worlds crawler once at startup
+    # execute these crawlers at startup
     await run_worlds_crawler_startup()
+    await run_currencies_crawler_job()
 
     # Initialize the TTL cache
     await init_cache()
 
-    # Schedule the worlds crawler to run cada 2880 minutos (48h)
+    # Schedule the crawlers to run at their specified time
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(run_worlds_crawler_job, 'interval', minutes=2880)
+    scheduler.add_job(run_worlds_crawler_job, 'interval', minutes=settings.WORLDS_CRAWLER_INTERVAL_MINUTES)
+    scheduler.add_job(run_currencies_crawler_job, 'interval', minutes=settings.CURRENCIES_CRAWLER_INTERVAL_MINUTES)
     scheduler.start()
 
     logger.info("Server is up and running!")

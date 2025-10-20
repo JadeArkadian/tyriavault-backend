@@ -3,10 +3,13 @@ import asyncio
 import httpx
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
+from fastapi_cache.decorator import cache
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.responses.worlds_reponse import WorldsResponse
+from app.core import settings
+from app.core.cache import cache_key_builder
 from app.db.dependency import get_db
 from app.db.model import Worlds
 from app.gw2.client import GW2Client
@@ -15,6 +18,7 @@ router = APIRouter(prefix="/worlds", tags=["worlds"])
 
 
 @router.get("/", summary="Provides info about worlds", response_description="Worlds info")
+@cache(expire=settings.CACHE_TTL_SECONDS, namespace="account", key_builder=cache_key_builder)
 async def get_worlds(db: AsyncSession = Depends(get_db)) -> list[WorldsResponse]:
     result = await db.execute(select(Worlds))
     worlds_info = result.scalars().all()

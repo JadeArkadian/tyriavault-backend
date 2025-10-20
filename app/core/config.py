@@ -22,7 +22,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     GW2_API_KEY: str
     FRONTEND_URL: str
-    WORLDS_CRAWLER_INTERVAL_MINUTES: int = 2880  # 48 hours
+    WORLDS_CRAWLER_INTERVAL_MINUTES: int = 14400  # 10 days
+    CURRENCIES_CRAWLER_INTERVAL_MINUTES: int = 10080  # 7 days
     CACHE_TTL_SECONDS: int = 300  # 5 minutes
     LOG_LEVEL: str = "INFO"
 

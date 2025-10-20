@@ -7,13 +7,13 @@ from app.db.model import Worlds
 
 class WorldsResponse(BaseModel):
     id: int
-    world_name: dict[str, str]
+    name: dict[str, str]
 
     @classmethod
     def map_response(cls, world: Worlds) -> Self:
         mapped = WorldsResponse(
             id=world.id,
-            world_name={
+            name={
                 "es": world.name_es if world else None,
                 "en": world.name_en if world else None,
                 "fr": world.name_fr if world else None,

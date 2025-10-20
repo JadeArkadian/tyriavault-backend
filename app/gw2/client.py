@@ -107,7 +107,7 @@ class GW2Client:
         return await self._get(f"/worlds?lang={lang}&ids=all", require_token=False)
 
     async def get_currencies(self, lang: str = "en"):
-        return await self._get(f"/currencies?lang={lang}", require_token=False)
+        return await self._get(f"/currencies?lang={lang}&ids=all", require_token=False)
 
     async def get_item(self, item_id: int):
         return await self._get(f"/items/{item_id}")
