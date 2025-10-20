@@ -29,10 +29,12 @@ async def get_worlds(db: AsyncSession = Depends(get_db)) -> list[WorldsResponse]
         worlds_info_from_api = await get_worlds_info_from_api(gw2)
         if worlds_info_from_api is not None:
             # Store the worlds in the database
+            worlds_info = []
             for world in worlds_info_from_api:
-                db.add(Worlds(**world))
+                world_obj = Worlds(**world)
+                db.add(world_obj)
+                worlds_info.append(world_obj)
             await db.commit()
-            worlds_info = worlds_info_from_api
 
     return [WorldsResponse.map_response(world) for world in worlds_info]
 
