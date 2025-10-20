@@ -28,8 +28,11 @@ async def get_currencies(db: AsyncSession = Depends(get_db)):
         currencies_info_from_api = await get_currencies_info_from_api(gw2)
         if currencies_info_from_api is not None:
             # Store the currencies in the database
+            currencies_info = []
             for currency in currencies_info_from_api:
-                db.add(Currencies(**currency))
+                currency_obj = Currencies(**currency)
+                db.add(currency_obj)
+                currencies_info.append(currency_obj)
             await db.commit()
             currencies_info = currencies_info_from_api
 
