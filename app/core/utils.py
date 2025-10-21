@@ -45,4 +45,3 @@ def handle_gw2_api_error(e: Exception) -> None:
         raise HTTPException(status_code=503, detail=f"Connection failure: {str(e)}")
     else:
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
-

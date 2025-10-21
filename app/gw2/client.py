@@ -66,7 +66,7 @@ class GW2Client:
                 if response.status_code == 429:
                     retry_after = int(response.headers.get("Retry-After", 1))
                     wait_time = retry_after or self.backoff_factor * (2 ** retries)
-                    logging.warn(f"Rate limit reached. Retrying in {wait_time:.1f}s...")
+                    logging.warning(f"Rate limit reached. Retrying in {wait_time:.1f}s...")
                     await asyncio.sleep(wait_time)
                     retries += 1
                     if retries > self.max_retries:
@@ -90,7 +90,7 @@ class GW2Client:
                 if retries > self.max_retries:
                     raise RuntimeError(f"Conection error after {self.max_retries} attemps: {e}")
                 wait_time = self.backoff_factor * (2 ** (retries - 1))
-                logging.warn(f"Network error: {e}. Retrying in {wait_time:.1f}s...")
+                logging.warning(f"Network error: {e}. Retrying in {wait_time:.1f}s...")
                 await asyncio.sleep(wait_time)
 
         response = await self.client.get(endpoint, params=params, headers=self._headers())
