@@ -65,7 +65,7 @@ class TestCommonTokenInfoEndpoint:
         # Verify response structure
         assert "api_key" in data
         assert "permissions" in data
-        assert data["api_key"] == "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+        assert data["api_key"] == "test-api-key-12345"
         assert isinstance(data["permissions"], list)
         assert len(data["permissions"]) == 5
         assert "account" in data["permissions"]

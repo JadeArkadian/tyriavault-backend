@@ -1,9 +1,8 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional, Self
 from uuid import UUID
 
 from pydantic import BaseModel
-from typing_extensions import Self
 
 
 class AccountInfoResponse(BaseModel):
@@ -12,7 +11,7 @@ class AccountInfoResponse(BaseModel):
     creation_date: datetime
     fractal_level: int
     world_name: dict[str, Optional[str]]
-    content_access: List[str]
+    content_access: list[str]
 
     @classmethod
     def map_response(cls, game_account: dict, world_info: dict) -> Self:

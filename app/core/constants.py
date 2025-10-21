@@ -1,2 +1,5 @@
+from typing import ClassVar
+
+
 class Constants:
-    LANGS: tuple[str, ...] = ("en", "es", "de", "fr")
+    LANGS: ClassVar[tuple[str, ...]] = ("en", "es", "de", "fr")

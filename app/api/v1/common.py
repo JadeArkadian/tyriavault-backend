@@ -27,7 +27,7 @@ async def check_token_info(
     gw2 = GW2Client(api_key=token)
     token_info_from_api = await get_token_info_from_api(gw2)
 
-    return TokenInfoResponse.map_response(token_info_from_api)
+    return TokenInfoResponse.map_response(token_info_from_api, token)
 
 
 async def get_token_info_from_api(gw2: GW2Client) -> dict:

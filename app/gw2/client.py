@@ -69,7 +69,7 @@ class GW2Client:
                         retry_after = int(header_val) if header_val is not None else None
                     except (TypeError, ValueError):
                         retry_after = None
-                        
+
                     wait_time = (retry_after
                                  if retry_after and retry_after > 0
                                  else self.backoff_factor * (2 ** retries))
@@ -96,7 +96,7 @@ class GW2Client:
             except httpx.RequestError as e:
                 retries += 1
                 if retries > self.max_retries:
-                    raise RuntimeError(f"Connection error after {self.max_retries} attempts: {e}")
+                    raise RuntimeError(f"Connection error after {self.max_retries} attempts.") from e
                 wait_time = self.backoff_factor * (2 ** (retries - 1))
                 logging.warning(f"Network error: {e}. Retrying in {wait_time:.1f}s...")
                 await asyncio.sleep(wait_time)

@@ -1,7 +1,6 @@
-from typing import List
+from typing import List, Self
 
 from pydantic import BaseModel
-from typing_extensions import Self
 
 
 class TokenInfoResponse(BaseModel):
@@ -9,10 +8,10 @@ class TokenInfoResponse(BaseModel):
     permissions: List[str]
 
     @classmethod
-    def map_response(cls, token_info: dict) -> Self:
+    def map_response(cls, token_info: dict, token: str) -> Self:
         try:
             return TokenInfoResponse(
-                api_key=token_info["id"],
+                api_key=token,
                 permissions=token_info.get("permissions", []))
         except KeyError as ke:
-            raise ValueError(f"Missing required key in token_info: {ke.args[0]}") from k
+            raise ValueError(f"Missing required key in token_info: {ke.args[0]}") from ke
