@@ -23,18 +23,19 @@ log_filename = f"tyriavault_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 log_filepath = os.path.join(os.path.dirname(__file__), log_filename)
 
 
-async def run_worlds_crawler_job():
-    logger.info("Running worlds crawler job")
+async def run_crawler_job(crawler_name: str, crawler_func):
+    logger.info(f"Running {crawler_name} crawler job")
     async for db in get_db():
-        await update_worlds_incremental(db)
+        await crawler_func(db)
         break
+
+
+async def run_worlds_crawler_job():
+    await run_crawler_job("worlds", update_worlds_incremental)
 
 
 async def run_currencies_crawler_job():
-    logger.info("Running currencies crawler job")
-    async for db in get_db():
-        await update_currencies_incremental(db)
-        break
+    await run_crawler_job("currencies", update_currencies_incremental)
 
 
 @asynccontextmanager

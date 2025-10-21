@@ -3,7 +3,7 @@ import asyncio
 import httpx
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
-from fastapi_cache.decorator import cache
+from fastapi_cache.decorator import cache, logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,7 +24,8 @@ async def get_currencies(db: AsyncSession = Depends(get_db)) -> list[CurrenciesR
     currencies_info = result.scalars().all()
 
     # No currencies on DB? -> check if the token is valid with GW2 API
-    if currencies_info is None or not currencies_info:
+    if not currencies_info:
+        logger.info("No currencies in DB, fetching from GW2 API")
         gw2 = GW2Client()
         currencies_info_from_api = await get_currencies_info_from_api(gw2)
         if currencies_info_from_api is not None:
@@ -55,7 +56,7 @@ async def get_currencies_info_from_api(gw2: GW2Client) -> list[dict]:
                 currency_id = currency["id"]
                 if currency_id not in combined_currencies:
                     combined_currencies[currency_id] = {"id": currency_id}
-                combined_currencies[currency_id]["icon_url"] = currency["icon"]
+                    combined_currencies[currency_id]["icon_url"] = currency["icon"]
                 combined_currencies[currency_id][f"name_{lang}"] = currency["name"]
                 combined_currencies[currency_id][f"description_{lang}"] = currency["description"]
         return list(combined_currencies.values())

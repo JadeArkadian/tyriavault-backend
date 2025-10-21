@@ -3,7 +3,7 @@ import asyncio
 import httpx
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
-from fastapi_cache.decorator import cache
+from fastapi_cache.decorator import cache, logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,7 +24,8 @@ async def get_worlds(db: AsyncSession = Depends(get_db)) -> list[WorldsResponse]
     worlds_info = result.scalars().all()
 
     # No worlds on DB? -> check if the token is valid with GW2 API
-    if worlds_info is None or not worlds_info:
+    if not worlds_info:
+        logger.info("No worlds in DB, fetching from GW2 API")
         gw2 = GW2Client()
         worlds_info_from_api = await get_worlds_info_from_api(gw2)
         if worlds_info_from_api is not None:
