@@ -15,7 +15,7 @@ router = APIRouter(prefix="/currencies", tags=["currencies"])
 
 
 @router.get("/", summary="Provides info about currencies", response_description="Currencies info")
-@cache(expire=settings.CACHE_TTL_SECONDS, namespace="currencies", key_builder=cache_key_builder)
+@cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="currencies", key_builder=cache_key_builder)
 async def get_currencies() -> list[CurrenciesResponse]:
     gw2 = GW2Client()
     currencies_info_from_api = await get_currencies_info_from_api(gw2)

@@ -15,7 +15,7 @@ router = APIRouter(prefix="/worlds", tags=["worlds"])
 
 
 @router.get("/", summary="Provides info about worlds", response_description="Worlds info")
-@cache(expire=settings.CACHE_TTL_SECONDS, namespace="worlds", key_builder=cache_key_builder)
+@cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="worlds", key_builder=cache_key_builder)
 async def get_worlds() -> list[WorldsResponse]:
     gw2 = GW2Client()
     worlds_info_from_api = await get_worlds_info_from_api(gw2)

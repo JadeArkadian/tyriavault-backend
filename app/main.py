@@ -19,6 +19,7 @@ log_filepath = os.path.join(os.path.dirname(__file__), log_filename)
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("Turning On...")
+    logger.debug(settings.DATABASE_URL)
     await startup_gw2_client()
 
     # Initialize the TTL cache

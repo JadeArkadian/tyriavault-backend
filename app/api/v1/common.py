@@ -16,7 +16,7 @@ def status() -> Response:
 
 
 @router.get("/tokeninfo", summary="Provides info about the API key", response_description="API Key info")
-@cache(expire=settings.CACHE_TTL_SECONDS, namespace="common", key_builder=cache_key_builder)
+@cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="common", key_builder=cache_key_builder)
 async def check_token_info(
         authorization: str = Header(..., description="Authorization header: Bearer <API_KEY>")) -> TokenInfoResponse:
     try:

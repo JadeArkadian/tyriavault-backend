@@ -15,7 +15,7 @@ router = APIRouter(prefix="/account", tags=["account"])
 
 
 @router.get("/", summary="Account summary", response_description="Account details")
-@cache(expire=settings.CACHE_TTL_SECONDS, namespace="account", key_builder=cache_key_builder)
+@cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="account", key_builder=cache_key_builder)
 async def account_details(authorization: str = Header(...,
                                                       description="Authorization header: Bearer <API_KEY>")) -> AccountInfoResponse:
     try:
@@ -31,7 +31,7 @@ async def account_details(authorization: str = Header(...,
     )
 
     game_account_info_from_api, worlds_info_from_api = results
-    
+
     worlds_by_id = {w["id"]: w for w in worlds_info_from_api}
     world_info = worlds_by_id.get(game_account_info_from_api["world"])
 
