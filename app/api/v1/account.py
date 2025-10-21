@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.v1.responses.account_responses import AccountInfoResponse
+from app.api.v1.responses.account_response import AccountInfoResponse
 from app.core import settings
 from app.core.cache import cache_key_builder
 from app.core.utils import split_bearer_token

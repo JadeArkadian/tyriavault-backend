@@ -1,3 +1,4 @@
+import asyncio
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -10,6 +11,7 @@ from app.api.v1 import api_router
 from app.core.cache import init_cache
 from app.core.config import settings
 from app.core.logging import logger
+from app.crawlers.currencies_crawler import update_currencies_incremental
 from app.crawlers.worlds_crawler import update_worlds_incremental
 from app.db.data.seeding import seed_data
 from app.db.dependency import get_db
@@ -21,11 +23,19 @@ log_filename = f"tyriavault_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 log_filepath = os.path.join(os.path.dirname(__file__), log_filename)
 
 
-async def run_worlds_crawler_job():
-    print("Running worlds crawler job")
+async def run_crawler_job(crawler_name: str, crawler_func):
+    logger.info(f"Running {crawler_name} crawler job")
     async for db in get_db():
-        await update_worlds_incremental(db)
+        await crawler_func(db)
         break
+
+
+async def run_worlds_crawler_job():
+    await run_crawler_job("worlds", update_worlds_incremental)
+
+
+async def run_currencies_crawler_job():
+    await run_crawler_job("currencies", update_currencies_incremental)
 
 
 @asynccontextmanager
@@ -43,15 +53,23 @@ async def lifespan(app: FastAPI):
 
     await startup_gw2_client()
 
-    # execute the worlds crawler once at startup
-    await run_worlds_crawler_startup()
+    # execute these crawlers at startup
+    await asyncio.gather(
+        run_worlds_crawler_job(),
+        run_currencies_crawler_job(),
+    )
 
     # Initialize the TTL cache
     await init_cache()
 
-    # Schedule the worlds crawler to run cada 2880 minutos (48h)
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(run_worlds_crawler_job, 'interval', minutes=2880)
+    # Schedule the crawlers to run at their specified time
+    scheduler = AsyncIOScheduler(job_defaults={"coalesce": True, "max_instances": 1})
+
+    scheduler.add_job(run_worlds_crawler_job, "interval", id="worlds_crawler",
+                      minutes=settings.WORLDS_CRAWLER_INTERVAL_MINUTES, replace_existing=True, misfire_grace_time=300)
+    scheduler.add_job(run_currencies_crawler_job, "interval", id="currencies_crawler",
+                      minutes=settings.CURRENCIES_CRAWLER_INTERVAL_MINUTES, replace_existing=True,
+                      misfire_grace_time=300)
     scheduler.start()
 
     logger.info("Server is up and running!")
@@ -62,20 +80,12 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
 
 
-def run_worlds_crawler_startup():
-    async def _run():
-        async for db in get_db():
-            await update_worlds_incremental(db)
-            break
-
-    return _run()
-
-
 # Setting up FastApi and our services
 api = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.PROJECT_VERSION,
-    lifespan=lifespan
+    lifespan=lifespan,
+    redirect_slashes=False
 )
 
 origins = [settings.FRONTEND_URL]

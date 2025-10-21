@@ -52,12 +52,12 @@ LOGGING_CONFIG = {
             "propagate": False,
         },
         "uvicorn.error": {
-            "handlers": ["file"],
+            "handlers": ["default", "file"],
             "level": settings.LOG_LEVEL,
             "propagate": False,
         },
         "uvicorn.access": {
-            "handlers": ["file"],
+            "handlers": ["default", "file"],
             "level": settings.LOG_LEVEL,
             "propagate": False,
         },

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -14,7 +14,7 @@ class AccountInfoResponse(BaseModel):
     creation_date: datetime
     fractal_level: int
     last_modified: datetime
-    world_name: dict[str, str]
+    world_name: dict[str, Optional[str]]
     content_access: List[str]
 
     @classmethod
