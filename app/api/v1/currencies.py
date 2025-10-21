@@ -1,17 +1,12 @@
 import asyncio
 
-import httpx
-from fastapi import APIRouter, HTTPException
-from fastapi.params import Depends
-from fastapi_cache.decorator import cache, logger
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter
+from fastapi_cache.decorator import cache
 
 from app.api.v1.responses.currencies_response import CurrenciesResponse
 from app.core import settings
 from app.core.cache import cache_key_builder
-from app.db.dependency import get_db
-from app.db.model import Currencies
+from app.core.utils import handle_gw2_api_error
 from app.gw2.client import GW2Client
 
 router = APIRouter(prefix="/currencies", tags=["currencies"])
@@ -19,25 +14,11 @@ router = APIRouter(prefix="/currencies", tags=["currencies"])
 
 @router.get("/", summary="Provides info about currencies", response_description="Currencies info")
 @cache(expire=settings.CACHE_TTL_SECONDS, namespace="currencies", key_builder=cache_key_builder)
-async def get_currencies(db: AsyncSession = Depends(get_db)) -> list[CurrenciesResponse]:
-    result = await db.execute(select(Currencies))
-    currencies_info = result.scalars().all()
+async def get_currencies() -> list[CurrenciesResponse]:
+    gw2 = GW2Client()
+    currencies_info_from_api = await get_currencies_info_from_api(gw2)
 
-    # No currencies on DB? -> check if the token is valid with GW2 API
-    if not currencies_info:
-        logger.info("No currencies in DB, fetching from GW2 API")
-        gw2 = GW2Client()
-        currencies_info_from_api = await get_currencies_info_from_api(gw2)
-        if currencies_info_from_api is not None:
-            # Store the currencies in the database
-            currencies_info = []
-            for currency in currencies_info_from_api:
-                currency_obj = Currencies(**currency)
-                db.add(currency_obj)
-                currencies_info.append(currency_obj)
-            await db.commit()
-
-    return [CurrenciesResponse.map_response(currency) for currency in currencies_info]
+    return [CurrenciesResponse.map_response(currency) for currency in currencies_info_from_api]
 
 
 async def get_currencies_info_from_api(gw2: GW2Client) -> list[dict]:
@@ -60,12 +41,5 @@ async def get_currencies_info_from_api(gw2: GW2Client) -> list[dict]:
                 combined_currencies[currency_id][f"name_{lang}"] = currency["name"]
                 combined_currencies[currency_id][f"description_{lang}"] = currency["description"]
         return list(combined_currencies.values())
-
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail=e.response.text) from e
-
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=503, detail=f"Connection failure: {e!s}") from e
-
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error: {e!s}") from e
+        handle_gw2_api_error(e)

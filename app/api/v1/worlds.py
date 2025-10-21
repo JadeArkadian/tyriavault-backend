@@ -1,17 +1,12 @@
 import asyncio
 
-import httpx
-from fastapi import APIRouter, HTTPException
-from fastapi.params import Depends
-from fastapi_cache.decorator import cache, logger
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter
+from fastapi_cache.decorator import cache
 
 from app.api.v1.responses.worlds_reponse import WorldsResponse
 from app.core import settings
 from app.core.cache import cache_key_builder
-from app.db.dependency import get_db
-from app.db.model import Worlds
+from app.core.utils import handle_gw2_api_error
 from app.gw2.client import GW2Client
 
 router = APIRouter(prefix="/worlds", tags=["worlds"])
@@ -19,25 +14,10 @@ router = APIRouter(prefix="/worlds", tags=["worlds"])
 
 @router.get("/", summary="Provides info about worlds", response_description="Worlds info")
 @cache(expire=settings.CACHE_TTL_SECONDS, namespace="worlds", key_builder=cache_key_builder)
-async def get_worlds(db: AsyncSession = Depends(get_db)) -> list[WorldsResponse]:
-    result = await db.execute(select(Worlds))
-    worlds_info = result.scalars().all()
-
-    # No worlds on DB? -> check if the token is valid with GW2 API
-    if not worlds_info:
-        logger.info("No worlds in DB, fetching from GW2 API")
-        gw2 = GW2Client()
-        worlds_info_from_api = await get_worlds_info_from_api(gw2)
-        if worlds_info_from_api is not None:
-            # Store the worlds in the database
-            worlds_info = []
-            for world in worlds_info_from_api:
-                world_obj = Worlds(**world)
-                db.add(world_obj)
-                worlds_info.append(world_obj)
-            await db.commit()
-
-    return [WorldsResponse.map_response(world) for world in worlds_info]
+async def get_worlds() -> list[WorldsResponse]:
+    gw2 = GW2Client()
+    worlds_info_from_api = await get_worlds_info_from_api(gw2)
+    return [WorldsResponse.map_response(world) for world in worlds_info_from_api]
 
 
 async def get_worlds_info_from_api(gw2: GW2Client) -> list[dict]:
@@ -59,12 +39,5 @@ async def get_worlds_info_from_api(gw2: GW2Client) -> list[dict]:
                 combined_worlds[world_id][f"name_{lang}"] = world["name"]
 
         return list(combined_worlds.values())
-
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail=e.response.text) from e
-
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=503, detail=f"Connection failure: {str(e)}") from e
-
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}") from e
+        handle_gw2_api_error(e)

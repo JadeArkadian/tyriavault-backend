@@ -54,7 +54,7 @@ class GW2Client:
             return {"Authorization": f"Bearer {self.api_key}"}
         return {}
 
-    async def _get(self, endpoint: str, params: dict | None = None, require_token: bool = False):
+    async def _get(self, endpoint: str, params: dict | None = None, require_token: bool = False) -> dict:
         if require_token and not self.api_key:
             raise ValueError(f"This endpoint requires an API key to work: {endpoint}")
 
@@ -97,20 +97,20 @@ class GW2Client:
         response.raise_for_status()
         return response.json()
 
-    async def token_info(self):
+    async def token_info(self) -> dict:
         return await self._get("/tokeninfo", require_token=True)
 
-    async def get_account(self):
+    async def get_account(self) -> dict:
         return await self._get("/account", require_token=True)
 
-    async def get_worlds(self, lang: str = "en"):
+    async def get_worlds(self, lang: str = "en") -> dict:
         return await self._get(f"/worlds?lang={lang}&ids=all", require_token=False)
 
-    async def get_currencies(self, lang: str = "en"):
+    async def get_currencies(self, lang: str = "en") -> dict:
         return await self._get(f"/currencies?lang={lang}&ids=all", require_token=False)
 
-    async def get_item(self, item_id: int):
+    async def get_item(self, item_id: int) -> dict:
         return await self._get(f"/items/{item_id}")
 
-    async def get_exchange_rates(self):
+    async def get_exchange_rates(self) -> dict:
         return await self._get("/commerce/exchange/coins")

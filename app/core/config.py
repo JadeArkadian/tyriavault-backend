@@ -20,10 +20,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "TyriaVault Backend ⚔️"
     PROJECT_VERSION: str = "0.1.0"
     DATABASE_URL: str
-    GW2_API_KEY: str
     FRONTEND_URL: str
-    WORLDS_CRAWLER_INTERVAL_MINUTES: int = 14400  # 10 days
-    CURRENCIES_CRAWLER_INTERVAL_MINUTES: int = 10080  # 7 days
     CACHE_TTL_SECONDS: int = 300  # 5 minutes
     LOG_LEVEL: str = "INFO"
 
