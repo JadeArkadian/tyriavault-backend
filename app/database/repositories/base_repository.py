@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Optional
+from typing import Generic, TypeVar, Optional, Sequence
 
 T = TypeVar('T')
 
@@ -13,7 +13,7 @@ class BaseRepository(ABC, Generic[T]):
         ...
 
     @abstractmethod
-    async def get_all(self) -> list[T]:
+    async def get_all(self) -> Sequence[T]:
         """Get all entities."""
         ...
 

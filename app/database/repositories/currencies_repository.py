@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -40,7 +40,7 @@ class CurrenciesRepository(BaseRepository[Currencies]):
 
         stmt = pg_insert(Currencies).values(currencies_data)
         stmt = stmt.on_conflict_do_update(
-            index_elements=['id'],
+            index_elements=[Currencies.id],
             set_={
                 'name_en': stmt.excluded.name_en,
                 'name_es': stmt.excluded.name_es,

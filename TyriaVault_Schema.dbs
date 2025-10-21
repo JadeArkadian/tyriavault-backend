@@ -612,10 +612,6 @@
 				<column name="id" />
 			</index>
 		</table>
-		<sequence name="achievements_id_seq" options="AS integer START WITH 1 INCREMENT BY 1" />
-		<sequence name="genders_id_seq" options="AS integer START WITH 1 INCREMENT BY 1" />
-		<sequence name="items_cache_id_seq" options="AS integer START WITH 1 INCREMENT BY 1" />
-		<sequence name="worlds_id_seq" options="AS integer START WITH 1 INCREMENT BY 1" />
 	</schema>
 	<layout name="Default Diagram" id="5ffc9b5e-f2bb-43b6-9c1b-c3a79de8faea" show_relation="columns" >
 		<entity schema="schema_tyriavault" name="item_types" color="FFFF39" x="1577" y="1425" />
