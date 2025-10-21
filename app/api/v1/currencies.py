@@ -12,7 +12,6 @@ router = APIRouter(prefix="/currencies", tags=["currencies"])
 
 @router.get("/", summary="Provides info about currencies", response_description="Currencies info")
 @cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="currencies", key_builder=cache_key_builder)
-async def get_currencies(currencies_service: CurrenciesService = Depends(get_currencies_service)) -> list[
-    CurrenciesResponse]:
-    currencies_info_from_api = await currencies_service.get_all_currencies()
-    return [CurrenciesResponse.map_response(currency) for currency in currencies_info_from_api]
+async def get_currencies(currencies_service: CurrenciesService = Depends(get_currencies_service)) -> list[CurrenciesResponse]:
+    currencies_data = await currencies_service.get_all_currencies()
+    return [CurrenciesResponse.map_response(currency) for currency in currencies_data]
