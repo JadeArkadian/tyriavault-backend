@@ -16,13 +16,20 @@ class CurrenciesService:
         self.gw2_client = gw2_client
 
     async def get_all_currencies(self) -> list[dict]:
-        """Get all currencies from GW2 API and sync with database in the background."""
-        currencies_data = await self._get_currencies_from_api()
+        """
+        Get all currencies from GW2 API and sync with database in the background.
+        If API fails, fallback to database.
+        """
+        try:
+            currencies_data = await self._get_currencies_from_api()
 
-        # Sync with db in background
-        asyncio.create_task(self._sync_currencies_to_db(currencies_data))
+            # Sync with db in background
+            asyncio.create_task(self._sync_currencies_to_db(currencies_data))
 
-        return currencies_data
+            return currencies_data
+        except Exception as e:
+            logger.warning(f"Failed to fetch currencies from GW2 API: {e}. Falling back to database.")
+            return await self._get_currencies_from_db()
 
     async def _get_currencies_from_api(self) -> list[dict]:
         """Fetch currencies from GW2 API in all supported languages and combine the data."""
@@ -43,6 +50,37 @@ class CurrenciesService:
                 combined_currencies[currency_id][f"name_{lang}"] = currency["name"]
                 combined_currencies[currency_id][f"description_{lang}"] = currency["description"]
         return list(combined_currencies.values())
+
+    async def _get_currencies_from_db(self) -> list[dict]:
+        """Fetch currencies from database as fallback."""
+        try:
+            currencies = await self.repository.get_all()
+
+            if not currencies:
+                logger.error("No currencies found in database for fallback")
+                raise RuntimeError("No currencies available from API or database")
+
+            # Convert ORM objects to dictionaries
+            currencies_data = []
+            for currency in currencies:
+                currencies_data.append({
+                    "id": currency.id,
+                    "name_en": currency.name_en,
+                    "name_es": currency.name_es,
+                    "name_de": currency.name_de,
+                    "name_fr": currency.name_fr,
+                    "description_en": currency.description_en,
+                    "description_es": currency.description_es,
+                    "description_de": currency.description_de,
+                    "description_fr": currency.description_fr,
+                    "icon_url": currency.icon_url
+                })
+
+            logger.info(f"Retrieved {len(currencies_data)} currencies from database as fallback")
+            return currencies_data
+        except Exception as e:
+            logger.error(f"Failed to retrieve currencies from database: {e}")
+            raise
 
     async def _sync_currencies_to_db(self, currencies_data: list[dict]) -> None:
         """Sync currencies to database using a new session for background task."""
