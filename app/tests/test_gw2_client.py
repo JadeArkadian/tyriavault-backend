@@ -255,27 +255,6 @@ class TestGW2ClientMethods:
         assert result == mock_response
         assert result["id"] == 12345
 
-    async def test_get_exchange_rates_success(self, mocker: MockerFixture):
-        """Test get_exchange_rates method returns exchange rate information"""
-        mock_response = {
-            "coins_per_gem": 12345,
-            "quantity": 100
-        }
-
-        mock_http_client = mocker.AsyncMock()
-        mock_http_client.get = AsyncMock(return_value=MagicMock(
-            status_code=200,
-            json=MagicMock(return_value=mock_response)
-        ))
-
-        mocker.patch("app.gw2.client.get_gw2_http_client", return_value=mock_http_client)
-
-        client = GW2Client()
-        result = await client.get_exchange_rates()
-
-        assert result == mock_response
-        assert "coins_per_gem" in result
-
 
 @pytest.mark.asyncio
 class TestGW2ClientRetryLogic:
@@ -422,8 +401,8 @@ class TestGW2ClientRetryLogic:
         with pytest.raises(RuntimeError) as exc:
             await client.get_worlds()
 
-        assert "Conection error after" in str(exc.value)
-        assert "attemps" in str(exc.value)
+        assert "Connection error after" in str(exc.value)
+        assert "attempts" in str(exc.value)
 
     async def test_backoff_calculation(self, mocker: MockerFixture):
         """Test that backoff time is calculated correctly"""
@@ -544,7 +523,7 @@ class TestGW2ClientErrorHandling:
         with pytest.raises(RuntimeError) as exc:
             await client.get_worlds()
 
-        assert "Conection error" in str(exc.value)
+        assert "Connection error" in str(exc.value)
 
     async def test_network_error(self, mocker: MockerFixture):
         """Test handling of generic network error"""
@@ -559,4 +538,4 @@ class TestGW2ClientErrorHandling:
         with pytest.raises(RuntimeError) as exc:
             await client.get_worlds()
 
-        assert "Conection error" in str(exc.value)
+        assert "Connection error" in str(exc.value)

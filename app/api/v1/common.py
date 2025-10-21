@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Response, HTTPException
-from fastapi.params import Header
+from fastapi import APIRouter, Response, HTTPException, Header
 from fastapi_cache.decorator import cache
 
 from app.api.v1.responses.common_response import TokenInfoResponse
+from app.core import settings
 from app.core.cache import cache_key_builder
-from app.core.config import settings
 from app.core.utils import split_bearer_token, handle_gw2_api_error
 from app.gw2.client import GW2Client
 
@@ -23,7 +22,7 @@ async def check_token_info(
     try:
         token = split_bearer_token(authorization)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     gw2 = GW2Client(api_key=token)
     token_info_from_api = await get_token_info_from_api(gw2)

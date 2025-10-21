@@ -1,11 +1,13 @@
 import asyncio
+from typing import Any
 
 from fastapi import APIRouter
 from fastapi_cache.decorator import cache
 
-from app.api.v1.responses.worlds_reponse import WorldsResponse
+from app.api.v1.responses.worlds_response import WorldsResponse
 from app.core import settings
 from app.core.cache import cache_key_builder
+from app.core.constants import Constants
 from app.core.utils import handle_gw2_api_error
 from app.gw2.client import GW2Client
 
@@ -22,16 +24,11 @@ async def get_worlds() -> list[WorldsResponse]:
 
 async def get_worlds_info_from_api(gw2: GW2Client) -> list[dict]:
     try:
-        results = await asyncio.gather(
-            gw2.get_worlds(lang="en"),
-            gw2.get_worlds(lang="es"),
-            gw2.get_worlds(lang="de"),
-            gw2.get_worlds(lang="fr")
-        )
+        results = await asyncio.gather(*(gw2.get_worlds(lang=lang) for lang in Constants.LANGS))
 
-        combined_worlds = {}
+        combined_worlds: dict[int, dict[str, Any]] = {}
 
-        for lang, worlds in zip(["en", "es", "de", "fr"], results):
+        for lang, worlds in zip(Constants.LANGS, results, strict=True):
             for world in worlds:
                 world_id = world["id"]
                 if world_id not in combined_worlds:

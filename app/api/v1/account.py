@@ -21,7 +21,7 @@ async def account_details(authorization: str = Header(...,
     try:
         token = split_bearer_token(authorization)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     gw2 = GW2Client(api_key=token)
 
@@ -30,11 +30,10 @@ async def account_details(authorization: str = Header(...,
         get_worlds_info_from_api(gw2),
     )
 
-    game_account_info_from_api = results[0]
-    worlds_info_from_api = results[1]
-
-    world_info = next((world for world in worlds_info_from_api if world["id"] == game_account_info_from_api["world"]),
-                      None)
+    game_account_info_from_api, worlds_info_from_api = results
+    
+    worlds_by_id = {w["id"]: w for w in worlds_info_from_api}
+    world_info = worlds_by_id.get(game_account_info_from_api["world"])
 
     return AccountInfoResponse.map_response(game_account_info_from_api, world_info)
 
