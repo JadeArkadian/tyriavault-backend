@@ -29,6 +29,7 @@ async def run_worlds_crawler_job():
         await update_worlds_incremental(db)
         break
 
+
 async def run_currencies_crawler_job():
     logger.info("Running currencies crawler job")
     async for db in get_db():
@@ -53,7 +54,7 @@ async def lifespan(app: FastAPI):
 
     # execute these crawlers at startup
     await asyncio.gather(
-        run_worlds_crawler_startup(),
+        run_worlds_crawler_job(),
         run_currencies_crawler_job(),
     )
 
@@ -66,7 +67,8 @@ async def lifespan(app: FastAPI):
     scheduler.add_job(run_worlds_crawler_job, "interval", id="worlds_crawler",
                       minutes=settings.WORLDS_CRAWLER_INTERVAL_MINUTES, replace_existing=True, misfire_grace_time=300)
     scheduler.add_job(run_currencies_crawler_job, "interval", id="currencies_crawler",
-                      minutes=settings.CURRENCIES_CRAWLER_INTERVAL_MINUTES, replace_existing=True, misfire_grace_time=300)
+                      minutes=settings.CURRENCIES_CRAWLER_INTERVAL_MINUTES, replace_existing=True,
+                      misfire_grace_time=300)
     scheduler.start()
 
     logger.info("Server is up and running!")
@@ -75,15 +77,6 @@ async def lifespan(app: FastAPI):
     logger.info("Turning Off...")
     await shutdown_gw2_client()
     scheduler.shutdown()
-
-
-def run_worlds_crawler_startup():
-    async def _run():
-        async for db in get_db():
-            await update_worlds_incremental(db)
-            break
-
-    return _run()
 
 
 # Setting up FastApi and our services
