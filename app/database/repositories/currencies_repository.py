@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
