@@ -35,7 +35,6 @@ async def get_currencies(db: AsyncSession = Depends(get_db)) -> list[CurrenciesR
                 db.add(currency_obj)
                 currencies_info.append(currency_obj)
             await db.commit()
-            currencies_info = currencies_info_from_api
 
     return [CurrenciesResponse.map_response(currency) for currency in currencies_info]
 

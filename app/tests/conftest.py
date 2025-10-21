@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 
@@ -6,6 +7,14 @@ from fastapi_cache.backends.inmemory import InMemoryBackend
 @pytest.fixture(scope="session", autouse=True)
 def init_cache_session():
     FastAPICache.init(InMemoryBackend(), prefix="tyriavault")
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def clear_cache():
+    """Clear cache before each test"""
+    await FastAPICache.clear()
+    yield
+    await FastAPICache.clear()
 
 
 @pytest.fixture(autouse=True)

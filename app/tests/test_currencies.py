@@ -1,6 +1,6 @@
-import httpx
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 from fastapi import HTTPException
 
@@ -13,13 +13,36 @@ from app.db.model import Currencies
 async def test_get_currencies_from_api_and_store(mock_gw2_client):
     # Arrange
     mock_db = AsyncMock()
+    mock_db.add = MagicMock()  # db.add is synchronous in SQLAlchemy
     mock_result = MagicMock()
     mock_result.scalars.return_value.all.return_value = []
     mock_db.execute.return_value = mock_result
 
     mock_api_data = [
-        {"id": 1, "name_en": "Gold", "description_en": "Gold coin", "icon_url": "icon1"},
-        {"id": 2, "name_en": "Silver", "description_en": "Silver coin", "icon_url": "icon2"},
+        {
+            "id": 1,
+            "name_en": "Gold",
+            "name_es": "Oro",
+            "name_de": "Gold",
+            "name_fr": "Or",
+            "description_en": "Gold coin",
+            "description_es": "Moneda de oro",
+            "description_de": "Goldmünze",
+            "description_fr": "Pièce d'or",
+            "icon_url": "icon1"
+        },
+        {
+            "id": 2,
+            "name_en": "Silver",
+            "name_es": "Plata",
+            "name_de": "Silber",
+            "name_fr": "Argent",
+            "description_en": "Silver coin",
+            "description_es": "Moneda de plata",
+            "description_de": "Silbermünze",
+            "description_fr": "Pièce d'argent",
+            "icon_url": "icon2"
+        },
     ]
 
     # Mock the internal function call
@@ -34,16 +57,41 @@ async def test_get_currencies_from_api_and_store(mock_gw2_client):
         assert mock_db.add.call_count == 2
         mock_db.commit.assert_called_once()
         assert len(response) == 2
-        assert response[0].name_en == "Gold"
+        assert response[0].name["en"] == "Gold"
+        assert response[0].id == 1
+        assert response[1].name["en"] == "Silver"
+        assert response[1].id == 2
 
 
 @pytest.mark.asyncio
 async def test_get_currencies_from_db():
     # Arrange
     mock_db = AsyncMock()
-    mock_currency_1 = Currencies(id=1, name_en="Gold", description_en="Gold coin", icon_url="icon1")
-    mock_currency_2 = Currencies(id=2, name_en="Silver", description_en="Silver coin", icon_url="icon2")
-    
+    mock_currency_1 = Currencies(
+        id=1,
+        name_en="Gold",
+        name_es="Oro",
+        name_de="Gold",
+        name_fr="Or",
+        description_en="Gold coin",
+        description_es="Moneda de oro",
+        description_de="Goldmünze",
+        description_fr="Pièce d'or",
+        icon_url="icon1"
+    )
+    mock_currency_2 = Currencies(
+        id=2,
+        name_en="Silver",
+        name_es="Plata",
+        name_de="Silber",
+        name_fr="Argent",
+        description_en="Silver coin",
+        description_es="Moneda de plata",
+        description_de="Silbermünze",
+        description_fr="Pièce d'argent",
+        icon_url="icon2"
+    )
+
     mock_result = MagicMock()
     mock_result.scalars.return_value.all.return_value = [mock_currency_1, mock_currency_2]
     mock_db.execute.return_value = mock_result
@@ -54,15 +102,15 @@ async def test_get_currencies_from_db():
     # Assert
     assert len(response) == 2
     assert response[0].id == 1
-    assert response[0].name_en == "Gold"
+    assert response[0].name["en"] == "Gold"
+    assert response[0].name["es"] == "Oro"
     assert response[1].id == 2
-    assert response[1].name_es is None # Testing mapping works
     mock_db.add.assert_not_called()
     mock_db.commit.assert_not_called()
 
 
 @pytest.mark.asyncio
-@patch("app.api.v1.currencies.asyncio.gather")
+@patch("app.api.v1.currencies.asyncio.gather", new_callable=AsyncMock)
 async def test_get_currencies_info_from_api_success(mock_gather):
     # Arrange
     mock_gw2_client = MagicMock()
@@ -89,7 +137,7 @@ async def test_get_currencies_info_from_api_success(mock_gather):
 
 
 @pytest.mark.asyncio
-@patch("app.api.v1.currencies.asyncio.gather")
+@patch("app.api.v1.currencies.asyncio.gather", new_callable=AsyncMock)
 async def test_get_currencies_info_from_api_http_error(mock_gather):
     # Arrange
     mock_gw2_client = MagicMock()
@@ -106,7 +154,7 @@ async def test_get_currencies_info_from_api_http_error(mock_gather):
 
 
 @pytest.mark.asyncio
-@patch("app.api.v1.currencies.asyncio.gather")
+@patch("app.api.v1.currencies.asyncio.gather", new_callable=AsyncMock)
 async def test_get_currencies_info_from_api_request_error(mock_gather):
     # Arrange
     mock_gw2_client = MagicMock()
