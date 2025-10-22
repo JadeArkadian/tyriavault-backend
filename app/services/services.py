@@ -1,21 +1,26 @@
+import logging
 from typing import Annotated
 
 from fastapi import HTTPException
 from fastapi.params import Depends, Header
+from fastapi_cache.decorator import cache
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import settings
+from app.core.cache import cache_key_builder
 from app.core.utils import split_bearer_token
 from app.database.repositories.apikeys_repository import ApikeysRepository
 from app.database.repositories.currencies_repository import CurrenciesRepository
 from app.database.repositories.worlds_repository import WorldsRepository
 from app.database.session import get_db
 from app.gw2.client import GW2Client
+from app.services.account_service import AccountService
 from app.services.apikey_service import ApiKeyService
 from app.services.currencies_service import CurrenciesService
 from app.services.worlds_service import WorldsService
 
 
-def get_api_key_service(db: AsyncSession = Depends(get_db)) -> ApiKeyService:
+def get_api_key_service(db: Annotated[AsyncSession, Depends(get_db)]) -> ApiKeyService:
     api_keys_repo = ApikeysRepository(db)
     worlds_repo = WorldsRepository(db)
     return ApiKeyService(api_keys_repo, worlds_repo)
@@ -33,12 +38,13 @@ def get_worlds_service(db: Annotated[AsyncSession, Depends(get_db)]) -> WorldsSe
     return WorldsService(repository, gw2_client)
 
 
-def get_account_service(db: Annotated[AsyncSession, Depends(get_db)]) -> WorldsService:
+def get_account_service(db: Annotated[AsyncSession, Depends(get_db)]) -> AccountService:
     repository = WorldsRepository(db)
     gw2_client = GW2Client()
-    return WorldsService(repository, gw2_client)
+    return AccountService(repository, gw2_client)
 
 
+@cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="apikey", key_builder=cache_key_builder)
 async def validate_api_key(
         authorization: str = Header(..., description="Authorization header: Bearer <API_KEY>"),
         api_key_service: ApiKeyService = Depends(get_api_key_service)) -> dict:
@@ -55,6 +61,7 @@ async def validate_api_key(
         raise HTTPException(status_code=400, detail=str(e))
 
     try:
+        logging.debug("Validating API key...")
         # Check if API key exists in DB
         api_key_data = await api_key_service.get_apikey_data_from_db(api_key)
 
