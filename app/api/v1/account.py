@@ -5,7 +5,6 @@ from fastapi.params import Header
 from fastapi_cache.decorator import cache
 
 from app.api.v1.responses.account_response import AccountInfoResponse
-from app.api.v1.worlds import get_worlds_info_from_api
 from app.core import settings
 from app.core.cache import cache_key_builder
 from app.core.utils import split_bearer_token, handle_gw2_api_error
@@ -27,7 +26,7 @@ async def account_details(authorization: str = Header(...,
 
     results = await asyncio.gather(
         get_account_info_from_api(gw2),
-        get_worlds_info_from_api(gw2),
+        # get_worlds_info_from_api(gw2),
     )
 
     game_account_info_from_api, worlds_info_from_api = results

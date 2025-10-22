@@ -9,27 +9,27 @@ from app.services.currencies_service import CurrenciesService
 
 @pytest.fixture
 def mock_repository():
-    """Mock del repositorio de currencies"""
+    """Mock repository for currencies"""
     repository = AsyncMock()
     return repository
 
 
 @pytest.fixture
 def mock_gw2_client():
-    """Mock del cliente GW2"""
+    """Mock GW2 client"""
     client = AsyncMock()
     return client
 
 
 @pytest.fixture
 def currencies_service(mock_repository, mock_gw2_client):
-    """Fixture del servicio de currencies"""
+    """Fixture for currencies service"""
     return CurrenciesService(repository=mock_repository, gw2_client=mock_gw2_client)
 
 
 @pytest.fixture
 def sample_api_response_en():
-    """Respuesta de ejemplo de la API GW2 en inglés"""
+    """Sample response from GW2 API in English"""
     return [
         {
             "id": 1,
@@ -48,7 +48,7 @@ def sample_api_response_en():
 
 @pytest.fixture
 def sample_api_response_es():
-    """Respuesta de ejemplo de la API GW2 en español"""
+    """Sample response from GW2 API in Spanish"""
     return [
         {
             "id": 1,
@@ -67,7 +67,7 @@ def sample_api_response_es():
 
 @pytest.fixture
 def sample_api_response_de():
-    """Respuesta de ejemplo de la API GW2 en alemán"""
+    """Sample response from GW2 API in German"""
     return [
         {
             "id": 1,
@@ -86,7 +86,7 @@ def sample_api_response_de():
 
 @pytest.fixture
 def sample_api_response_fr():
-    """Respuesta de ejemplo de la API GW2 en francés"""
+    """Sample response from GW2 API in French"""
     return [
         {
             "id": 1,
@@ -105,7 +105,7 @@ def sample_api_response_fr():
 
 @pytest.fixture
 def sample_db_currencies():
-    """Currencies de ejemplo desde la base de datos"""
+    """Sample currencies from the database"""
     currency1 = MagicMock(spec=Currencies)
     currency1.id = 1
     currency1.name_en = "Coin"
@@ -134,7 +134,7 @@ def sample_db_currencies():
 
 
 class TestCurrenciesService:
-    """Test suite para CurrenciesService"""
+    """Test suite for CurrenciesService"""
 
     @pytest.mark.asyncio
     async def test_get_all_currencies_success_from_api(
@@ -146,7 +146,7 @@ class TestCurrenciesService:
             sample_api_response_de,
             sample_api_response_fr
     ):
-        """Test: obtener currencies exitosamente desde la API"""
+        """Test: successfully obtain currencies from the API"""
         # Arrange
         mock_gw2_client.get_currencies.side_effect = [
             sample_api_response_en,
@@ -170,7 +170,7 @@ class TestCurrenciesService:
         assert result[1]["id"] == 2
         assert result[1]["name_en"] == "Karma"
 
-        # Verificar que se llamó a la API para cada idioma
+        # Verify that the API was called for each language
         assert mock_gw2_client.get_currencies.call_count == 4
 
     @pytest.mark.asyncio
@@ -181,7 +181,7 @@ class TestCurrenciesService:
             mock_repository,
             sample_db_currencies
     ):
-        """Test: fallback a la base de datos cuando la API falla"""
+        """Test: fallback to the database when the API fails"""
         # Arrange
         mock_gw2_client.get_currencies.side_effect = Exception("API Error")
         mock_repository.get_all.return_value = sample_db_currencies
@@ -196,7 +196,7 @@ class TestCurrenciesService:
         assert result[0]["name_es"] == "Moneda"
         assert result[1]["id"] == 2
 
-        # Verificar que se llamó al repositorio
+        # Verify that the repository was called
         mock_repository.get_all.assert_called_once()
 
     @pytest.mark.asyncio
@@ -209,7 +209,7 @@ class TestCurrenciesService:
             sample_api_response_de,
             sample_api_response_fr
     ):
-        """Test: _get_currencies_from_api combina correctamente todos los idiomas"""
+        """Test: _get_currencies_from_api correctly combines all languages"""
         # Arrange
         mock_gw2_client.get_currencies.side_effect = [
             sample_api_response_en,
@@ -224,7 +224,7 @@ class TestCurrenciesService:
         # Assert
         assert len(result) == 2
 
-        # Verificar que la primera currency tiene todos los idiomas
+        # Verify that the first currency has all languages
         currency = result[0]
         assert "name_en" in currency
         assert "name_es" in currency
@@ -243,7 +243,7 @@ class TestCurrenciesService:
             mock_repository,
             sample_db_currencies
     ):
-        """Test: obtener currencies desde la base de datos exitosamente"""
+        """Test: successfully obtain currencies from the database"""
         # Arrange
         mock_repository.get_all.return_value = sample_db_currencies
 
@@ -265,7 +265,7 @@ class TestCurrenciesService:
             currencies_service,
             mock_repository
     ):
-        """Test: error cuando la base de datos está vacía"""
+        """Test: error when the database is empty"""
         # Arrange
         mock_repository.get_all.return_value = []
 
@@ -279,7 +279,7 @@ class TestCurrenciesService:
             currencies_service,
             mock_repository
     ):
-        """Test: error cuando el repositorio falla"""
+        """Test: error when the repository fails"""
         # Arrange
         mock_repository.get_all.side_effect = Exception("Database error")
 
@@ -289,7 +289,7 @@ class TestCurrenciesService:
 
     @pytest.mark.asyncio
     async def test_sync_currencies_to_db_success(self, currencies_service):
-        """Test: sincronización exitosa de currencies a la base de datos"""
+        """Test: successful synchronization of currencies to the database"""
         # Arrange
         currencies_data = [
             {
@@ -317,17 +317,17 @@ class TestCurrenciesService:
 
     @pytest.mark.asyncio
     async def test_sync_currencies_to_db_handles_error(self, currencies_service):
-        """Test: manejo de errores durante la sincronización"""
+        """Test: error handling during synchronization"""
         # Arrange
         currencies_data = [{"id": 1, "name_en": "Coin"}]
 
         with patch('app.services.currencies_service.async_session_maker') as mock_session_maker:
             mock_session_maker.return_value.__aenter__.side_effect = Exception("DB Connection error")
 
-            # Act - no debe lanzar excepción, solo loggear
+            # Act - should not raise exception, just log the error
             await currencies_service._sync_currencies_to_db(currencies_data)
 
-            # Assert - si llegamos aquí, el error fue manejado correctamente
+            # Assert - if we reached here, the error was handled correctly
             assert True
 
     @pytest.mark.asyncio
@@ -340,7 +340,7 @@ class TestCurrenciesService:
             sample_api_response_de,
             sample_api_response_fr
     ):
-        """Test: verificar que se llaman todos los idiomas de Constants.LANGS"""
+        """Test: verify that all languages in Constants.LANGS are called"""
         # Arrange
         mock_gw2_client.get_currencies.side_effect = [
             sample_api_response_en,
@@ -366,7 +366,7 @@ class TestCurrenciesService:
             mock_gw2_client,
             mock_repository
     ):
-        """Test: error cuando la API falla y no hay datos en la DB"""
+        """Test: error when the API fails and there is no data in the DB"""
         # Arrange
         mock_gw2_client.get_currencies.side_effect = Exception("API Error")
         mock_repository.get_all.return_value = []
@@ -385,7 +385,7 @@ class TestCurrenciesService:
             sample_api_response_de,
             sample_api_response_fr
     ):
-        """Test: verificar la estructura de datos retornada"""
+        """Test: verify the structure of the returned data"""
         # Arrange
         mock_gw2_client.get_currencies.side_effect = [
             sample_api_response_en,

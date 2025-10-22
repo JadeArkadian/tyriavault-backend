@@ -4,91 +4,89 @@ from typing import Any
 from fastapi_cache.decorator import logger
 
 from app.core.constants import Constants
-from app.database.repositories.currencies_repository import CurrenciesRepository
 from app.database.repositories.worlds_repository import WorldsRepository
 from app.database.session import async_session_maker
 from app.gw2.client import GW2Client
 
 
 class WorldsService:
+    """
+    Service to manage worlds data from GW2 API and database.
+    Worlds are very unlikely to change, so we try DB first.
+
+    Data fetch strategy: 1 - Try to get data from DB
+                         2 - If empty or unsuccessful, try to get data from GW2 API
+                         3 - If API successful, return data and sync with DB in background
+                         4 - If both fail, raise error
+    """
 
     def __init__(self, repository: WorldsRepository, gw2_client: GW2Client):
         self.repository = repository
         self.gw2_client = gw2_client
+        self.task = None
 
     async def get_all_worlds(self) -> list[dict]:
         """
-        Get all worlds from GW2 API and sync with database in the background.
-        If API fails, fallback to database.
+        Get all worlds from database. If DB is empty, fetch from GW2 API and sync with database in the background.
         """
         try:
-            worlds_data = await self._get_currencies_from_api()
-
+            worlds_data = await self._get_worlds_from_db()
+            return worlds_data
+        except Exception as e:
+            logger.warning(f"No data in DB or failed to fetch worlds from DB: {e}. Falling back to GW2 API.")
+            worlds_data = await self._get_worlds_from_api()
             # Sync with db in background
-            asyncio.create_task(self._sync_currencies_to_db(worlds_data))
+            self.task = asyncio.create_task(self._sync_worlds_to_db(worlds_data))
+            return worlds_data
+
+    async def _get_worlds_from_api(self) -> list[dict]:
+        """Fetch worlds from GW2 API in all supported languages and combine the data."""
+        results = await asyncio.gather(
+            *(self.gw2_client.get_worlds(lang=lang) for lang in Constants.LANGS)
+        )
+
+        combined_worlds: dict[int, dict[str, Any]] = {}
+
+        for lang, worlds in zip(Constants.LANGS, results, strict=True):
+            for world in worlds:
+                world_id = world["id"]
+                if world_id not in combined_worlds:
+                    combined_worlds[world_id] = {
+                        "id": world_id,
+                    }
+                combined_worlds[world_id][f"name_{lang}"] = world["name"]
+        return list(combined_worlds.values())
+
+    async def _get_worlds_from_db(self) -> list[dict]:
+        """Fetch worlds from database as fallback."""
+        try:
+            worlds = await self.repository.get_all()
+
+            if not worlds:
+                raise ValueError("No worlds found in database")
+
+            # Convert ORM objects to dictionaries
+            worlds_data = []
+            for world in worlds:
+                worlds_data.append({
+                    "id": world.id,
+                    "name_en": world.name_en,
+                    "name_es": world.name_es,
+                    "name_de": world.name_de,
+                    "name_fr": world.name_fr,
+                })
 
             return worlds_data
         except Exception as e:
-            logger.warning(f"Failed to fetch currencies from GW2 API: {e}. Falling back to database.")
-            return await self._get_currencies_from_db()
-
-    async def _get_currencies_from_api(self) -> list[dict]:
-        """Fetch currencies from GW2 API in all supported languages and combine the data."""
-        results = await asyncio.gather(
-            *(self.gw2_client.get_currencies(lang=lang) for lang in Constants.LANGS)
-        )
-
-        combined_currencies: dict[int, dict[str, Any]] = {}
-
-        for lang, currencies in zip(Constants.LANGS, results, strict=True):
-            for currency in currencies:
-                currency_id = currency["id"]
-                if currency_id not in combined_currencies:
-                    combined_currencies[currency_id] = {
-                        "id": currency_id,
-                        "icon_url": currency["icon"]
-                    }
-                combined_currencies[currency_id][f"name_{lang}"] = currency["name"]
-                combined_currencies[currency_id][f"description_{lang}"] = currency["description"]
-        return list(combined_currencies.values())
-
-    async def _get_currencies_from_db(self) -> list[dict]:
-        """Fetch currencies from database as fallback."""
-        try:
-            currencies = await self.repository.get_all()
-
-            if not currencies:
-                logger.error("No currencies found in database for fallback")
-                raise RuntimeError("No currencies available from API or database")
-
-            # Convert ORM objects to dictionaries
-            currencies_data = []
-            for currency in currencies:
-                currencies_data.append({
-                    "id": currency.id,
-                    "name_en": currency.name_en,
-                    "name_es": currency.name_es,
-                    "name_de": currency.name_de,
-                    "name_fr": currency.name_fr,
-                    "description_en": currency.description_en,
-                    "description_es": currency.description_es,
-                    "description_de": currency.description_de,
-                    "description_fr": currency.description_fr,
-                    "icon_url": currency.icon_url
-                })
-
-            logger.info(f"Retrieved {len(currencies_data)} currencies from database as fallback")
-            return currencies_data
-        except Exception as e:
-            logger.error(f"Failed to retrieve currencies from database: {e}")
+            logger.warning(f"Failed to retrieve worlds from database: {e}")
             raise
 
-    async def _sync_currencies_to_db(self, currencies_data: list[dict]) -> None:
-        """Sync currencies to database using a new session for background task."""
+    async def _sync_worlds_to_db(self, worlds_data: list[dict]) -> None:
+        """Sync worlds to database using a new session for background task."""
         try:
             async with async_session_maker() as session:
-                repository = CurrenciesRepository(session)
-                await repository.upsert_batch(currencies_data)
-            logger.info(f"Synced {len(currencies_data)} currencies to database")
+                repository = WorldsRepository(session)
+                await repository.upsert_batch(worlds_data)
+            logger.info(f"Synced {len(worlds_data)} worlds to database")
         except Exception as e:
-            logger.error(f"Error syncing currencies to database: {e}")
+            logger.error(f"Error syncing worlds to database: {e}")

@@ -10,10 +10,20 @@ from app.gw2.client import GW2Client
 
 
 class CurrenciesService:
+    """
+    Service to manage currencies data from GW2 API and database.
+    Currencies can change on some patches, or even appear for an event, so we try API first.
+
+    Data fetch strategy: 1 - Try to get data from GW2 API
+                         2 - If successful, return data and sync with DB in background
+                         3 - If API fails, fallback to DB
+                         4 - If both fail, raise error
+    """
 
     def __init__(self, repository: CurrenciesRepository, gw2_client: GW2Client):
         self.repository = repository
         self.gw2_client = gw2_client
+        self.task = None
 
     async def get_all_currencies(self) -> list[dict]:
         """
@@ -24,7 +34,7 @@ class CurrenciesService:
             currencies_data = await self._get_currencies_from_api()
 
             # Sync with db in background
-            asyncio.create_task(self._sync_currencies_to_db(currencies_data))
+            self.task = asyncio.create_task(self._sync_currencies_to_db(currencies_data))
 
             return currencies_data
         except Exception as e:
