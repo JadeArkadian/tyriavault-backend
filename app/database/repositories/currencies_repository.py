@@ -15,11 +15,7 @@ class CurrenciesRepository(BaseRepository[Currencies]):
         self.session = session
 
     async def get_by_id(self, _id: int) -> Optional[Currencies]:
-        """Get a currency by its ID."""
-        result = await self.session.execute(
-            select(Currencies).where(Currencies.id == _id)
-        )
-        return result.scalar_one_or_none()
+        pass
 
     async def get_all(self) -> list[Currencies]:
         """Get all currencies."""
@@ -27,11 +23,7 @@ class CurrenciesRepository(BaseRepository[Currencies]):
         return list(result.scalars().all())
 
     async def upsert(self, entity: Currencies) -> Currencies:
-        """Insert or update a currency (upsert operation)."""
-        merged_entity = await self.session.merge(entity)
-        await self.session.commit()
-        await self.session.refresh(merged_entity)
-        return merged_entity
+        pass
 
     async def upsert_batch(self, currencies_data: list[dict[str, Any]]) -> None:
         """Insert or update multiple currencies in a batch operation."""

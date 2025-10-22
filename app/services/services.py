@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core import settings
 from app.core.cache import cache_key_builder
 from app.core.utils import split_bearer_token
+from app.database.repositories.account_repository import AccountRepository
 from app.database.repositories.apikeys_repository import ApikeysRepository
 from app.database.repositories.currencies_repository import CurrenciesRepository
 from app.database.repositories.worlds_repository import WorldsRepository
@@ -38,10 +39,11 @@ def get_worlds_service(db: Annotated[AsyncSession, Depends(get_db)]) -> WorldsSe
     return WorldsService(repository, gw2_client)
 
 
-def get_account_service(db: Annotated[AsyncSession, Depends(get_db)]) -> AccountService:
-    repository = WorldsRepository(db)
-    gw2_client = GW2Client()
-    return AccountService(repository, gw2_client)
+def get_account_service(db: Annotated[AsyncSession, Depends(get_db)], apikey: str) -> AccountService:
+    account_repository = AccountRepository(db)
+    worlds_repository = WorldsRepository(db)
+    gw2_client = GW2Client(apikey)
+    return AccountService(account_repository, worlds_repository, gw2_client)
 
 
 @cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="apikey", key_builder=cache_key_builder)

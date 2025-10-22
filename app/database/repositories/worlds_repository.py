@@ -27,11 +27,7 @@ class WorldsRepository(BaseRepository[Worlds]):
         return list(result.scalars().all())
 
     async def upsert(self, entity: Worlds) -> Worlds:
-        """Insert or update a world (upsert operation)."""
-        merged_entity = await self.session.merge(entity)
-        await self.session.commit()
-        await self.session.refresh(merged_entity)
-        return merged_entity
+        pass
 
     async def upsert_batch(self, worlds_data: list[dict[str, Any]]) -> None:
         """Insert or update multiple worlds in a batch operation."""

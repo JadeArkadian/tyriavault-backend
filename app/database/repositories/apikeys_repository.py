@@ -14,16 +14,10 @@ class ApikeysRepository(BaseRepository[ApiKeys]):
         self.session = session
 
     async def get_by_id(self, _id: int) -> Optional[ApiKeys]:
-        """Get an apikey by its ID."""
-        result = await self.session.execute(
-            select(ApiKeys).where(ApiKeys.id == _id)
-        )
-        return result.scalar_one_or_none()
+        pass
 
     async def get_all(self) -> list[ApiKeys]:
-        """Get all apikeys."""
-        result = await self.session.execute(select(ApiKeys))
-        return list(result.scalars().all())
+        pass
 
     async def upsert(self, entity: ApiKeys) -> ApiKeys:
         """Insert or update an apikey (upsert operation)."""
