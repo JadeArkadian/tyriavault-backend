@@ -23,7 +23,6 @@ class WorldsService:
     def __init__(self, repository: WorldsRepository, gw2_client: GW2Client):
         self.repository = repository
         self.gw2_client = gw2_client
-        self.task = None
 
     async def get_all_worlds(self) -> list[dict]:
         """
@@ -36,7 +35,7 @@ class WorldsService:
             logger.warning(f"No data in DB or failed to fetch worlds from DB: {e}. Falling back to GW2 API.")
             worlds_data = await self._get_worlds_from_api()
             # Sync with db in background
-            self.task = asyncio.create_task(self._sync_worlds_to_db(worlds_data))
+            asyncio.create_task(self._sync_worlds_to_db(worlds_data))
             return worlds_data
 
     async def _get_worlds_from_api(self) -> list[dict]:

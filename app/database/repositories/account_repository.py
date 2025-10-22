@@ -15,10 +15,10 @@ class AccountRepository(BaseRepository[GameAccounts]):
         self.session = session
 
     async def get_by_id(self, _id: int) -> Optional[GameAccounts]:
-        pass
+        raise NotImplementedError("Get by ID is not implemented for GameAccounts.")
 
     async def get_all(self) -> Sequence[GameAccounts]:
-        pass
+        raise NotImplementedError("Get all is not implemented for GameAccounts.")
 
     async def get_by_uuid(self, uuid: UUID) -> Optional[GameAccounts]:
         """Get a game account by its UUID."""

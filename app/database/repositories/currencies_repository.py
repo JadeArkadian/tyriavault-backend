@@ -15,7 +15,7 @@ class CurrenciesRepository(BaseRepository[Currencies]):
         self.session = session
 
     async def get_by_id(self, _id: int) -> Optional[Currencies]:
-        pass
+        raise NotImplementedError("Get by ID is not implemented for Currencies.")
 
     async def get_all(self) -> list[Currencies]:
         """Get all currencies."""
@@ -23,7 +23,7 @@ class CurrenciesRepository(BaseRepository[Currencies]):
         return list(result.scalars().all())
 
     async def upsert(self, entity: Currencies) -> Currencies:
-        pass
+        raise NotImplementedError("Upsert is not implemented for Currencies.")
 
     async def upsert_batch(self, currencies_data: list[dict[str, Any]]) -> None:
         """Insert or update multiple currencies in a batch operation."""

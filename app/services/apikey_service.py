@@ -70,17 +70,17 @@ class ApiKeyService:
                 content_access=account_data.get("access", []),
                 last_fetched=datetime.now(timezone.utc)
             )
-            await self.api_keys_repo.upsert_game_account(game_account)
-
-            # 5. Upsert API key with the game_account_uuid
-            logger.info(f"Upserting API key for account: {account_data['name']}")
-            api_key_entity = ApiKeys(
-                api_key=api_key,
-                permissions=permissions,
-                game_account_uuid=account_uuid,
-                last_fetched=datetime.now(timezone.utc)
-            )
-            await self.api_keys_repo.upsert(api_key_entity)
+            async with self.api_keys_repo.session.begin():
+                await self.api_keys_repo.upsert_game_account(game_account)
+                # 5. Upsert API key with the game_account_uuid
+                logger.info(f"Upserting API key for account: {account_data['name']}")
+                api_key_entity = ApiKeys(
+                    api_key=api_key,
+                    permissions=permissions,
+                    game_account_uuid=account_uuid,
+                    last_fetched=datetime.now(timezone.utc)
+                )
+                await self.api_keys_repo.upsert(api_key_entity)
 
             return {
                 "api_key": api_key,

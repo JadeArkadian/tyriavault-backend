@@ -27,7 +27,7 @@ class WorldsRepository(BaseRepository[Worlds]):
         return list(result.scalars().all())
 
     async def upsert(self, entity: Worlds) -> Worlds:
-        pass
+        raise NotImplementedError("Upsert is not implemented for Worlds.")
 
     async def upsert_batch(self, worlds_data: list[dict[str, Any]]) -> None:
         """Insert or update multiple worlds in a batch operation."""

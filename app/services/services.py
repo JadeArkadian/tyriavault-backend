@@ -60,7 +60,7 @@ async def validate_api_key(
         # Extract API key from Bearer token
         api_key = split_bearer_token(authorization)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     try:
         logging.debug("Validating API key...")
@@ -75,7 +75,7 @@ async def validate_api_key(
 
     except RuntimeError as e:
         # World not found or other validation errors
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
     except Exception as e:
         # Invalid API key or GW2 API errors
-        raise HTTPException(status_code=401, detail=f"Invalid API key: {str(e)}")
+        raise HTTPException(status_code=401, detail=f"Invalid API key: {str(e)}") from e

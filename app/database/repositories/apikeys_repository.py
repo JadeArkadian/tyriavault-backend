@@ -22,7 +22,7 @@ class ApikeysRepository(BaseRepository[ApiKeys]):
     async def upsert(self, entity: ApiKeys) -> ApiKeys:
         """Insert or update an apikey (upsert operation)."""
         merged_entity = await self.session.merge(entity)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(merged_entity)
         return merged_entity
 
@@ -36,6 +36,6 @@ class ApikeysRepository(BaseRepository[ApiKeys]):
     async def upsert_game_account(self, game_account: GameAccounts) -> GameAccounts:
         """Insert or update a game account."""
         merged_entity = await self.session.merge(game_account)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(merged_entity)
         return merged_entity

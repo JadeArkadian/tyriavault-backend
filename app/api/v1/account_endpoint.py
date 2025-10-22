@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter
 from fastapi.params import Depends
 from fastapi_cache.decorator import cache
@@ -15,7 +17,7 @@ router = APIRouter(prefix="/account", tags=["account"])
 @router.get("/", summary="Account summary", response_description="Account details", response_model=AccountInfoResponse)
 @cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="account", key_builder=cache_key_builder)
 async def account_details(
-        api_key_data: dict = Depends(validate_api_key),
+        api_key_data: Annotated[dict, Depends(validate_api_key)],
         db: AsyncSession = Depends(get_db)
 ) -> AccountInfoResponse:
     # Get account service with the API key
