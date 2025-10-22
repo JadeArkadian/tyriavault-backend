@@ -1,14 +1,24 @@
 from typing import Annotated
 
-from fastapi.params import Depends
+from fastapi import HTTPException
+from fastapi.params import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.utils import split_bearer_token
+from app.database.repositories.apikeys_repository import ApikeysRepository
 from app.database.repositories.currencies_repository import CurrenciesRepository
 from app.database.repositories.worlds_repository import WorldsRepository
 from app.database.session import get_db
 from app.gw2.client import GW2Client
+from app.services.apikey_service import ApiKeyService
 from app.services.currencies_service import CurrenciesService
 from app.services.worlds_service import WorldsService
+
+
+def get_api_key_service(db: AsyncSession = Depends(get_db)) -> ApiKeyService:
+    api_keys_repo = ApikeysRepository(db)
+    worlds_repo = WorldsRepository(db)
+    return ApiKeyService(api_keys_repo, worlds_repo)
 
 
 def get_currencies_service(db: Annotated[AsyncSession, Depends(get_db)]) -> CurrenciesService:
@@ -21,3 +31,42 @@ def get_worlds_service(db: Annotated[AsyncSession, Depends(get_db)]) -> WorldsSe
     repository = WorldsRepository(db)
     gw2_client = GW2Client()
     return WorldsService(repository, gw2_client)
+
+
+def get_account_service(db: Annotated[AsyncSession, Depends(get_db)]) -> WorldsService:
+    repository = WorldsRepository(db)
+    gw2_client = GW2Client()
+    return WorldsService(repository, gw2_client)
+
+
+async def validate_api_key(
+        authorization: str = Header(..., description="Authorization header: Bearer <API_KEY>"),
+        api_key_service: ApiKeyService = Depends(get_api_key_service)) -> dict:
+    """
+    Dependency to validate API key from Authorization header and return its data.
+    Use it in endpoints that require API key authentication.
+    Raises HTTPException if API key is invalid or not registered.
+    """
+
+    try:
+        # Extract API key from Bearer token
+        api_key = split_bearer_token(authorization)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    try:
+        # Check if API key exists in DB
+        api_key_data = await api_key_service.get_apikey_data_from_db(api_key)
+
+        # First time using this API key? -> Register it
+        if not api_key_data:
+            api_key_data = await api_key_service.validate_and_register(api_key)
+
+        return api_key_data
+
+    except RuntimeError as e:
+        # World not found or other validation errors
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        # Invalid API key or GW2 API errors
+        raise HTTPException(status_code=401, detail=f"Invalid API key: {str(e)}")
