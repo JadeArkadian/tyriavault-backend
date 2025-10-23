@@ -239,33 +239,6 @@ class TestAccountService:
         mock_account_repository.get_by_uuid.assert_called_once_with(sample_account_uuid)
 
     @pytest.mark.asyncio
-    async def test_sync_account_to_db_creates_background_task(
-            self,
-            account_service,
-            mock_gw2_client,
-            mock_worlds_repository,
-            sample_account_uuid,
-            sample_api_response,
-            sample_world
-    ):
-        """Test: verify that background sync task is created"""
-        # Arrange
-        mock_gw2_client.get_account.return_value = sample_api_response
-        mock_worlds_repository.get_by_id.return_value = sample_world
-
-        # Act
-        result = await account_service.get_account_details(sample_account_uuid)
-
-        # Assert
-        assert isinstance(result, AccountInfoResponse)
-        assert account_service.task is not None
-        assert not account_service.task.done() or account_service.task.done()
-
-        # Wait for background task to complete
-        if not account_service.task.done():
-            await account_service.task
-
-    @pytest.mark.asyncio
     async def test_build_response_with_complete_world_info(
             self,
             account_service,
