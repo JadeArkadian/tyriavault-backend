@@ -14,7 +14,7 @@ from app.services.services import validate_api_key, get_account_service
 router = APIRouter(prefix="/account", tags=["account"])
 
 
-@router.get("/", summary="Account summary", response_description="Account details", response_model=AccountInfoResponse)
+@router.get("", summary="Account summary", response_description="Account details", response_model=AccountInfoResponse)
 @cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="account", key_builder=cache_key_builder)
 async def account_details(
         api_key_data: Annotated[dict, Depends(validate_api_key)],

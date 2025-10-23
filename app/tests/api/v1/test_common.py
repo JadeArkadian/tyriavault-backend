@@ -5,7 +5,7 @@ import pytest
 from fastapi import HTTPException
 from pytest_mock import MockerFixture
 
-from app.api.v1.common import get_token_info_from_api
+from app.api.v1.common_endpoint import get_token_info_from_api
 from app.gw2.client import GW2Client
 from app.main import api
 
