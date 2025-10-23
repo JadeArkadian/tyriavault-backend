@@ -52,7 +52,7 @@ class TestCurrenciesEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/currencies/")
+                response = await ac.get("/api/v1/currencies")
 
             # Assert
             assert response.status_code == 200
@@ -98,7 +98,7 @@ class TestCurrenciesEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/currencies/")
+                response = await ac.get("/api/v1/currencies")
 
             # Assert
             assert response.status_code == 200
@@ -121,7 +121,7 @@ class TestCurrenciesEndpoint:
             # Act & Assert - Exception should be raised
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test", follow_redirects=True) as ac:
                 with pytest.raises(RuntimeError, match="No currencies available from API or database"):
-                    await ac.get("/api/v1/currencies/")
+                    await ac.get("/api/v1/currencies")
 
             # Verify service was called
             mock_service.get_all_currencies.assert_called_once()
@@ -154,7 +154,7 @@ class TestCurrenciesEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/currencies/")
+                response = await ac.get("/api/v1/currencies")
 
             # Assert
             assert response.status_code == 200
@@ -204,7 +204,7 @@ class TestCurrenciesEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/currencies/")
+                response = await ac.get("/api/v1/currencies")
 
             # Assert
             assert response.status_code == 200
@@ -240,7 +240,7 @@ class TestCurrenciesEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/currencies/")
+                response = await ac.get("/api/v1/currencies")
 
             # Assert
             assert response.status_code == 200
@@ -280,8 +280,8 @@ class TestCurrenciesEndpoint:
         try:
             # Act - Make two requests
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response1 = await ac.get("/api/v1/currencies/")
-                response2 = await ac.get("/api/v1/currencies/")
+                response1 = await ac.get("/api/v1/currencies")
+                response2 = await ac.get("/api/v1/currencies")
 
             # Assert
             assert response1.status_code == 200
@@ -304,7 +304,7 @@ class TestCurrenciesEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/currencies/")
+                response = await ac.get("/api/v1/currencies")
 
             # Assert
             assert response.status_code == 200

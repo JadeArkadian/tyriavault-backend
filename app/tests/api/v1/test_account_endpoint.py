@@ -52,7 +52,7 @@ class TestAccountEndpoint:
                 # Act
                 async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
                     response = await ac.get(
-                        "/api/v1/account/",
+                        "/api/v1/account",
                         headers={"Authorization": "Bearer test-api-key-1234"}
                     )
 
@@ -116,7 +116,7 @@ class TestAccountEndpoint:
                 # Act
                 async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
                     response = await ac.get(
-                        "/api/v1/account/",
+                        "/api/v1/account",
                         headers={"Authorization": "Bearer test-api-key-5678"}
                     )
 
@@ -161,7 +161,7 @@ class TestAccountEndpoint:
                 ) as ac:
                     with pytest.raises(RuntimeError, match="No account data available from API or database"):
                         await ac.get(
-                            "/api/v1/account/",
+                            "/api/v1/account",
                             headers={"Authorization": "Bearer test-api-key-error"}
                         )
 
@@ -209,7 +209,7 @@ class TestAccountEndpoint:
                 # Act
                 async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
                     response = await ac.get(
-                        "/api/v1/account/",
+                        "/api/v1/account",
                         headers={"Authorization": "Bearer test-api-key-pro"}
                     )
 
@@ -261,7 +261,7 @@ class TestAccountEndpoint:
                 # Act
                 async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
                     response = await ac.get(
-                        "/api/v1/account/",
+                        "/api/v1/account",
                         headers={"Authorization": "Bearer test-api-key-schema"}
                     )
 
@@ -288,4 +288,3 @@ class TestAccountEndpoint:
             assert isinstance(json_response["fractal_level"], int)
         finally:
             api.dependency_overrides.clear()
-

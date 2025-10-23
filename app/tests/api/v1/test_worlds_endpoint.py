@@ -42,7 +42,7 @@ class TestWorldsEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/worlds/")
+                response = await ac.get("/api/v1/worlds")
 
             # Assert
             assert response.status_code == 200
@@ -82,7 +82,7 @@ class TestWorldsEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/worlds/")
+                response = await ac.get("/api/v1/worlds")
 
             # Assert
             assert response.status_code == 200
@@ -106,7 +106,7 @@ class TestWorldsEndpoint:
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test",
                                          follow_redirects=True) as ac:
                 with pytest.raises(RuntimeError, match="No worlds available from API or database"):
-                    await ac.get("/api/v1/worlds/")
+                    await ac.get("/api/v1/worlds")
 
             # Verify service was called
             mock_service.get_all_worlds.assert_called_once()
@@ -134,7 +134,7 @@ class TestWorldsEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/worlds/")
+                response = await ac.get("/api/v1/worlds")
 
             # Assert
             assert response.status_code == 200
@@ -174,7 +174,7 @@ class TestWorldsEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/worlds/")
+                response = await ac.get("/api/v1/worlds")
 
             # Assert
             assert response.status_code == 200
@@ -209,8 +209,8 @@ class TestWorldsEndpoint:
         try:
             # Act - Make two requests
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response1 = await ac.get("/api/v1/worlds/")
-                response2 = await ac.get("/api/v1/worlds/")
+                response1 = await ac.get("/api/v1/worlds")
+                response2 = await ac.get("/api/v1/worlds")
 
             # Assert
             assert response1.status_code == 200
@@ -233,7 +233,7 @@ class TestWorldsEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/worlds/")
+                response = await ac.get("/api/v1/worlds")
 
             # Assert
             assert response.status_code == 200
@@ -290,7 +290,7 @@ class TestWorldsEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/worlds/")
+                response = await ac.get("/api/v1/worlds")
 
             # Assert
             assert response.status_code == 200
@@ -331,7 +331,7 @@ class TestWorldsEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/worlds/")
+                response = await ac.get("/api/v1/worlds")
 
             # Assert
             assert response.status_code == 200
@@ -374,7 +374,7 @@ class TestWorldsEndpoint:
         try:
             # Act
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-                response = await ac.get("/api/v1/worlds/")
+                response = await ac.get("/api/v1/worlds")
 
             # Assert
             assert response.status_code == 200
