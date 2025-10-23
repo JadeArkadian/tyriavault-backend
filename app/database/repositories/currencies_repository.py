@@ -46,4 +46,4 @@ class CurrenciesRepository(BaseRepository[Currencies]):
             }
         )
         await self.session.execute(stmt)
-        await self.session.commit()
+        await self.session.flush()

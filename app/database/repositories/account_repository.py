@@ -30,6 +30,6 @@ class AccountRepository(BaseRepository[GameAccounts]):
     async def upsert(self, entity: GameAccounts) -> GameAccounts:
         """Insert or update a game account (upsert operation)."""
         merged_entity = await self.session.merge(entity)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(merged_entity)
         return merged_entity

@@ -14,10 +14,10 @@ class ApikeysRepository(BaseRepository[ApiKeys]):
         self.session = session
 
     async def get_by_id(self, _id: int) -> Optional[ApiKeys]:
-        pass
+        raise NotImplementedError("Get by ID is not implemented for ApiKeys.")
 
     async def get_all(self) -> list[ApiKeys]:
-        pass
+        raise NotImplementedError("Get all is not implemented for ApiKeys.")
 
     async def upsert(self, entity: ApiKeys) -> ApiKeys:
         """Insert or update an apikey (upsert operation)."""

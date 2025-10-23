@@ -387,7 +387,7 @@
 			<column name="name_fr" type="varchar" length="200" mandatory="y" />
 			<column name="name_en" type="varchar" length="200" mandatory="y" />
 			<column name="name_de" type="varchar" length="200" mandatory="y" />
-			<column name="item_id" type="integer" />
+			<column name="item_id" type="bigint" />
 			<index name="pk_miniatures" unique="PRIMARY_KEY" >
 				<column name="id" />
 			</index>
