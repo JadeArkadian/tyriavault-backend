@@ -22,7 +22,7 @@ def get_db_url() -> str:
     elif db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
     elif not db_url.startswith("postgresql+asyncpg://"):
-        raise ValueError(f"Unsupported DATABASE_URL scheme: {db_url}")
+        raise ValueError(f"Unsupported DATABASE_URL scheme")
     return db_url
 
 
