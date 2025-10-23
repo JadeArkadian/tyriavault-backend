@@ -21,7 +21,8 @@ class Settings(BaseSettings):
     PROJECT_VERSION: str = "0.1.0"
     DATABASE_URL: str
     FRONTEND_URL: str
-    CACHE_TTL_SECONDS: int = 300  # 5 minutes
+    CACHE_TTL_STATIC_SECONDS: int = 2592000  # 30 days
+    CACHE_TTL_NORMAL_SECONDS: int = 300  # 5 minutes
     LOG_LEVEL: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=env_file, env_file_encoding="utf-8")
