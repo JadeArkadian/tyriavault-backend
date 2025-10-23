@@ -99,7 +99,7 @@ CREATE  TABLE schema_tyriavault.worlds (
 CREATE  TABLE schema_tyriavault.game_accounts ( 
 	uuid                 uuid  NOT NULL  ,
 	account_name         varchar(80)  NOT NULL  ,
-	world_id             integer DEFAULT 0   ,
+	world_id             integer    ,
 	creation_date        timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL  ,
 	fractal_level        integer DEFAULT 1 NOT NULL  ,
 	last_modified        timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL  ,
@@ -143,7 +143,7 @@ CREATE  TABLE schema_tyriavault.miniatures (
 	name_fr              varchar(200)  NOT NULL  ,
 	name_en              varchar(200)  NOT NULL  ,
 	name_de              varchar(200)  NOT NULL  ,
-	item_id              integer    ,
+	item_id              bigint    ,
 	CONSTRAINT pk_miniatures PRIMARY KEY ( id ),
 	CONSTRAINT fk_miniatures_items_cache FOREIGN KEY ( item_id ) REFERENCES schema_tyriavault.items_cache( id )   
  );
@@ -418,6 +418,16 @@ COMMENT ON TABLE schema_tyriavault.miniatures IS 'Table enumerating every mini f
 COMMENT ON COLUMN schema_tyriavault.miniatures.id IS 'The mini ID. Assigned by the GW2 Api';
 
 COMMENT ON COLUMN schema_tyriavault.miniatures.icon_url IS 'The icon URL';
+
+COMMENT ON COLUMN schema_tyriavault.miniatures.name_es IS 'The name in spanish';
+
+COMMENT ON COLUMN schema_tyriavault.miniatures.name_fr IS 'The name in french';
+
+COMMENT ON COLUMN schema_tyriavault.miniatures.name_en IS 'The name in english';
+
+COMMENT ON COLUMN schema_tyriavault.miniatures.name_de IS 'The name in german';
+
+COMMENT ON COLUMN schema_tyriavault.miniatures.item_id IS 'The item associated to this mini';
 
 COMMENT ON TABLE schema_tyriavault.unlocked_dyes IS 'Unlocked dyes for a given account';
 

@@ -1,4 +1,3 @@
-import logging
 from typing import Annotated
 
 from fastapi import HTTPException
@@ -8,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import settings
 from app.core.cache import cache_key_builder
+from app.core.logging import logger
 from app.core.utils import split_bearer_token
 from app.database.repositories.account_repository import AccountRepository
 from app.database.repositories.apikeys_repository import ApikeysRepository
@@ -63,7 +63,7 @@ async def validate_api_key(
         raise HTTPException(status_code=400, detail=str(e)) from e
 
     try:
-        logging.debug("Validating API key...")
+        logger.debug("Validating API key...")
         # Check if API key exists in DB
         api_key_data = await api_key_service.get_apikey_data_from_db(api_key)
 

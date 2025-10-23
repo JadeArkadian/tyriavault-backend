@@ -2,8 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
-from fastapi_cache.decorator import logger
-
+from app.core.logging import logger
 from app.database.models import GameAccounts, ApiKeys
 from app.database.repositories.apikeys_repository import ApikeysRepository
 from app.database.repositories.worlds_repository import WorldsRepository

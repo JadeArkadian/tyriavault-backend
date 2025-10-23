@@ -1,7 +1,8 @@
 import asyncio
-import logging
 
 import httpx
+
+from app.core.logging import logger
 
 BASE_URL = "https://api.guildwars2.com/v2"
 
@@ -74,7 +75,7 @@ class GW2Client:
                                  if retry_after and retry_after > 0
                                  else self.backoff_factor * (2 ** retries))
 
-                    logging.warning(f"Rate limit reached. Retrying in {wait_time:.1f}s...")
+                    logger.warning(f"Rate limit reached. Retrying in {wait_time:.1f}s...")
                     await asyncio.sleep(wait_time)
                     retries += 1
                     if retries > self.max_retries:
@@ -86,7 +87,7 @@ class GW2Client:
                     if retries > self.max_retries:
                         response.raise_for_status()
                     wait_time = self.backoff_factor * (2 ** (retries - 1))
-                    logging.error(f"Error {response.status_code}, retrying in {wait_time:.1f}s...")
+                    logger.error(f"Error {response.status_code}, retrying in {wait_time:.1f}s...")
                     await asyncio.sleep(wait_time)
                     continue
 
@@ -98,7 +99,7 @@ class GW2Client:
                 if retries > self.max_retries:
                     raise RuntimeError(f"Connection error after {self.max_retries} attempts.") from e
                 wait_time = self.backoff_factor * (2 ** (retries - 1))
-                logging.warning(f"Network error: {e}. Retrying in {wait_time:.1f}s...")
+                logger.warning(f"Network error: {e}. Retrying in {wait_time:.1f}s...")
                 await asyncio.sleep(wait_time)
 
         response = await self.client.get(endpoint, params=params, headers=self._headers())
