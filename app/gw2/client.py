@@ -1,7 +1,8 @@
 import asyncio
-import logging
 
 import httpx
+
+from app.core.logging import logger
 
 BASE_URL = "https://api.guildwars2.com/v2"
 
@@ -54,7 +55,7 @@ class GW2Client:
             return {"Authorization": f"Bearer {self.api_key}"}
         return {}
 
-    async def _get(self, endpoint: str, params: dict | None = None, require_token: bool = False):
+    async def _get(self, endpoint: str, params: dict | None = None, require_token: bool = False) -> dict | list:
         if require_token and not self.api_key:
             raise ValueError(f"This endpoint requires an API key to work: {endpoint}")
 
@@ -64,9 +65,17 @@ class GW2Client:
                 response = await self.client.get(endpoint, params=params, headers=self._headers())
 
                 if response.status_code == 429:
-                    retry_after = int(response.headers.get("Retry-After", 1))
-                    wait_time = retry_after or self.backoff_factor * (2 ** retries)
-                    logging.warn(f"Rate limit reached. Retrying in {wait_time:.1f}s...")
+                    header_val = response.headers.get("Retry-After")
+                    try:
+                        retry_after = int(header_val) if header_val is not None else None
+                    except (TypeError, ValueError):
+                        retry_after = None
+
+                    wait_time = (retry_after
+                                 if retry_after and retry_after > 0
+                                 else self.backoff_factor * (2 ** retries))
+
+                    logger.warning(f"Rate limit reached. Retrying in {wait_time:.1f}s...")
                     await asyncio.sleep(wait_time)
                     retries += 1
                     if retries > self.max_retries:
@@ -78,7 +87,7 @@ class GW2Client:
                     if retries > self.max_retries:
                         response.raise_for_status()
                     wait_time = self.backoff_factor * (2 ** (retries - 1))
-                    logging.error(f"Error {response.status_code}, retrying in {wait_time:.1f}s...")
+                    logger.error(f"Error {response.status_code}, retrying in {wait_time:.1f}s...")
                     await asyncio.sleep(wait_time)
                     continue
 
@@ -88,26 +97,26 @@ class GW2Client:
             except httpx.RequestError as e:
                 retries += 1
                 if retries > self.max_retries:
-                    raise RuntimeError(f"Conection error after {self.max_retries} attemps: {e}")
+                    raise RuntimeError(f"Connection error after {self.max_retries} attempts.") from e
                 wait_time = self.backoff_factor * (2 ** (retries - 1))
-                logging.warn(f"Network error: {e}. Retrying in {wait_time:.1f}s...")
+                logger.warning(f"Network error: {e}. Retrying in {wait_time:.1f}s...")
                 await asyncio.sleep(wait_time)
 
         response = await self.client.get(endpoint, params=params, headers=self._headers())
         response.raise_for_status()
         return response.json()
 
-    async def token_info(self):
+    async def token_info(self) -> dict:
         return await self._get("/tokeninfo", require_token=True)
 
-    async def get_account(self):
+    async def get_account(self) -> dict:
         return await self._get("/account", require_token=True)
 
-    async def get_worlds(self, lang: str = "en"):
+    async def get_worlds(self, lang: str = "en") -> list:
         return await self._get(f"/worlds?lang={lang}&ids=all", require_token=False)
 
-    async def get_item(self, item_id: int):
-        return await self._get(f"/items/{item_id}")
+    async def get_currencies(self, lang: str = "en") -> list:
+        return await self._get(f"/currencies?lang={lang}&ids=all", require_token=False)
 
-    async def get_exchange_rates(self):
-        return await self._get("/commerce/exchange/coins")
+    async def get_item(self, item_id: int) -> dict:
+        return await self._get(f"/items/{item_id}")
