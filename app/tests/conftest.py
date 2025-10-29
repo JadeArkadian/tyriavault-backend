@@ -23,3 +23,12 @@ def clear_dependency_overrides():
     api.dependency_overrides = {}
     yield
     api.dependency_overrides = {}
+
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def init_gw2_client():
+    """Initialize GW2 client for tests"""
+    from app.gw2.client import startup_gw2_client, shutdown_gw2_client
+    await startup_gw2_client()
+    yield
+    await shutdown_gw2_client()

@@ -106,6 +106,13 @@ class GW2Client:
         response.raise_for_status()
         return response.json()
 
+    async def get_build(self) -> dict:
+        """
+        Get the current build id of the game.
+        This is a public endpoint that doesn't require authentication.
+        """
+        return await self._get("/build", require_token=False)
+
     async def token_info(self) -> dict:
         return await self._get("/tokeninfo", require_token=True)
 
