@@ -14,4 +14,8 @@ class HealthService:
         Check if the GW2 API is responding correctly.
         Returns True if the API is up, False otherwise.
         """
-        return await self.gw2_client.check_api_status()
+        try:
+            await self.gw2_client.get_build()
+            return True
+        except Exception:
+            return False

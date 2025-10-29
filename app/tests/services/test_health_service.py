@@ -14,7 +14,7 @@ class TestHealthService:
         """Test check_gw2_api_status returns True when GW2 API is responding"""
         # Arrange
         mock_gw2_client = AsyncMock(spec=GW2Client)
-        mock_gw2_client.check_api_status.return_value = True
+        mock_gw2_client.get_build.return_value = {"id": 123456}
         health_service = HealthService(mock_gw2_client)
 
         # Act
@@ -22,13 +22,13 @@ class TestHealthService:
 
         # Assert
         assert result is True
-        mock_gw2_client.check_api_status.assert_called_once()
+        mock_gw2_client.get_build.assert_called_once()
 
     async def test_check_gw2_api_status_when_api_is_down(self):
         """Test check_gw2_api_status returns False when GW2 API is not responding"""
         # Arrange
         mock_gw2_client = AsyncMock(spec=GW2Client)
-        mock_gw2_client.check_api_status.return_value = False
+        mock_gw2_client.get_build.side_effect = Exception("API is down")
         health_service = HealthService(mock_gw2_client)
 
         # Act
@@ -36,4 +36,4 @@ class TestHealthService:
 
         # Assert
         assert result is False
-        mock_gw2_client.check_api_status.assert_called_once()
+        mock_gw2_client.get_build.assert_called_once()

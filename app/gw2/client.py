@@ -106,16 +106,12 @@ class GW2Client:
         response.raise_for_status()
         return response.json()
 
-    async def check_api_status(self) -> bool:
+    async def get_build(self) -> dict:
         """
-        Checks if the GW2 API is responding correctly.
-        Returns True if the API is up, False otherwise.
+        Get the current build id of the game.
+        This is a public endpoint that doesn't require authentication.
         """
-        try:
-            await self._get("/build", require_token=False)
-            return True
-        except Exception:
-            return False
+        return await self._get("/build", require_token=False)
 
     async def token_info(self) -> dict:
         return await self._get("/tokeninfo", require_token=True)
