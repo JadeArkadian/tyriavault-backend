@@ -122,5 +122,8 @@ class GW2Client:
     async def get_currencies(self, lang: str = "en") -> list:
         return await self._get(f"/currencies?lang={lang}&ids=all", require_token=False)
 
+    async def get_wallet(self) -> list:
+        return await self._get("/account/wallet", require_token=True)
+
     async def get_item(self, item_id: int) -> dict:
         return await self._get(f"/items/{item_id}")
