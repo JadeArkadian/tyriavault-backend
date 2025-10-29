@@ -2,7 +2,9 @@
 <project name="tyriavault" database="PostgreSQL" id="0742b151-06f8-47b3-8fe7-a83968be0f5c" >
 	<schema name="schema_tyriavault" >
 		<table name="achievements" prior="achievement" >
-			<column name="id" type="integer" mandatory="y" />
+			<column name="id" type="integer" mandatory="y" >
+				<defo><![CDATA[nextval('schema_tyriavault.achievements_id_seq'::regclass)]]></defo>
+			</column>
 			<column name="name_es" type="text" mandatory="y" />
 			<column name="name_fr" type="text" mandatory="y" />
 			<column name="name_en" type="text" mandatory="y" />
@@ -308,6 +310,7 @@
 		</table>
 		<table name="items_cache" prior="items_cache " generator_rows="150" >
 			<column name="id" type="bigint" mandatory="y" >
+				<defo><![CDATA[nextval('schema_tyriavault.items_cache_id_seq'::regclass)]]></defo>
 				<comment><![CDATA[The item ID, given by the GW2 API]]></comment>
 			</column>
 			<column name="chat_link" type="varchar" mandatory="y" >
@@ -603,6 +606,7 @@
 		<table name="worlds" prior="world" generator_rows="100" >
 			<comment><![CDATA[The worlds (or servers) of the game. Content may change... or not.. who knows]]></comment>
 			<column name="id" type="integer" mandatory="y" >
+				<defo><![CDATA[nextval('schema_tyriavault.worlds_id_seq'::regclass)]]></defo>
 				<comment><![CDATA[Id of the world -> supplied by the GW2 API]]></comment>
 			</column>
 			<column name="name_es" type="varchar" length="100" mandatory="y" >
@@ -621,6 +625,10 @@
 				<column name="id" />
 			</index>
 		</table>
+		<sequence name="achievements_id_seq" options="AS integer START WITH 1 INCREMENT BY 1" />
+		<sequence name="genders_id_seq" options="AS integer START WITH 1 INCREMENT BY 1" />
+		<sequence name="items_cache_id_seq" options="AS integer START WITH 1 INCREMENT BY 1" />
+		<sequence name="worlds_id_seq" options="AS integer START WITH 1 INCREMENT BY 1" />
 	</schema>
 	<layout name="Default Diagram" id="5ffc9b5e-f2bb-43b6-9c1b-c3a79de8faea" show_relation="columns" >
 		<entity schema="schema_tyriavault" name="dyes" color="C1D8EE" x="1216" y="95" />

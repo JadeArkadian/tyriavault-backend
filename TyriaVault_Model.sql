@@ -1,7 +1,7 @@
 CREATE SCHEMA IF NOT EXISTS schema_tyriavault;
 
 CREATE  TABLE schema_tyriavault.achievements ( 
-	id                   integer  NOT NULL  ,
+	id                   integer DEFAULT nextval('schema_tyriavault.achievements_id_seq'::regclass) NOT NULL  ,
 	name_es              text  NOT NULL  ,
 	name_fr              text  NOT NULL  ,
 	name_en              text  NOT NULL  ,
@@ -42,7 +42,7 @@ CREATE  TABLE schema_tyriavault.dyes (
  );
 
 CREATE  TABLE schema_tyriavault.genders ( 
-	id                   integer  NOT NULL  ,
+	id                   integer DEFAULT nextval('schema_tyriavault.genders_id_seq'::regclass) NOT NULL  ,
 	name_es              varchar(100)  NOT NULL  ,
 	name_fr              varchar(100)  NOT NULL  ,
 	name_en              varchar(100)  NOT NULL  ,
@@ -88,7 +88,7 @@ CREATE  TABLE schema_tyriavault.rarities (
  );
 
 CREATE  TABLE schema_tyriavault.worlds ( 
-	id                   integer  NOT NULL  ,
+	id                   integer DEFAULT nextval('schema_tyriavault.worlds_id_seq'::regclass) NOT NULL  ,
 	name_es              varchar(100)  NOT NULL  ,
 	name_fr              varchar(100)  NOT NULL  ,
 	name_en              varchar(100)  NOT NULL  ,

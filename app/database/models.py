@@ -502,6 +502,8 @@ class UnlockedEmotes(Base):
     game_account_uuid: Mapped[UUID] = mapped_column(Uuid, nullable=False,
                                                     comment='uuId referencing the game_account who unlocked this emote')
     emote_id: Mapped[int] = mapped_column(Integer, nullable=False, comment='The id referencing the unlocked emote')
+    game_account_uuid: Mapped[UUID] = mapped_column(Uuid, nullable=False,
+                                                         comment='uuId referencing the game_account who unlocked this emote')
 
     emote: Mapped['Emotes'] = relationship('Emotes', back_populates='unlocked_emotes')
     game_accounts: Mapped['GameAccounts'] = relationship('GameAccounts', back_populates='unlocked_emotes')
