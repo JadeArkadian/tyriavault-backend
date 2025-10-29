@@ -1,11 +1,8 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional, Self
 from uuid import UUID
 
 from pydantic import BaseModel
-from typing_extensions import Self
-
-from app.db.model import GameAccounts
 
 
 class AccountInfoResponse(BaseModel):
@@ -13,24 +10,22 @@ class AccountInfoResponse(BaseModel):
     account_name: str
     creation_date: datetime
     fractal_level: int
-    last_modified: datetime
     world_name: dict[str, Optional[str]]
-    content_access: List[str]
+    content_access: list[str]
 
     @classmethod
-    def map_response(cls, game_account: GameAccounts) -> Self:
+    def map_response(cls, game_account: dict, world_info: dict) -> Self:
         mapped = AccountInfoResponse(
-            uuid=game_account.uuid,
-            account_name=game_account.account_name,
-            creation_date=game_account.creation_date,
-            fractal_level=game_account.fractal_level,
-            last_modified=game_account.last_modified,
-            content_access=game_account.content_access,
+            uuid=game_account["id"],
+            account_name=game_account["name"],
+            creation_date=game_account["created"],
+            fractal_level=game_account.get("fractal_level", 1),
+            content_access=game_account.get("access", []),
             world_name={
-                "es": game_account.world.name_es if game_account.world else None,
-                "en": game_account.world.name_en if game_account.world else None,
-                "fr": game_account.world.name_fr if game_account.world else None,
-                "de": game_account.world.name_de if game_account.world else None
+                "es": world_info["name_es"] if world_info else None,
+                "en": world_info["name_en"] if world_info else None,
+                "fr": world_info["name_fr"] if world_info else None,
+                "de": world_info["name_de"] if world_info else None
             }
         )
         return mapped

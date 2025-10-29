@@ -1,9 +1,7 @@
-import asyncio
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -11,73 +9,26 @@ from app.api.v1 import api_router
 from app.core.cache import init_cache
 from app.core.config import settings
 from app.core.logging import logger
-from app.crawlers.currencies_crawler import update_currencies_incremental
-from app.crawlers.worlds_crawler import update_worlds_incremental
-from app.db.data.seeding import seed_data
-from app.db.dependency import get_db
-from app.db.model import Base
-from app.db.session import engine
 from app.gw2.client import startup_gw2_client, shutdown_gw2_client
 
 log_filename = f"tyriavault_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 log_filepath = os.path.join(os.path.dirname(__file__), log_filename)
 
 
-async def run_crawler_job(crawler_name: str, crawler_func):
-    logger.info(f"Running {crawler_name} crawler job")
-    async for db in get_db():
-        await crawler_func(db)
-        break
-
-
-async def run_worlds_crawler_job():
-    await run_crawler_job("worlds", update_worlds_incremental)
-
-
-async def run_currencies_crawler_job():
-    await run_crawler_job("currencies", update_currencies_incremental)
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("Turning On...")
-    logger.debug(settings.DATABASE_URL)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    # Seed almost invariable data
-    async for db in get_db():
-        await seed_data(db)
-        break
-
     await startup_gw2_client()
-
-    # execute these crawlers at startup
-    await asyncio.gather(
-        run_worlds_crawler_job(),
-        run_currencies_crawler_job(),
-    )
 
     # Initialize the TTL cache
     await init_cache()
-
-    # Schedule the crawlers to run at their specified time
-    scheduler = AsyncIOScheduler(job_defaults={"coalesce": True, "max_instances": 1})
-
-    scheduler.add_job(run_worlds_crawler_job, "interval", id="worlds_crawler",
-                      minutes=settings.WORLDS_CRAWLER_INTERVAL_MINUTES, replace_existing=True, misfire_grace_time=300)
-    scheduler.add_job(run_currencies_crawler_job, "interval", id="currencies_crawler",
-                      minutes=settings.CURRENCIES_CRAWLER_INTERVAL_MINUTES, replace_existing=True,
-                      misfire_grace_time=300)
-    scheduler.start()
 
     logger.info("Server is up and running!")
     yield
     # Shutdown
     logger.info("Turning Off...")
     await shutdown_gw2_client()
-    scheduler.shutdown()
 
 
 # Setting up FastApi and our services
