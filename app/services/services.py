@@ -18,7 +18,13 @@ from app.gw2.client import GW2Client
 from app.services.account_service import AccountService
 from app.services.apikey_service import ApiKeyService
 from app.services.currencies_service import CurrenciesService
+from app.services.health_service import HealthService
 from app.services.worlds_service import WorldsService
+
+
+def get_health_service() -> HealthService:
+    gw2_client = GW2Client()
+    return HealthService(gw2_client)
 
 
 def get_api_key_service(db: Annotated[AsyncSession, Depends(get_db)]) -> ApiKeyService:

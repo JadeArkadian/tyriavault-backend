@@ -106,6 +106,17 @@ class GW2Client:
         response.raise_for_status()
         return response.json()
 
+    async def check_api_status(self) -> bool:
+        """
+        Checks if the GW2 API is responding correctly.
+        Returns True if the API is up, False otherwise.
+        """
+        try:
+            await self._get("/build", require_token=False)
+            return True
+        except Exception:
+            return False
+
     async def token_info(self) -> dict:
         return await self._get("/tokeninfo", require_token=True)
 
