@@ -8,7 +8,7 @@ class WalletItemResponse(BaseModel):
     amount: int
     currency_name: dict[str, str]
     currency_icon: Optional[str]
-    currency_description: dict[str, str]
+    currency_description: dict[str, Optional[str]]
 
     @classmethod
     def map_response(cls, wallet_entry: dict, currency: dict) -> Self:
