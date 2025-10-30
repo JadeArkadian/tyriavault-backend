@@ -17,10 +17,10 @@ class WalletRepository(BaseRepository[Wallet]):
         self.session = session
 
     async def get_by_id(self, _id: int) -> Optional[Wallet]:
-        raise NotImplementedError("Get by ID is not implemented for ApiKeys.")
+        raise NotImplementedError("Get by ID is not implemented for Wallet.")
 
     async def get_all(self) -> list[Wallet]:
-        raise NotImplementedError("Get all is not implemented for ApiKeys.")
+        raise NotImplementedError("Get all is not implemented for Wallet.")
 
     async def upsert(self, entity: Wallet) -> Wallet:
         raise NotImplementedError("Upsert is not implemented for Wallet.")

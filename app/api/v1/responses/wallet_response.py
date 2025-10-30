@@ -12,6 +12,10 @@ class WalletItemResponse(BaseModel):
 
     @classmethod
     def map_response(cls, wallet_entry: dict, currency: dict) -> Self:
+        # Validate required keys
+        if 'currency_id' not in wallet_entry or 'amount' not in wallet_entry:
+            raise ValueError(f"Invalid wallet_entry structure: {wallet_entry}")
+
         mapped = WalletItemResponse(
             currency_id=wallet_entry['currency_id'],
             amount=wallet_entry['amount'] or 0,
