@@ -80,3 +80,26 @@ def test_get_db_url_postgresql_special_chars():
 def test_get_db_url_postgres_with_params():
     result = get_db_url()
     assert result == "postgresql+asyncpg://user:pass@localhost:5432/db?sslmode=require"
+
+
+# Tests for rgb_to_hex function
+
+# Black color (0, 0, 0)
+def test_rgb_to_hex_black():
+    from app.core.utils import rgb_to_hex
+    result = rgb_to_hex((0, 0, 0))
+    assert result == "#000000"
+
+
+# White color (255, 255, 255)
+def test_rgb_to_hex_white():
+    from app.core.utils import rgb_to_hex
+    result = rgb_to_hex((255, 255, 255))
+    assert result == "#ffffff"
+
+
+# Red color (255, 0, 0)
+def test_rgb_to_hex_red():
+    from app.core.utils import rgb_to_hex
+    result = rgb_to_hex((255, 0, 0))
+    assert result == "#ff0000"
