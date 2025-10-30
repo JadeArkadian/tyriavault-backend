@@ -1,6 +1,7 @@
 import asyncio
 
 import httpx
+import orjson
 
 from app.core.logging import logger
 
@@ -92,7 +93,7 @@ class GW2Client:
                     continue
 
                 response.raise_for_status()
-                return response.json()
+                return orjson.loads(response.content)
 
             except httpx.RequestError as e:
                 retries += 1
@@ -101,10 +102,6 @@ class GW2Client:
                 wait_time = self.backoff_factor * (2 ** (retries - 1))
                 logger.warning(f"Network error: {e}. Retrying in {wait_time:.1f}s...")
                 await asyncio.sleep(wait_time)
-
-        response = await self.client.get(endpoint, params=params, headers=self._headers())
-        response.raise_for_status()
-        return response.json()
 
     async def get_build(self) -> dict:
         """

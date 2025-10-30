@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import httpx
+import orjson
 import pytest
 from pytest_mock import MockerFixture
 
@@ -120,7 +121,8 @@ class TestGW2ClientMethods:
         mock_http_client = mocker.AsyncMock()
         mock_http_client.get = AsyncMock(return_value=MagicMock(
             status_code=200,
-            json=MagicMock(return_value=mock_response)
+            content=orjson.dumps(mock_response),
+            raise_for_status=MagicMock()
         ))
 
         mocker.patch("app.gw2.client.get_gw2_http_client", return_value=mock_http_client)
@@ -153,7 +155,8 @@ class TestGW2ClientMethods:
         mock_http_client = mocker.AsyncMock()
         mock_http_client.get = AsyncMock(return_value=MagicMock(
             status_code=200,
-            json=MagicMock(return_value=mock_response)
+            content=orjson.dumps(mock_response),
+            raise_for_status=MagicMock()
         ))
 
         mocker.patch("app.gw2.client.get_gw2_http_client", return_value=mock_http_client)
@@ -183,7 +186,8 @@ class TestGW2ClientMethods:
         mock_http_client = mocker.AsyncMock()
         mock_http_client.get = AsyncMock(return_value=MagicMock(
             status_code=200,
-            json=MagicMock(return_value=mock_response)
+            content=orjson.dumps(mock_response),
+            raise_for_status=MagicMock()
         ))
 
         mocker.patch("app.gw2.client.get_gw2_http_client", return_value=mock_http_client)
@@ -199,7 +203,8 @@ class TestGW2ClientMethods:
         mock_http_client = mocker.AsyncMock()
         mock_http_client.get = AsyncMock(return_value=MagicMock(
             status_code=200,
-            json=MagicMock(return_value=[])
+            content=orjson.dumps([]),
+            raise_for_status=MagicMock()
         ))
 
         mocker.patch("app.gw2.client.get_gw2_http_client", return_value=mock_http_client)
@@ -222,7 +227,8 @@ class TestGW2ClientMethods:
         mock_http_client = mocker.AsyncMock()
         mock_http_client.get = AsyncMock(return_value=MagicMock(
             status_code=200,
-            json=MagicMock(return_value=mock_response)
+            content=orjson.dumps(mock_response),
+            raise_for_status=MagicMock()
         ))
 
         mocker.patch("app.gw2.client.get_gw2_http_client", return_value=mock_http_client)
@@ -244,7 +250,8 @@ class TestGW2ClientMethods:
         mock_http_client = mocker.AsyncMock()
         mock_http_client.get = AsyncMock(return_value=MagicMock(
             status_code=200,
-            json=MagicMock(return_value=mock_response)
+            content=orjson.dumps(mock_response),
+            raise_for_status=MagicMock()
         ))
 
         mocker.patch("app.gw2.client.get_gw2_http_client", return_value=mock_http_client)
@@ -275,7 +282,8 @@ class TestGW2ClientRetryLogic:
                 )
             return MagicMock(
                 status_code=200,
-                json=MagicMock(return_value={"success": True})
+                content=orjson.dumps({"success": True}),
+                raise_for_status=MagicMock()
             )
 
         mock_http_client = mocker.AsyncMock()
@@ -304,7 +312,7 @@ class TestGW2ClientRetryLogic:
                 )
             return MagicMock(
                 status_code=200,
-                json=MagicMock(return_value={"success": True}),
+                content=orjson.dumps({"success": True}),
                 raise_for_status=MagicMock()
             )
 
@@ -372,7 +380,7 @@ class TestGW2ClientRetryLogic:
                 raise httpx.ConnectError("Connection failed")
             return MagicMock(
                 status_code=200,
-                json=MagicMock(return_value={"success": True}),
+                content=orjson.dumps({"success": True}),
                 raise_for_status=MagicMock()
             )
 
@@ -420,7 +428,7 @@ class TestGW2ClientRetryLogic:
                 raise httpx.ConnectError("Connection failed")
             return MagicMock(
                 status_code=200,
-                json=MagicMock(return_value={"success": True}),
+                content=orjson.dumps({"success": True}),
                 raise_for_status=MagicMock()
             )
 
