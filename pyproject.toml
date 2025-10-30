@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tyriavault-backend"
 version = "0.1.1"
+requires-python = ">=3.13"
 dependencies = [
     "fastapi==0.119.0",
     "uvicorn[standard]==0.37.0",
@@ -23,25 +24,21 @@ dependencies = [
     "coverage==7.11.0"
 ]
 
-[project.optional-dependencies]
-uvloop = [
-    "uvloop==0.22.1; sys_platform != 'win32'"
-]
-
-
-requires-python = ">=3.13"
-
 authors = [
     { name = "Jade Arkadian" }
 ]
 
 description = "TyriaVault Backend ⚔️"
 readme = "README.md"
-license = "MIT"
-license-files = ["LICENSE"]
+license = { text = "MIT" }
 keywords = ["gw2", "tyria", "vault", "backend", "api"]
 classifiers = [
     "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
     "Framework :: FastAPI"
+]
+
+[project.optional-dependencies]
+uvloop = [
+    "uvloop==0.22.1; sys_platform != 'win32'"
 ]
