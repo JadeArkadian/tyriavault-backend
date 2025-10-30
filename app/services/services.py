@@ -12,6 +12,7 @@ from app.core.utils import split_bearer_token
 from app.database.repositories.account_repository import AccountRepository
 from app.database.repositories.apikeys_repository import ApikeysRepository
 from app.database.repositories.currencies_repository import CurrenciesRepository
+from app.database.repositories.dyes_repository import DyesRepository
 from app.database.repositories.wallet_repository import WalletRepository
 from app.database.repositories.worlds_repository import WorldsRepository
 from app.database.session import get_db
@@ -19,6 +20,7 @@ from app.gw2.client import GW2Client
 from app.services.account_service import AccountService
 from app.services.apikey_service import ApiKeyService
 from app.services.currencies_service import CurrenciesService
+from app.services.dyes_service import DyesService
 from app.services.health_service import HealthService
 from app.services.wallet_service import WalletService
 from app.services.worlds_service import WorldsService
@@ -39,6 +41,12 @@ def get_currencies_service(db: Annotated[AsyncSession, Depends(get_db)]) -> Curr
     repository = CurrenciesRepository(db)
     gw2_client = GW2Client()
     return CurrenciesService(repository, gw2_client)
+
+
+def get_dyes_service(db: Annotated[AsyncSession, Depends(get_db)]) -> DyesService:
+    repository = DyesRepository(db)
+    gw2_client = GW2Client()
+    return DyesService(repository, gw2_client)
 
 
 def get_worlds_service(db: Annotated[AsyncSession, Depends(get_db)]) -> WorldsService:
