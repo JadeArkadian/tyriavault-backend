@@ -97,6 +97,7 @@ class CurrenciesService:
             async with async_session_maker() as session:
                 repository = CurrenciesRepository(session)
                 await repository.upsert_batch(currencies_data)
+                await session.commit()
             logger.info(f"Synced {len(currencies_data)} currencies to database")
         except Exception as e:
             logger.error(f"Error syncing currencies to database: {e}")

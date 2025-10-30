@@ -35,13 +35,9 @@ class WalletService:
         If API fails, fallback to database.
         """
         try:
-            # 1. Try to get fresh data from GW2 API
             wallet_data = await self._get_wallet_from_api()
-
-            # 2. Sync with DB in background
+            # Sync with DB in background
             asyncio.create_task(self._sync_wallet_to_db(wallet_data, account_uuid))
-
-            # 3. Build and return response
             return await self._build_response(wallet_data)
 
         except Exception as e:
@@ -50,14 +46,12 @@ class WalletService:
 
     async def _get_wallet_from_api(self) -> list[dict]:
         """Fetch wallet data from GW2 API."""
-        logger.info("Fetching wallet from GW2 API")
         wallet_data = await self.gw2_client.get_wallet()
         return wallet_data
 
     async def _get_wallet_from_db(self, account_uuid: UUID) -> list[WalletItemResponse]:
         """Fetch wallet from database as fallback."""
         try:
-            logger.info(f"Fetching wallet from database for account UUID: {account_uuid}")
             wallet_entries = await self.wallet_repository.get_wallet_by_account_uuid(account_uuid)
 
             if not wallet_entries:
@@ -97,11 +91,8 @@ class WalletService:
         if not wallet_data:
             return []
 
-        # Get all currency IDs from wallet data
-        currency_ids = {item['id'] for item in wallet_data}
-
-        # Fetch currency information from database
-        currencies = await self.currencies_repository.get_by_ids(list(currency_ids))
+        # Fetch every currency information from database
+        currencies = await self.currencies_repository.get_all()
 
         # Create a lookup dict for currencies
         currency_lookup = {currency.id: currency for currency in currencies}

@@ -86,6 +86,7 @@ class WorldsService:
             async with async_session_maker() as session:
                 repository = WorldsRepository(session)
                 await repository.upsert_batch(worlds_data)
+                await session.commit()
             logger.info(f"Synced {len(worlds_data)} worlds to database")
         except Exception as e:
             logger.error(f"Error syncing worlds to database: {e}")

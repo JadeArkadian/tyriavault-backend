@@ -120,6 +120,7 @@ class AccountService:
                 )
 
                 await repository.upsert(game_account)
+                await session.commit()
                 logger.info(f"Synced account {account_data['name']} to database")
 
         except Exception as e:
