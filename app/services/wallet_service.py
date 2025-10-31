@@ -7,6 +7,7 @@ from app.database.repositories.currencies_repository import CurrenciesRepository
 from app.database.repositories.wallet_repository import WalletRepository
 from app.database.session import async_session_maker
 from app.gw2.client import GW2Client
+from app.gw2.responses import GW2ApiWalletEntry
 
 
 class WalletService:
@@ -44,7 +45,7 @@ class WalletService:
             logger.warning(f"Failed to fetch wallet from GW2 API: {e}. Falling back to database.")
             return await self._get_wallet_from_db(account_uuid)
 
-    async def _get_wallet_from_api(self) -> list[dict]:
+    async def _get_wallet_from_api(self) -> list[GW2ApiWalletEntry]:
         """Fetch wallet data from GW2 API."""
         wallet_data = await self.gw2_client.get_wallet()
         return wallet_data
@@ -86,7 +87,7 @@ class WalletService:
             logger.error(f"Failed to retrieve wallet from database: {e}")
             raise
 
-    async def _build_response(self, wallet_data: list[dict]) -> list[WalletItemResponse]:
+    async def _build_response(self, wallet_data: list[GW2ApiWalletEntry]) -> list[WalletItemResponse]:
         """Build the response by combining wallet data with currency information."""
         if not wallet_data:
             return []
@@ -100,7 +101,7 @@ class WalletService:
         # Build responses
         responses = []
         for wallet_item in wallet_data:
-            currency_id = wallet_item['id']
+            currency_id = wallet_item.id
             currency = currency_lookup.get(currency_id)
 
             if not currency:
@@ -121,7 +122,7 @@ class WalletService:
 
             wallet_entry = {
                 'currency_id': currency_id,
-                'amount': wallet_item['value']
+                'amount': wallet_item.value
             }
 
             responses.append(WalletItemResponse.map_response(wallet_entry, currency_info))
@@ -129,7 +130,7 @@ class WalletService:
         logger.info(f"Successfully built response with {len(responses)} wallet entries")
         return responses
 
-    async def _sync_wallet_to_db(self, wallet_data: list[dict], account_uuid: UUID) -> None:
+    async def _sync_wallet_to_db(self, wallet_data: list[GW2ApiWalletEntry], account_uuid: UUID) -> None:
         """Sync wallet data to database using a new session for background task."""
         try:
             async with async_session_maker() as session:
@@ -139,9 +140,9 @@ class WalletService:
                 wallet_entries = []
                 for item in wallet_data:
                     wallet_entries.append({
-                        'currency_id': item['id'],
+                        'currency_id': item.id,
                         'game_account_uuid': account_uuid,
-                        'amount': item['value']
+                        'amount': item.value
                     })
 
                 await wallet_repository.upsert_batch(wallet_entries)

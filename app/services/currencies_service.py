@@ -49,14 +49,14 @@ class CurrenciesService:
 
         for lang, currencies in zip(Constants.LANGS, results, strict=True):
             for currency in currencies:
-                currency_id = currency["id"]
+                currency_id = currency.id
                 if currency_id not in combined_currencies:
                     combined_currencies[currency_id] = {
                         "id": currency_id,
-                        "icon_url": currency["icon"]
+                        "icon_url": currency.icon
                     }
-                combined_currencies[currency_id][f"name_{lang}"] = currency["name"]
-                combined_currencies[currency_id][f"description_{lang}"] = currency["description"]
+                combined_currencies[currency_id][f"name_{lang}"] = currency.name
+                combined_currencies[currency_id][f"description_{lang}"] = currency.description
         return list(combined_currencies.values())
 
     async def _get_currencies_from_db(self) -> list[dict]:

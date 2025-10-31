@@ -3,7 +3,31 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.database.models import Dyes
+from app.gw2.responses import GW2ApiColor, MaterialColor
 from app.services.dyes_service import DyesService
+
+
+def create_color(color_id: int, name: str, rgb: tuple[int, int, int]) -> GW2ApiColor:
+    """Helper function to create a Color object for testing."""
+    material = MaterialColor(
+        brightness=0,
+        contrast=1.0,
+        hue=0,
+        saturation=0.0,
+        lightness=1.0,
+        rgb=list(rgb)
+    )
+    return GW2ApiColor(
+        id=color_id,
+        name=name,
+        base_rgb=list(rgb),
+        cloth=material,
+        leather=material,
+        metal=material,
+        fur=material,
+        item=None,
+        categories=[]
+    )
 
 
 @pytest.fixture
@@ -30,20 +54,8 @@ def dyes_service(mock_repository, mock_gw2_client):
 def sample_api_response_en():
     """Sample response from GW2 API in English"""
     return [
-        {
-            "id": 1,
-            "name": "Black",
-            "cloth": {
-                "rgb": (0, 0, 0)
-            }
-        },
-        {
-            "id": 2,
-            "name": "White",
-            "cloth": {
-                "rgb": (255, 255, 255)
-            }
-        }
+        create_color(1, "Black", (0, 0, 0)),
+        create_color(2, "White", (255, 255, 255))
     ]
 
 
@@ -51,20 +63,8 @@ def sample_api_response_en():
 def sample_api_response_es():
     """Sample response from GW2 API in Spanish"""
     return [
-        {
-            "id": 1,
-            "name": "Negro",
-            "cloth": {
-                "rgb": (0, 0, 0)
-            }
-        },
-        {
-            "id": 2,
-            "name": "Blanco",
-            "cloth": {
-                "rgb": (255, 255, 255)
-            }
-        }
+        create_color(1, "Negro", (0, 0, 0)),
+        create_color(2, "Blanco", (255, 255, 255))
     ]
 
 
@@ -72,20 +72,8 @@ def sample_api_response_es():
 def sample_api_response_de():
     """Sample response from GW2 API in German"""
     return [
-        {
-            "id": 1,
-            "name": "Schwarz",
-            "cloth": {
-                "rgb": (0, 0, 0)
-            }
-        },
-        {
-            "id": 2,
-            "name": "Weiß",
-            "cloth": {
-                "rgb": (255, 255, 255)
-            }
-        }
+        create_color(1, "Schwarz", (0, 0, 0)),
+        create_color(2, "Weiß", (255, 255, 255))
     ]
 
 
@@ -93,20 +81,8 @@ def sample_api_response_de():
 def sample_api_response_fr():
     """Sample response from GW2 API in French"""
     return [
-        {
-            "id": 1,
-            "name": "Noir",
-            "cloth": {
-                "rgb": (0, 0, 0)
-            }
-        },
-        {
-            "id": 2,
-            "name": "Blanc",
-            "cloth": {
-                "rgb": (255, 255, 255)
-            }
-        }
+        create_color(1, "Noir", (0, 0, 0)),
+        create_color(2, "Blanc", (255, 255, 255))
     ]
 
 
@@ -380,15 +356,7 @@ class TestDyesService:
     ):
         """Test: verify that returned dyes have correct structure"""
         # Arrange
-        api_response = [
-            {
-                "id": 99,
-                "name": "Test Dye",
-                "cloth": {
-                    "rgb": (123, 45, 67)
-                }
-            }
-        ]
+        api_response = [create_color(99, "Test Dye", (123, 45, 67))]
         mock_gw2_client.get_colors.side_effect = [api_response, api_response, api_response, api_response]
 
         # Act
@@ -419,14 +387,14 @@ class TestDyesService:
         """Test: correctly convert different RGB values to hex"""
         # Arrange
         api_response_en = [
-            {"id": 1, "name": "Red", "cloth": {"rgb": (255, 0, 0)}},
-            {"id": 2, "name": "Green", "cloth": {"rgb": (0, 255, 0)}},
-            {"id": 3, "name": "Blue", "cloth": {"rgb": (0, 0, 255)}}
+            create_color(1, "Red", (255, 0, 0)),
+            create_color(2, "Green", (0, 255, 0)),
+            create_color(3, "Blue", (0, 0, 255))
         ]
         api_response_other = [
-            {"id": 1, "name": "Color1", "cloth": {"rgb": (255, 0, 0)}},
-            {"id": 2, "name": "Color2", "cloth": {"rgb": (0, 255, 0)}},
-            {"id": 3, "name": "Color3", "cloth": {"rgb": (0, 0, 255)}}
+            create_color(1, "Color1", (255, 0, 0)),
+            create_color(2, "Color2", (0, 255, 0)),
+            create_color(3, "Color3", (0, 0, 255))
         ]
 
         mock_gw2_client.get_colors.side_effect = [
@@ -453,7 +421,7 @@ class TestDyesService:
     ):
         """Test: handle API response with single dye"""
         # Arrange
-        single_dye = [{"id": 1, "name": "Only Dye", "cloth": {"rgb": (128, 128, 128)}}]
+        single_dye = [create_color(1, "Only Dye", (128, 128, 128))]
         mock_gw2_client.get_colors.side_effect = [single_dye, single_dye, single_dye, single_dye]
 
         # Act
@@ -474,7 +442,7 @@ class TestDyesService:
         """Test: handle API response with many dyes"""
         # Arrange
         many_dyes = [
-            {"id": i, "name": f"Dye {i}", "cloth": {"rgb": (i % 256, (i * 2) % 256, (i * 3) % 256)}}
+            create_color(i, f"Dye {i}", (i % 256, (i * 2) % 256, (i * 3) % 256))
             for i in range(1, 51)  # 50 dyes
         ]
         mock_gw2_client.get_colors.side_effect = [many_dyes, many_dyes, many_dyes, many_dyes]
@@ -525,10 +493,10 @@ class TestDyesService:
     ):
         """Test: verify dyes are deduplicated by ID when combining languages"""
         # Arrange - Each language returns the same dye IDs
-        dye_en = [{"id": 1, "name": "English Name", "cloth": {"rgb": (100, 100, 100)}}]
-        dye_es = [{"id": 1, "name": "Spanish Name", "cloth": {"rgb": (100, 100, 100)}}]
-        dye_de = [{"id": 1, "name": "German Name", "cloth": {"rgb": (100, 100, 100)}}]
-        dye_fr = [{"id": 1, "name": "French Name", "cloth": {"rgb": (100, 100, 100)}}]
+        dye_en = [create_color(1, "English Name", (100, 100, 100))]
+        dye_es = [create_color(1, "Spanish Name", (100, 100, 100))]
+        dye_de = [create_color(1, "German Name", (100, 100, 100))]
+        dye_fr = [create_color(1, "French Name", (100, 100, 100))]
 
         mock_gw2_client.get_colors.side_effect = [dye_en, dye_es, dye_de, dye_fr]
 

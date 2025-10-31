@@ -1,9 +1,11 @@
 import asyncio
+from typing import Any
 
 import httpx
 import orjson
 
 from app.core.logging import logger
+from app.gw2.responses import GW2ApiAccount, GW2ApiColor, GW2ApiCurrency, GW2ApiTokenInfo, GW2ApiWalletEntry, GW2ApiWorld
 
 BASE_URL = "https://api.guildwars2.com/v2"
 
@@ -56,7 +58,7 @@ class GW2Client:
             return {"Authorization": f"Bearer {self.api_key}"}
         return {}
 
-    async def _get(self, endpoint: str, params: dict | None = None, require_token: bool = False) -> dict | list:
+    async def _get(self, endpoint: str, params: dict | None = None, require_token: bool = False) -> Any | None:
         if require_token and not self.api_key:
             raise ValueError(f"This endpoint requires an API key to work: {endpoint}")
 
@@ -110,23 +112,35 @@ class GW2Client:
         """
         return await self._get("/build", require_token=False)
 
-    async def token_info(self) -> dict:
-        return await self._get("/tokeninfo", require_token=True)
+    async def token_info(self) -> GW2ApiTokenInfo:
+        """Get information about the current API token."""
+        data = await self._get("/tokeninfo", require_token=True)
+        return GW2ApiTokenInfo(**data)
 
-    async def get_account(self) -> dict:
-        return await self._get("/account", require_token=True)
+    async def get_account(self) -> GW2ApiAccount:
+        """Get account information."""
+        data = await self._get("/account", require_token=True)
+        return GW2ApiAccount(**data)
 
-    async def get_worlds(self, lang: str = "en") -> list:
-        return await self._get(f"/worlds?lang={lang}&ids=all", require_token=False)
+    async def get_worlds(self, lang: str = "en") -> list[GW2ApiWorld]:
+        """Get all worlds with their names and population."""
+        data = await self._get(f"/worlds?lang={lang}&ids=all", require_token=False)
+        return [GW2ApiWorld(**world) for world in data]
 
-    async def get_currencies(self, lang: str = "en") -> list:
-        return await self._get(f"/currencies?lang={lang}&ids=all", require_token=False)
+    async def get_currencies(self, lang: str = "en") -> list[GW2ApiCurrency]:
+        """Get all currencies with their names, descriptions, and icons."""
+        data = await self._get(f"/currencies?lang={lang}&ids=all", require_token=False)
+        return [GW2ApiCurrency(**currency) for currency in data]
 
-    async def get_colors(self, lang: str = "en") -> list:
-        return await self._get(f"/colors?lang={lang}&ids=all", require_token=False)
+    async def get_colors(self, lang: str = "en") -> list[GW2ApiColor]:
+        """Get all colors/dyes with their names, material info, and categories."""
+        data = await self._get(f"/colors?lang={lang}&ids=all", require_token=False)
+        return [GW2ApiColor(**color) for color in data]
 
-    async def get_wallet(self) -> list:
-        return await self._get("/account/wallet", require_token=True)
+    async def get_wallet(self) -> list[GW2ApiWalletEntry]:
+        """Get account wallet with all currencies and their amounts."""
+        data = await self._get("/account/wallet", require_token=True)
+        return [GW2ApiWalletEntry(**entry) for entry in data]
 
     async def get_item(self, item_id: int) -> dict:
         return await self._get(f"/items/{item_id}")

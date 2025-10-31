@@ -47,12 +47,12 @@ class WorldsService:
 
         for lang, worlds in zip(Constants.LANGS, results, strict=True):
             for world in worlds:
-                world_id = world["id"]
+                world_id = world.id
                 if world_id not in combined_worlds:
                     combined_worlds[world_id] = {
                         "id": world_id,
                     }
-                combined_worlds[world_id][f"name_{lang}"] = world["name"]
+                combined_worlds[world_id][f"name_{lang}"] = world.name
         return list(combined_worlds.values())
 
     async def _get_worlds_from_db(self) -> list[dict]:
