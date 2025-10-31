@@ -1,9 +1,8 @@
 import asyncio
 from typing import Any
 
-from fastapi_cache.decorator import logger
-
 from app.core.constants import Constants
+from app.core.logging import logger
 from app.core.utils import rgb_to_hex
 from app.database.repositories.dyes_repository import DyesRepository
 from app.database.session import async_session_maker
