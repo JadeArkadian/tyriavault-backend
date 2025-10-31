@@ -47,6 +47,10 @@ jobs:
           name: py-coverage-data
           path: .coverage-reports/
 
+      - name: 🏗️ Build package
+        run: |
+          python -m build
+
       - name: 🔎 SonarQube Scan
         id: sonarqube-scan
         if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
