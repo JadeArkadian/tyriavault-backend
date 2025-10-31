@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from app.db.model import GameAccounts
+from app.database.models import GameAccounts
 
 
 class AccountInfoResponse(BaseModel):

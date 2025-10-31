@@ -39,53 +39,52 @@ class ApiKeyService:
             # 1. Validate API Key and get permissions
             logger.info(f"Validating API key: {api_key[:8]}...")
             token_info = await gw2_client.token_info()
-            permissions = token_info.get("permissions", [])
+            permissions = token_info.permissions
 
             # 2. Get account information (this gives us the UUID)
             logger.info(f"Fetching account info for API key: {api_key[:8]}...")
             account_data = await gw2_client.get_account()
-            account_uuid = UUID(account_data["id"])
+            account_uuid = UUID(account_data.id)
 
             # 3. Verify that world_id exists in DB (FK validation)
-            world_id = account_data.get("world")
+            world_id = account_data.world
             if world_id:
                 world_exists = await self.worlds_repo.get_by_id(world_id)
                 if not world_exists:
-                    logger.error(f"World {world_id} not found in DB for account {account_data['name']}")
+                    logger.error(f"World {world_id} not found in DB for account {account_data.name}")
                     raise RuntimeError(f"World ID {world_id} doesn't exist in database. "
                                        f"Please sync worlds table first.")
 
             # 4. Upsert game_account
-            logger.info(f"Upserting game account: {account_data['name']}")
+            logger.info(f"Upserting game account: {account_data.name}")
             game_account = GameAccounts(
                 uuid=account_uuid,
-                account_name=account_data["name"],
+                account_name=account_data.name,
                 world_id=world_id,
-                creation_date=datetime.fromisoformat(account_data["created"].replace("Z", "+00:00")),
-                fractal_level=account_data.get("fractal_level", 1),
-                last_modified=datetime.fromisoformat(
-                    account_data.get("last_modified", datetime.now(timezone.utc).isoformat()).replace("Z", "+00:00")
-                ),
-                content_access=account_data.get("access", []),
+                creation_date=account_data.created,
+                fractal_level=account_data.fractal_level or 1,
+                last_modified=datetime.now(timezone.utc),
+                content_access=account_data.access,
                 last_fetched=datetime.now(timezone.utc)
             )
-            async with self.api_keys_repo.session.begin():
-                await self.api_keys_repo.upsert_game_account(game_account)
-                # 5. Upsert API key with the game_account_uuid
-                logger.info(f"Upserting API key for account: {account_data['name']}")
-                api_key_entity = ApiKeys(
-                    api_key=api_key,
-                    permissions=permissions,
-                    game_account_uuid=account_uuid,
-                    last_fetched=datetime.now(timezone.utc)
-                )
-                await self.api_keys_repo.upsert(api_key_entity)
+
+            await self.api_keys_repo.upsert_game_account(game_account)
+            # 5. Upsert API key with the game_account_uuid
+            logger.info(f"Upserting API key for account: {account_data.name}")
+            api_key_entity = ApiKeys(
+                api_key=api_key,
+                permissions=permissions,
+                game_account_uuid=account_uuid,
+                last_fetched=datetime.now(timezone.utc)
+            )
+            await self.api_keys_repo.upsert(api_key_entity)
+            await self.api_keys_repo.session.commit()
 
             return {
                 "api_key": api_key,
                 "permissions": permissions,
                 "game_account_uuid": account_uuid,
-                "account_name": account_data["name"]
+                "account_name": account_data.name
             }
         except Exception as e:
             logger.error(f"Error validating API key: {e}")

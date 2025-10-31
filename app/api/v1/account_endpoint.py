@@ -6,10 +6,11 @@ from fastapi_cache.decorator import cache
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.responses.account_response import AccountInfoResponse
+from app.api.v1.responses.wallet_response import WalletItemResponse
 from app.core import settings
 from app.core.cache import cache_key_builder
 from app.database.session import get_db
-from app.services.services import validate_api_key, get_account_service
+from app.services.services import validate_api_key, get_account_service, get_wallet_service
 
 router = APIRouter(prefix="/account", tags=["account"])
 
@@ -25,3 +26,16 @@ async def account_details(
 
     # Fetch account details using the UUID from validated API key
     return await account_service.get_account_details(api_key_data["game_account_uuid"])
+
+
+@router.get("/wallet", summary="Account wallet", response_description="Account wallet details", response_model=list[WalletItemResponse])
+@cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="account:wallet", key_builder=cache_key_builder)
+async def account_wallet(
+        api_key_data: Annotated[dict, Depends(validate_api_key)],
+        db: AsyncSession = Depends(get_db)
+) -> list[WalletItemResponse]:
+    # Get wallet service with the API key
+    wallet_service = get_wallet_service(db, api_key_data["api_key"])
+
+    # Fetch wallet using the UUID from validated API key
+    return await wallet_service.get_wallet(api_key_data["game_account_uuid"])

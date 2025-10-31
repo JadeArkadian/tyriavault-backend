@@ -1,9 +1,8 @@
 import asyncio
 from typing import Any
 
-from fastapi_cache.decorator import logger
-
 from app.core.constants import Constants
+from app.core.logging import logger
 from app.database.repositories.currencies_repository import CurrenciesRepository
 from app.database.session import async_session_maker
 from app.gw2.client import GW2Client
@@ -23,6 +22,7 @@ class CurrenciesService:
     def __init__(self, repository: CurrenciesRepository, gw2_client: GW2Client):
         self.repository = repository
         self.gw2_client = gw2_client
+        self._background_tasks: set[asyncio.Task] = set()
 
     async def get_all_currencies(self) -> list[dict]:
         """
@@ -33,7 +33,9 @@ class CurrenciesService:
             currencies_data = await self._get_currencies_from_api()
 
             # Sync with db in background
-            asyncio.create_task(self._sync_currencies_to_db(currencies_data))
+            task = asyncio.create_task(self._sync_currencies_to_db(currencies_data))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
 
             return currencies_data
         except Exception as e:
@@ -50,14 +52,14 @@ class CurrenciesService:
 
         for lang, currencies in zip(Constants.LANGS, results, strict=True):
             for currency in currencies:
-                currency_id = currency["id"]
+                currency_id = currency.id
                 if currency_id not in combined_currencies:
                     combined_currencies[currency_id] = {
                         "id": currency_id,
-                        "icon_url": currency["icon"]
+                        "icon_url": currency.icon
                     }
-                combined_currencies[currency_id][f"name_{lang}"] = currency["name"]
-                combined_currencies[currency_id][f"description_{lang}"] = currency["description"]
+                combined_currencies[currency_id][f"name_{lang}"] = currency.name
+                combined_currencies[currency_id][f"description_{lang}"] = currency.description
         return list(combined_currencies.values())
 
     async def _get_currencies_from_db(self) -> list[dict]:
@@ -97,6 +99,7 @@ class CurrenciesService:
             async with async_session_maker() as session:
                 repository = CurrenciesRepository(session)
                 await repository.upsert_batch(currencies_data)
+                await session.commit()
             logger.info(f"Synced {len(currencies_data)} currencies to database")
         except Exception as e:
             logger.error(f"Error syncing currencies to database: {e}")

@@ -1,9 +1,8 @@
 import asyncio
 from typing import Any
 
-from fastapi_cache.decorator import logger
-
 from app.core.constants import Constants
+from app.core.logging import logger
 from app.database.repositories.worlds_repository import WorldsRepository
 from app.database.session import async_session_maker
 from app.gw2.client import GW2Client
@@ -23,6 +22,7 @@ class WorldsService:
     def __init__(self, repository: WorldsRepository, gw2_client: GW2Client):
         self.repository = repository
         self.gw2_client = gw2_client
+        self._background_tasks: set[asyncio.Task] = set()
 
     async def get_all_worlds(self) -> list[dict]:
         """
@@ -35,7 +35,9 @@ class WorldsService:
             logger.warning(f"No data in DB or failed to fetch worlds from DB: {e}. Falling back to GW2 API.")
             worlds_data = await self._get_worlds_from_api()
             # Sync with db in background
-            asyncio.create_task(self._sync_worlds_to_db(worlds_data))
+            task = asyncio.create_task(self._sync_worlds_to_db(worlds_data))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
             return worlds_data
 
     async def _get_worlds_from_api(self) -> list[dict]:
@@ -48,12 +50,12 @@ class WorldsService:
 
         for lang, worlds in zip(Constants.LANGS, results, strict=True):
             for world in worlds:
-                world_id = world["id"]
+                world_id = world.id
                 if world_id not in combined_worlds:
                     combined_worlds[world_id] = {
                         "id": world_id,
                     }
-                combined_worlds[world_id][f"name_{lang}"] = world["name"]
+                combined_worlds[world_id][f"name_{lang}"] = world.name
         return list(combined_worlds.values())
 
     async def _get_worlds_from_db(self) -> list[dict]:
@@ -86,6 +88,7 @@ class WorldsService:
             async with async_session_maker() as session:
                 repository = WorldsRepository(session)
                 await repository.upsert_batch(worlds_data)
+                await session.commit()
             logger.info(f"Synced {len(worlds_data)} worlds to database")
         except Exception as e:
             logger.error(f"Error syncing worlds to database: {e}")

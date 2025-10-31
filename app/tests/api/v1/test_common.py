@@ -5,7 +5,8 @@ import pytest
 
 from app.main import api
 from app.services.apikey_service import ApiKeyService
-from app.services.services import get_api_key_service, validate_api_key
+from app.services.health_service import HealthService
+from app.services.services import get_api_key_service, validate_api_key, get_health_service
 
 
 @pytest.mark.asyncio
@@ -13,15 +14,46 @@ class TestCommonEndpoint:
     """Tests for the /common endpoint"""
 
     async def test_status_endpoint(self):
-        """Test the health check endpoint returns alive"""
-        # Act
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
-            response = await ac.get("/api/v1/common/status")
+        """Test the health check endpoint returns alive when GW2 API is up"""
+        # Arrange - Mock HealthService
+        mock_health_service = AsyncMock(spec=HealthService)
+        mock_health_service.check_gw2_api_status.return_value = True
 
-        # Assert
-        assert response.status_code == 200
-        assert response.text == "alive"
-        assert response.headers["content-type"] == "text/plain; charset=utf-8"
+        api.dependency_overrides[get_health_service] = lambda: mock_health_service
+
+        try:
+            # Act
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
+                response = await ac.get("/api/v1/common/status")
+
+            # Assert
+            assert response.status_code == 200
+            assert response.text == "alive"
+            assert response.headers["content-type"] == "text/plain; charset=utf-8"
+            mock_health_service.check_gw2_api_status.assert_called_once()
+        finally:
+            api.dependency_overrides.clear()
+
+    async def test_status_endpoint_api_down(self):
+        """Test the health check endpoint returns unstable when GW2 API is down"""
+        # Arrange - Mock HealthService
+        mock_health_service = AsyncMock(spec=HealthService)
+        mock_health_service.check_gw2_api_status.return_value = False
+
+        api.dependency_overrides[get_health_service] = lambda: mock_health_service
+
+        try:
+            # Act
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
+                response = await ac.get("/api/v1/common/status")
+
+            # Assert
+            assert response.status_code == 503
+            assert response.text == "unstable: API down"
+            assert response.headers["content-type"] == "text/plain; charset=utf-8"
+            mock_health_service.check_gw2_api_status.assert_called_once()
+        finally:
+            api.dependency_overrides.clear()
 
     async def test_tokeninfo_success(self):
         """Test successful tokeninfo response with valid API key"""

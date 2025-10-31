@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.database.models import Worlds
+from app.gw2.responses import GW2ApiWorld
 from app.services.worlds_service import WorldsService
 
 
@@ -30,16 +31,8 @@ def worlds_service(mock_repository, mock_gw2_client):
 def sample_api_response_en():
     """Sample GW2 API response in English"""
     return [
-        {
-            "id": 1001,
-            "name": "Anvil Rock",
-            "population": "High"
-        },
-        {
-            "id": 1002,
-            "name": "Borlis Pass",
-            "population": "Medium"
-        }
+        GW2ApiWorld(id=1001, name="Anvil Rock", population="High"),
+        GW2ApiWorld(id=1002, name="Borlis Pass", population="Medium")
     ]
 
 
@@ -47,16 +40,8 @@ def sample_api_response_en():
 def sample_api_response_es():
     """Sample GW2 API response in Spanish"""
     return [
-        {
-            "id": 1001,
-            "name": "Roca del Yunque",
-            "population": "High"
-        },
-        {
-            "id": 1002,
-            "name": "Paso de Borlis",
-            "population": "Medium"
-        }
+        GW2ApiWorld(id=1001, name="Roca del Yunque", population="High"),
+        GW2ApiWorld(id=1002, name="Paso de Borlis", population="Medium")
     ]
 
 
@@ -64,16 +49,8 @@ def sample_api_response_es():
 def sample_api_response_de():
     """Sample GW2 API response in German"""
     return [
-        {
-            "id": 1001,
-            "name": "Ambossfelsen",
-            "population": "High"
-        },
-        {
-            "id": 1002,
-            "name": "Borlispass",
-            "population": "Medium"
-        }
+        GW2ApiWorld(id=1001, name="Ambossfelsen", population="High"),
+        GW2ApiWorld(id=1002, name="Borlispass", population="Medium")
     ]
 
 
@@ -81,16 +58,8 @@ def sample_api_response_de():
 def sample_api_response_fr():
     """Sample GW2 API response in French"""
     return [
-        {
-            "id": 1001,
-            "name": "Rocher de l'enclume",
-            "population": "High"
-        },
-        {
-            "id": 1002,
-            "name": "Passage de Borlis",
-            "population": "Medium"
-        }
+        GW2ApiWorld(id=1001, name="Rocher de l'enclume", population="High"),
+        GW2ApiWorld(id=1002, name="Passage de Borlis", population="Medium")
     ]
 
 

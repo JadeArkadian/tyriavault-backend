@@ -12,13 +12,23 @@ from app.core.utils import split_bearer_token
 from app.database.repositories.account_repository import AccountRepository
 from app.database.repositories.apikeys_repository import ApikeysRepository
 from app.database.repositories.currencies_repository import CurrenciesRepository
+from app.database.repositories.dyes_repository import DyesRepository
+from app.database.repositories.wallet_repository import WalletRepository
 from app.database.repositories.worlds_repository import WorldsRepository
 from app.database.session import get_db
 from app.gw2.client import GW2Client
 from app.services.account_service import AccountService
 from app.services.apikey_service import ApiKeyService
 from app.services.currencies_service import CurrenciesService
+from app.services.dyes_service import DyesService
+from app.services.health_service import HealthService
+from app.services.wallet_service import WalletService
 from app.services.worlds_service import WorldsService
+
+
+def get_health_service() -> HealthService:
+    gw2_client = GW2Client()
+    return HealthService(gw2_client)
 
 
 def get_api_key_service(db: Annotated[AsyncSession, Depends(get_db)]) -> ApiKeyService:
@@ -33,6 +43,12 @@ def get_currencies_service(db: Annotated[AsyncSession, Depends(get_db)]) -> Curr
     return CurrenciesService(repository, gw2_client)
 
 
+def get_dyes_service(db: Annotated[AsyncSession, Depends(get_db)]) -> DyesService:
+    repository = DyesRepository(db)
+    gw2_client = GW2Client()
+    return DyesService(repository, gw2_client)
+
+
 def get_worlds_service(db: Annotated[AsyncSession, Depends(get_db)]) -> WorldsService:
     repository = WorldsRepository(db)
     gw2_client = GW2Client()
@@ -44,6 +60,13 @@ def get_account_service(db: Annotated[AsyncSession, Depends(get_db)], apikey: st
     worlds_repository = WorldsRepository(db)
     gw2_client = GW2Client(apikey)
     return AccountService(account_repository, worlds_repository, gw2_client)
+
+
+def get_wallet_service(db: Annotated[AsyncSession, Depends(get_db)], apikey: str) -> WalletService:
+    wallet_repository = WalletRepository(db)
+    currencies_repository = CurrenciesRepository(db)
+    gw2_client = GW2Client(apikey)
+    return WalletService(wallet_repository, currencies_repository, gw2_client)
 
 
 @cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="apikey", key_builder=cache_key_builder)

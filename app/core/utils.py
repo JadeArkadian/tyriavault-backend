@@ -1,6 +1,19 @@
 from app.core import settings
 
 
+def rgb_to_hex(rgb: tuple[int, int, int] | list[int]) -> str:
+    """
+    Converts an RGB color tuple or list to a hexadecimal color string.
+
+    Args:
+        rgb (tuple[int, int, int] | list[int]): A tuple or list containing the red, green, and blue components (0-255).
+
+    Returns:
+        str: The hexadecimal color string in the format '#RRGGBB'.
+    """
+    return "#{:02x}{:02x}{:02x}".format(*rgb)
+
+
 def get_db_url() -> str:
     """
     Ensures the DATABASE_URL uses the asyncpg driver for PostgreSQL.
