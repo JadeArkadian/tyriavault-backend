@@ -1,12 +1,12 @@
 from app.core import settings
 
 
-def rgb_to_hex(rgb: tuple[int, int, int]) -> str:
+def rgb_to_hex(rgb: tuple[int, int, int] | list[int]) -> str:
     """
-    Converts an RGB color tuple to a hexadecimal color string.
+    Converts an RGB color tuple or list to a hexadecimal color string.
 
     Args:
-        rgb (tuple[int, int, int]): A tuple containing the red, green, and blue components (0-255).
+        rgb (tuple[int, int, int] | list[int]): A tuple or list containing the red, green, and blue components (0-255).
 
     Returns:
         str: The hexadecimal color string in the format '#RRGGBB'.

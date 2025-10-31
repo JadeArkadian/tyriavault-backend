@@ -5,6 +5,7 @@ from uuid import UUID
 import pytest
 
 from app.database.models import ApiKeys, GameAccounts, Worlds
+from app.gw2.responses import GW2ApiAccount, GW2ApiTokenInfo
 from app.services.apikey_service import ApiKeyService
 
 
@@ -48,25 +49,28 @@ def sample_account_uuid():
 @pytest.fixture
 def sample_token_info():
     """Sample token info from GW2 API"""
-    return {
-        "id": "test-token-id",
-        "name": "My API Key",
-        "permissions": ["account", "inventories", "characters", "wallet"]
-    }
+    return GW2ApiTokenInfo(
+        id="test-token-id",
+        name="My API Key",
+        permissions=["account", "inventories", "characters", "wallet"]
+    )
 
 
 @pytest.fixture
 def sample_account_data():
     """Sample account data from GW2 API"""
-    return {
-        "id": "12345678-1234-1234-1234-123456789abc",
-        "name": "TestAccount.1234",
-        "world": 2001,
-        "created": "2015-06-16T04:31:00Z",
-        "fractal_level": 75,
-        "access": ["PlayForFree", "GuildWars2", "HeartOfThorns", "PathOfFire"],
-        "last_modified": "2023-12-01T10:00:00Z"
-    }
+    return GW2ApiAccount(
+        id="12345678-1234-1234-1234-123456789abc",
+        name="TestAccount.1234",
+        world=2001,
+        created="2015-06-16T04:31:00Z",
+        age=123456789,
+        guilds=[],
+        guild_leader=[],
+        fractal_level=75,
+        access=["PlayForFree", "GuildWars2", "HeartOfThorns", "PathOfFire"],
+        commander=False
+    )
 
 
 @pytest.fixture
@@ -240,15 +244,18 @@ class TestApiKeyService:
     ):
         """Test: successfully register API key when account has no world"""
         # Arrange
-        account_data_no_world = {
-            "id": "12345678-1234-1234-1234-123456789abc",
-            "name": "NoWorldAccount.5678",
-            "world": None,  # No world
-            "created": "2020-01-01T00:00:00Z",
-            "fractal_level": 1,
-            "access": ["PlayForFree"],
-            "last_modified": "2023-01-01T00:00:00Z"
-        }
+        account_data_no_world = GW2ApiAccount(
+            id="12345678-1234-1234-1234-123456789abc",
+            name="NoWorldAccount.5678",
+            world=None,  # No world
+            created="2020-01-01T00:00:00Z",
+            age=123456,
+            guilds=[],
+            guild_leader=[],
+            fractal_level=1,
+            access=["PlayForFree"],
+            commander=False
+        )
 
         with patch('app.services.apikey_service.GW2Client') as mock_gw2_client_class:
             mock_client = AsyncMock()
@@ -319,11 +326,11 @@ class TestApiKeyService:
     ):
         """Test: register API key with minimal permissions"""
         # Arrange
-        minimal_token_info = {
-            "id": "test-token-id",
-            "name": "Minimal Key",
-            "permissions": ["account"]  # Only account permission
-        }
+        minimal_token_info = GW2ApiTokenInfo(
+            id="test-token-id",
+            name="Minimal Key",
+            permissions=["account"]  # Only account permission
+        )
 
         mock_worlds_repository.get_by_id.return_value = sample_world
 
@@ -352,11 +359,11 @@ class TestApiKeyService:
     ):
         """Test: register API key with no permissions"""
         # Arrange
-        no_permissions_token = {
-            "id": "test-token-id",
-            "name": "No Permissions Key",
-            "permissions": []  # No permissions
-        }
+        no_permissions_token = GW2ApiTokenInfo(
+            id="test-token-id",
+            name="No Permissions Key",
+            permissions=[]  # No permissions
+        )
 
         mock_worlds_repository.get_by_id.return_value = sample_world
 
@@ -455,15 +462,18 @@ class TestApiKeyService:
     ):
         """Test: handle account data without last_modified field"""
         # Arrange
-        account_data_no_last_modified = {
-            "id": "12345678-1234-1234-1234-123456789abc",
-            "name": "TestAccount.1234",
-            "world": 2001,
-            "created": "2015-06-16T04:31:00Z",
-            "fractal_level": 75,
-            "access": ["PlayForFree", "GuildWars2"]
-            # No last_modified field
-        }
+        account_data_no_last_modified = GW2ApiAccount(
+            id="12345678-1234-1234-1234-123456789abc",
+            name="TestAccount.1234",
+            world=2001,
+            created="2015-06-16T04:31:00Z",
+            age=123456,
+            guilds=[],
+            guild_leader=[],
+            fractal_level=75,
+            access=["PlayForFree", "GuildWars2"],
+            commander=False
+        )
 
         mock_worlds_repository.get_by_id.return_value = sample_world
 

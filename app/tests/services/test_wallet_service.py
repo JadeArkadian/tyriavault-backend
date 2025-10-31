@@ -5,6 +5,7 @@ import pytest
 
 from app.api.v1.responses.wallet_response import WalletItemResponse
 from app.database.models import Currencies, Wallet
+from app.gw2.responses.gw2api_wallet import GW2ApiWalletEntry
 from app.services.wallet_service import WalletService
 
 
@@ -49,18 +50,9 @@ def sample_account_uuid():
 def sample_api_wallet_response():
     """Sample wallet response from GW2 API"""
     return [
-        {
-            "id": 1,
-            "value": 1234567
-        },
-        {
-            "id": 2,
-            "value": 500000
-        },
-        {
-            "id": 4,
-            "value": 125
-        }
+        GW2ApiWalletEntry(id=1, value=1234567),
+        GW2ApiWalletEntry(id=2, value=500000),
+        GW2ApiWalletEntry(id=4, value=125)
     ]
 
 
@@ -246,8 +238,8 @@ class TestWalletService:
         """Test: skip wallet entries when currency is not found in database"""
         # Arrange
         wallet_response = [
-            {"id": 1, "value": 1000},
-            {"id": 999, "value": 500},  # Currency not in database
+            GW2ApiWalletEntry(id=1, value=1000),
+            GW2ApiWalletEntry(id=999, value=500),  # Currency not in database
         ]
 
         currency1 = MagicMock(spec=Currencies)
@@ -353,7 +345,7 @@ class TestWalletService:
                 await wallet_service._sync_wallet_to_db(sample_api_wallet_response, sample_account_uuid)
 
         # Assert
-        mock_wallet_repo.upsert_batch.assert_called_once()
+        mock_wallet_repo.upsert_batch.assert_awaited_once()
 
         # Verify the data structure passed to upsert_batch
         call_args = mock_wallet_repo.upsert_batch.call_args[0][0]
@@ -375,7 +367,7 @@ class TestWalletService:
         }
 
         # Verify commit was called
-        mock_session.commit.assert_called_once()
+        mock_session.commit.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_get_wallet_from_db_with_null_amount(

@@ -24,6 +24,7 @@ class DyesService:
     def __init__(self, repository: DyesRepository, gw2_client: GW2Client):
         self.repository = repository
         self.gw2_client = gw2_client
+        self._background_tasks: set[asyncio.Task] = set()
 
     async def get_all_dyes(self) -> list[dict]:
         """
@@ -34,7 +35,9 @@ class DyesService:
             dyes_data = await self._get_dyes_from_api()
 
             # Sync with db in background
-            asyncio.create_task(self._sync_dyes_to_db(dyes_data))
+            task = asyncio.create_task(self._sync_dyes_to_db(dyes_data))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
 
             return dyes_data
         except Exception as e:
@@ -51,13 +54,13 @@ class DyesService:
 
         for lang, dyes in zip(Constants.LANGS, results, strict=True):
             for dye in dyes:
-                dye_id = dye["id"]
+                dye_id = dye.id
                 if dye_id not in combined_dyes:
                     combined_dyes[dye_id] = {
                         "id": dye_id,
-                        "color": rgb_to_hex(dye["cloth"]["rgb"])
+                        "color": rgb_to_hex(dye.cloth.rgb)
                     }
-                combined_dyes[dye_id][f"name_{lang}"] = dye["name"]
+                combined_dyes[dye_id][f"name_{lang}"] = dye.name
         return list(combined_dyes.values())
 
     async def _get_dyes_from_db(self) -> list[dict]:

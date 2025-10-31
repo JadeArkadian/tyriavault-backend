@@ -9,6 +9,7 @@ from app.database.repositories.account_repository import AccountRepository
 from app.database.repositories.worlds_repository import WorldsRepository
 from app.database.session import async_session_maker
 from app.gw2.client import GW2Client
+from app.gw2.responses import GW2ApiAccount
 
 
 class AccountService:
@@ -25,6 +26,7 @@ class AccountService:
         self.account_repository = account_repository
         self.worlds_repository = worlds_repository
         self.gw2_client = gw2_client
+        self._background_tasks: set[asyncio.Task] = set()
 
     async def get_account_details(self, account_uuid: UUID) -> AccountInfoResponse:
         """
@@ -36,7 +38,9 @@ class AccountService:
             account_data = await self._get_account_from_api()
 
             # 2. Sync with DB in background
-            asyncio.create_task(self._sync_account_to_db(account_data))
+            task = asyncio.create_task(self._sync_account_to_db(account_data))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
 
             # 3. Get world info and return response
             return await self._build_response(account_data)
@@ -45,7 +49,7 @@ class AccountService:
             logger.warning(f"Failed to fetch account from GW2 API: {e}. Falling back to database.")
             return await self._get_account_from_db(account_uuid)
 
-    async def _get_account_from_api(self) -> dict:
+    async def _get_account_from_api(self) -> GW2ApiAccount:
         """Fetch account data from GW2 API."""
         logger.info("Fetching account details from GW2 API")
         account_data = await self.gw2_client.get_account()
@@ -77,9 +81,16 @@ class AccountService:
             logger.error(f"Failed to retrieve account from database: {e}")
             raise
 
-    async def _build_response(self, account_data: dict) -> AccountInfoResponse:
+    async def _build_response(self, account_data: GW2ApiAccount | dict) -> AccountInfoResponse:
         """Build the response by combining account data with world information."""
-        world_id = account_data.get("world")
+        # Support both Account class and dict for backwards compatibility
+        if isinstance(account_data, GW2ApiAccount):
+            world_id = account_data.world
+            account_dict = account_data.model_dump()
+        else:
+            world_id = account_data.get("world")
+            account_dict = account_data
+
         world_info = None
 
         if world_id:
@@ -95,11 +106,11 @@ class AccountService:
             else:
                 logger.warning(f"World {world_id} not found in database. Consider syncing worlds data.")
 
-        response = AccountInfoResponse.map_response(account_data, world_info)
-        logger.info(f"Successfully fetched account details for: {account_data.get('name')}")
+        response = AccountInfoResponse.map_response(account_dict, world_info)
+        logger.info(f"Successfully fetched account details for: {account_dict.get('name')}")
         return response
 
-    async def _sync_account_to_db(self, account_data: dict) -> None:
+    async def _sync_account_to_db(self, account_data: GW2ApiAccount) -> None:
         """Sync account data to database using a new session for background task."""
         try:
             async with async_session_maker() as session:
@@ -107,21 +118,19 @@ class AccountService:
 
                 # Create GameAccounts entity from API data
                 game_account = GameAccounts(
-                    uuid=UUID(account_data["id"]),
-                    account_name=account_data["name"],
-                    world_id=account_data.get("world"),
-                    creation_date=datetime.fromisoformat(account_data["created"].replace("Z", "+00:00")),
-                    fractal_level=account_data.get("fractal_level", 1),
-                    last_modified=datetime.fromisoformat(
-                        account_data.get("last_modified", datetime.now(timezone.utc).isoformat()).replace("Z", "+00:00")
-                    ),
-                    content_access=account_data.get("access", []),
+                    uuid=UUID(account_data.id),
+                    account_name=account_data.name,
+                    world_id=account_data.world,
+                    creation_date=account_data.created,
+                    fractal_level=account_data.fractal_level or 1,
+                    last_modified=datetime.now(timezone.utc),
+                    content_access=account_data.access,
                     last_fetched=datetime.now(timezone.utc)
                 )
 
                 await repository.upsert(game_account)
                 await session.commit()
-                logger.info(f"Synced account {account_data['name']} to database")
+                logger.info(f"Synced account {account_data.name} to database")
 
         except Exception as e:
             logger.error(f"Error syncing account to database: {e}")

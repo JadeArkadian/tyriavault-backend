@@ -4,6 +4,7 @@ import pytest
 
 from app.core.constants import Constants
 from app.database.models import Currencies
+from app.gw2.responses import GW2ApiCurrency
 from app.services.currencies_service import CurrenciesService
 
 
@@ -31,18 +32,20 @@ def currencies_service(mock_repository, mock_gw2_client):
 def sample_api_response_en():
     """Sample response from GW2 API in English"""
     return [
-        {
-            "id": 1,
-            "name": "Coin",
-            "description": "The primary currency",
-            "icon": "https://example.com/coin.png"
-        },
-        {
-            "id": 2,
-            "name": "Karma",
-            "description": "Earned by helping others",
-            "icon": "https://example.com/karma.png"
-        }
+        GW2ApiCurrency(
+            id=1,
+            name="Coin",
+            description="The primary currency",
+            order=101,
+            icon="https://example.com/coin.png"
+        ),
+        GW2ApiCurrency(
+            id=2,
+            name="Karma",
+            description="Earned by helping others",
+            order=102,
+            icon="https://example.com/karma.png"
+        )
     ]
 
 
@@ -50,18 +53,20 @@ def sample_api_response_en():
 def sample_api_response_es():
     """Sample response from GW2 API in Spanish"""
     return [
-        {
-            "id": 1,
-            "name": "Moneda",
-            "description": "La moneda principal",
-            "icon": "https://example.com/coin.png"
-        },
-        {
-            "id": 2,
-            "name": "Karma",
-            "description": "Ganado ayudando a otros",
-            "icon": "https://example.com/karma.png"
-        }
+        GW2ApiCurrency(
+            id=1,
+            name="Moneda",
+            description="La moneda principal",
+            order=101,
+            icon="https://example.com/coin.png"
+        ),
+        GW2ApiCurrency(
+            id=2,
+            name="Karma",
+            description="Ganado ayudando a otros",
+            order=102,
+            icon="https://example.com/karma.png"
+        )
     ]
 
 
@@ -69,18 +74,20 @@ def sample_api_response_es():
 def sample_api_response_de():
     """Sample response from GW2 API in German"""
     return [
-        {
-            "id": 1,
-            "name": "Münze",
-            "description": "Die Hauptwährung",
-            "icon": "https://example.com/coin.png"
-        },
-        {
-            "id": 2,
-            "name": "Karma",
-            "description": "Verdient durch Hilfe für andere",
-            "icon": "https://example.com/karma.png"
-        }
+        GW2ApiCurrency(
+            id=1,
+            name="Münze",
+            description="Die Hauptwährung",
+            order=101,
+            icon="https://example.com/coin.png"
+        ),
+        GW2ApiCurrency(
+            id=2,
+            name="Karma",
+            description="Verdient durch Hilfe für andere",
+            order=102,
+            icon="https://example.com/karma.png"
+        )
     ]
 
 
@@ -88,18 +95,20 @@ def sample_api_response_de():
 def sample_api_response_fr():
     """Sample response from GW2 API in French"""
     return [
-        {
-            "id": 1,
-            "name": "Pièce",
-            "description": "La monnaie principale",
-            "icon": "https://example.com/coin.png"
-        },
-        {
-            "id": 2,
-            "name": "Karma",
-            "description": "Gagné en aidant les autres",
-            "icon": "https://example.com/karma.png"
-        }
+        GW2ApiCurrency(
+            id=1,
+            name="Pièce",
+            description="La monnaie principale",
+            order=101,
+            icon="https://example.com/coin.png"
+        ),
+        GW2ApiCurrency(
+            id=2,
+            name="Karma",
+            description="Gagné en aidant les autres",
+            order=102,
+            icon="https://example.com/karma.png"
+        )
     ]
 
 

@@ -130,9 +130,9 @@ class TestGW2ClientMethods:
         client = GW2Client(api_key="test-key")
         result = await client.token_info()
 
-        assert result == mock_response
-        assert result["id"] == "TEST-API-KEY"
-        assert "account" in result["permissions"]
+        assert result.id == "TEST-API-KEY"
+        assert result.name == "My API Key"
+        assert "account" in result.permissions
 
     async def test_token_info_requires_api_key(self):
         """Test that token_info raises ValueError when no API key is provided"""
@@ -149,7 +149,12 @@ class TestGW2ClientMethods:
             "id": "account-uuid",
             "name": "Player.1234",
             "world": 2001,
-            "created": "2012-08-28T00:00:00Z"
+            "created": "2012-08-28T00:00:00Z",
+            "age": 123456,
+            "guilds": [],
+            "guild_leader": [],
+            "access": ["GuildWars2"],
+            "commander": False
         }
 
         mock_http_client = mocker.AsyncMock()
@@ -164,8 +169,8 @@ class TestGW2ClientMethods:
         client = GW2Client(api_key="test-key")
         result = await client.get_account()
 
-        assert result == mock_response
-        assert result["name"] == "Player.1234"
+        assert result.name == "Player.1234"
+        assert result.world == 2001
 
     async def test_get_account_requires_api_key(self):
         """Test that get_account raises ValueError when no API key is provided"""
@@ -179,8 +184,8 @@ class TestGW2ClientMethods:
     async def test_get_worlds_success(self, mocker: MockerFixture):
         """Test get_worlds method returns worlds list"""
         mock_response = [
-            {"id": 1001, "name": "Anvil Rock"},
-            {"id": 1002, "name": "Borlis Pass"}
+            {"id": 1001, "name": "Anvil Rock", "population": "High"},
+            {"id": 1002, "name": "Borlis Pass", "population": "Medium"}
         ]
 
         mock_http_client = mocker.AsyncMock()
@@ -195,8 +200,10 @@ class TestGW2ClientMethods:
         client = GW2Client()
         result = await client.get_worlds(lang="en")
 
-        assert result == mock_response
         assert len(result) == 2
+        assert result[0].id == 1001
+        assert result[0].name == "Anvil Rock"
+        assert result[1].id == 1002
 
     async def test_get_worlds_different_languages(self, mocker: MockerFixture):
         """Test get_worlds method with different language parameters"""
@@ -220,8 +227,8 @@ class TestGW2ClientMethods:
     async def test_get_currencies_success(self, mocker: MockerFixture):
         """Test get_currencies method returns currencies list"""
         mock_response = [
-            {"id": 1, "name": "Coin", "icon": "https://icon.png"},
-            {"id": 2, "name": "Karma", "icon": "https://karma.png"}
+            {"id": 1, "name": "Coin", "description": "Currency", "order": 101, "icon": "https://icon.png"},
+            {"id": 2, "name": "Karma", "description": "Karma points", "order": 102, "icon": "https://karma.png"}
         ]
 
         mock_http_client = mocker.AsyncMock()
@@ -236,8 +243,10 @@ class TestGW2ClientMethods:
         client = GW2Client()
         result = await client.get_currencies(lang="en")
 
-        assert result == mock_response
         assert len(result) == 2
+        assert result[0].id == 1
+        assert result[0].name == "Coin"
+        assert result[1].id == 2
 
     async def test_get_item_success(self, mocker: MockerFixture):
         """Test get_item method returns item information"""
@@ -282,7 +291,7 @@ class TestGW2ClientRetryLogic:
                 )
             return MagicMock(
                 status_code=200,
-                content=orjson.dumps({"success": True}),
+                content=orjson.dumps([{"id": 1001, "name": "Test World", "population": "High"}]),
                 raise_for_status=MagicMock()
             )
 
@@ -295,7 +304,8 @@ class TestGW2ClientRetryLogic:
         client = GW2Client()
         result = await client.get_worlds()
 
-        assert result == {"success": True}
+        assert len(result) == 1
+        assert result[0].id == 1001
         assert call_count == 2
 
     async def test_retry_on_500_server_error(self, mocker: MockerFixture):
@@ -312,7 +322,7 @@ class TestGW2ClientRetryLogic:
                 )
             return MagicMock(
                 status_code=200,
-                content=orjson.dumps({"success": True}),
+                content=orjson.dumps([{"id": 1001, "name": "Test World", "population": "High"}]),
                 raise_for_status=MagicMock()
             )
 
@@ -325,7 +335,8 @@ class TestGW2ClientRetryLogic:
         client = GW2Client()
         result = await client.get_worlds()
 
-        assert result == {"success": True}
+        assert len(result) == 1
+        assert result[0].id == 1001
         assert call_count == 2
 
     async def test_max_retries_exceeded_on_429(self, mocker: MockerFixture):
@@ -380,7 +391,7 @@ class TestGW2ClientRetryLogic:
                 raise httpx.ConnectError("Connection failed")
             return MagicMock(
                 status_code=200,
-                content=orjson.dumps({"success": True}),
+                content=orjson.dumps([{"id": 1001, "name": "Test World", "population": "High"}]),
                 raise_for_status=MagicMock()
             )
 
@@ -393,7 +404,8 @@ class TestGW2ClientRetryLogic:
         client = GW2Client()
         result = await client.get_worlds()
 
-        assert result == {"success": True}
+        assert len(result) == 1
+        assert result[0].id == 1001
         assert call_count == 2
 
     async def test_max_retries_exceeded_on_request_error(self, mocker: MockerFixture):
@@ -428,7 +440,7 @@ class TestGW2ClientRetryLogic:
                 raise httpx.ConnectError("Connection failed")
             return MagicMock(
                 status_code=200,
-                content=orjson.dumps({"success": True}),
+                content=orjson.dumps([{"id": 1001, "name": "Test World", "population": "High"}]),
                 raise_for_status=MagicMock()
             )
 
