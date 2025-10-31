@@ -7,6 +7,8 @@ import orjson
 from app.core.logging import logger
 from app.gw2.responses import GW2ApiAccount, GW2ApiColor, GW2ApiCurrency, GW2ApiTokenInfo, GW2ApiWalletEntry, GW2ApiWorld
 
+from app.core.logging import logger
+
 BASE_URL = "https://api.guildwars2.com/v2"
 
 _gw2_http_client: httpx.AsyncClient | None = None
