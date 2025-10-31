@@ -26,6 +26,7 @@ class AccountService:
         self.account_repository = account_repository
         self.worlds_repository = worlds_repository
         self.gw2_client = gw2_client
+        self._background_tasks: set[asyncio.Task] = set()
 
     async def get_account_details(self, account_uuid: UUID) -> AccountInfoResponse:
         """
@@ -37,7 +38,9 @@ class AccountService:
             account_data = await self._get_account_from_api()
 
             # 2. Sync with DB in background
-            asyncio.create_task(self._sync_account_to_db(account_data))
+            task = asyncio.create_task(self._sync_account_to_db(account_data))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
 
             # 3. Get world info and return response
             return await self._build_response(account_data)

@@ -24,6 +24,7 @@ class DyesService:
     def __init__(self, repository: DyesRepository, gw2_client: GW2Client):
         self.repository = repository
         self.gw2_client = gw2_client
+        self._background_tasks: set[asyncio.Task] = set()
 
     async def get_all_dyes(self) -> list[dict]:
         """
@@ -34,7 +35,9 @@ class DyesService:
             dyes_data = await self._get_dyes_from_api()
 
             # Sync with db in background
-            asyncio.create_task(self._sync_dyes_to_db(dyes_data))
+            task = asyncio.create_task(self._sync_dyes_to_db(dyes_data))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
 
             return dyes_data
         except Exception as e:

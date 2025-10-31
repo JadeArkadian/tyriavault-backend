@@ -22,6 +22,7 @@ class CurrenciesService:
     def __init__(self, repository: CurrenciesRepository, gw2_client: GW2Client):
         self.repository = repository
         self.gw2_client = gw2_client
+        self._background_tasks: set[asyncio.Task] = set()
 
     async def get_all_currencies(self) -> list[dict]:
         """
@@ -32,7 +33,9 @@ class CurrenciesService:
             currencies_data = await self._get_currencies_from_api()
 
             # Sync with db in background
-            asyncio.create_task(self._sync_currencies_to_db(currencies_data))
+            task = asyncio.create_task(self._sync_currencies_to_db(currencies_data))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
 
             return currencies_data
         except Exception as e:

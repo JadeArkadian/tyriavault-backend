@@ -29,6 +29,7 @@ class WalletService:
         self.wallet_repository = wallet_repository
         self.currencies_repository = currencies_repository
         self.gw2_client = gw2_client
+        self._background_tasks: set[asyncio.Task] = set()
 
     async def get_wallet(self, account_uuid: UUID) -> list[WalletItemResponse]:
         """
@@ -38,7 +39,9 @@ class WalletService:
         try:
             wallet_data = await self._get_wallet_from_api()
             # Sync with DB in background
-            asyncio.create_task(self._sync_wallet_to_db(wallet_data, account_uuid))
+            task = asyncio.create_task(self._sync_wallet_to_db(wallet_data, account_uuid))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
             return await self._build_response(wallet_data)
 
         except Exception as e:
