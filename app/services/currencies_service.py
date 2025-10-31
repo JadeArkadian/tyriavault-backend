@@ -1,9 +1,8 @@
 import asyncio
 from typing import Any
 
-from fastapi_cache.decorator import logger
-
 from app.core.constants import Constants
+from app.core.logging import logger
 from app.database.repositories.currencies_repository import CurrenciesRepository
 from app.database.session import async_session_maker
 from app.gw2.client import GW2Client
