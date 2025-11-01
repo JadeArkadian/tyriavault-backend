@@ -36,7 +36,7 @@ class CurrencyDTO:
             icon_url=currency_model.icon_url
         )
 
-    def to_orm(self):
+    def to_orm(self) -> Currencies:
         """Convert the DTO to an ORM model instance."""
         return Currencies(
             id=self.id,

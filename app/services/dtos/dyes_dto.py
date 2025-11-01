@@ -27,7 +27,7 @@ class DyeDTO:
             color=dye_model.color
         )
 
-    def to_orm(self):
+    def to_orm(self) -> Dyes:
         """Convert the DTO to an ORM model instance."""
         return Dyes(
             id=self.id,

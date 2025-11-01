@@ -62,10 +62,10 @@ class DyesService:
         # Create DTOs directly from collected data
         return [
             DyeDTO(id=dye_id,
-                   name_en=data["name_en"],
-                   name_es=data["name_es"],
-                   name_de=data["name_de"],
-                   name_fr=data["name_fr"],
+                   name_en=data.get("name_en", ""),
+                   name_es=data.get("name_es") or data.get("name_en", ""),
+                   name_de=data.get("name_de") or data.get("name_en", ""),
+                   name_fr=data.get("name_fr") or data.get("name_en", ""),
                    color=data["color"])
             for dye_id, data in dye_data.items()
         ]

@@ -15,7 +15,7 @@ class WorldDTO:
     name_fr: str
 
     @classmethod
-    def from_orm(cls, world_model) -> "WorldDTO":
+    def from_orm(cls, world_model: Worlds) -> "WorldDTO":
         """Create a WorldDTO from a database model."""
         return cls(
             id=world_model.id,
@@ -25,7 +25,7 @@ class WorldDTO:
             name_fr=world_model.name_fr
         )
 
-    def to_orm(self):
+    def to_orm(self) -> Worlds:
         """Convert the DTO to an ORM model instance."""
         return Worlds(
             id=self.id,

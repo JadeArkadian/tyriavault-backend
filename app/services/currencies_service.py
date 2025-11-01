@@ -62,14 +62,14 @@ class CurrenciesService:
         return [
             CurrencyDTO(
                 id=currency_id,
-                name_en=data["name_en"],
-                name_es=data["name_es"],
-                name_de=data["name_de"],
-                name_fr=data["name_fr"],
-                description_en=data["description_en"],
-                description_es=data["description_es"],
-                description_de=data["description_de"],
-                description_fr=data["description_fr"],
+                name_en=data.get("name_en", ""),
+                name_es=data.get("name_es") or data.get("name_en", ""),
+                name_de=data.get("name_de") or data.get("name_en", ""),
+                name_fr=data.get("name_fr") or data.get("name_en", ""),
+                description_en=data.get("description_en"),
+                description_es=data.get("description_es") or data.get("description_en"),
+                description_de=data.get("description_de") or data.get("description_en"),
+                description_fr=data.get("description_fr") or data.get("description_en"),
                 icon_url=data["icon_url"]
             )
             for currency_id, data in currency_data.items()

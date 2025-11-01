@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from typing import Optional
 from uuid import UUID
 
-from app.database.models import Wallet
+from app.database.models import Wallet, Currencies
+from app.gw2.responses import GW2ApiWalletEntry
 
 
 @dataclass
@@ -24,7 +25,7 @@ class WalletItemDTO:
     currency_icon_url: Optional[str]
 
     @classmethod
-    def from_orm_with_currency(cls, wallet_model, currency_model) -> "WalletItemDTO":
+    def from_orm_with_currency(cls, wallet_model: Wallet, currency_model: Currencies) -> "WalletItemDTO":
         """Create a WalletItemDTO from database models (Wallet + Currency)."""
         return cls(
             currency_id=wallet_model.currency_id,
@@ -41,7 +42,7 @@ class WalletItemDTO:
         )
 
     @classmethod
-    def from_api_with_currency(cls, api_wallet_entry, currency_model) -> "WalletItemDTO":
+    def from_api_with_currency(cls, api_wallet_entry: GW2ApiWalletEntry, currency_model: Currencies) -> "WalletItemDTO":
         """Create a WalletItemDTO from API data and currency model."""
         return cls(
             currency_id=api_wallet_entry.id,
@@ -57,7 +58,7 @@ class WalletItemDTO:
             currency_icon_url=currency_model.icon_url
         )
 
-    def to_wallet_orm(self, game_account_uuid: UUID):
+    def to_wallet_orm(self, game_account_uuid: UUID) -> Wallet:
         """Convert the DTO to a Wallet ORM model instance."""
         return Wallet(
             currency_id=self.currency_id,

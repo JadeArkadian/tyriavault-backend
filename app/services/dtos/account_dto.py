@@ -1,10 +1,11 @@
 """DTO for Account data transfer between layers."""
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
 from app.database.models import GameAccounts, Worlds
+from app.gw2.responses import GW2ApiAccount
 
 
 @dataclass
@@ -49,7 +50,7 @@ class AccountDTO:
         return dto
 
     @classmethod
-    def from_api(cls, api_account) -> "AccountDTO":
+    def from_api(cls, api_account: GW2ApiAccount) -> "AccountDTO":
         """Create an AccountDTO from GW2 API account data."""
         return cls(
             uuid=UUID(api_account.id),
@@ -61,7 +62,7 @@ class AccountDTO:
         )
 
     @classmethod
-    def from_api_with_world(cls, api_account, world_model=None) -> "AccountDTO":
+    def from_api_with_world(cls, api_account: GW2ApiAccount, world_model=None) -> "AccountDTO":
         """Create an AccountDTO from API data with world information."""
         dto = cls.from_api(api_account)
 
@@ -75,7 +76,6 @@ class AccountDTO:
 
     def to_orm(self) -> GameAccounts:
         """Convert the DTO to an ORM model instance."""
-        from datetime import timezone
 
         return GameAccounts(
             uuid=self.uuid,
