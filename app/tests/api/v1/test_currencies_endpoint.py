@@ -3,9 +3,9 @@ from unittest.mock import AsyncMock
 import httpx
 import pytest
 
+from app.database.models import Currencies
 from app.main import api
 from app.services.currencies_service import CurrenciesService
-from app.services.models import CurrencyData
 from app.services.services import get_currencies_service
 
 
@@ -17,7 +17,7 @@ class TestCurrenciesEndpoint:
         """Test successful response from GET /currencies endpoint"""
         # Arrange - Mock data from service
         mock_currencies_data = [
-            CurrencyData(
+            Currencies(
                 id=1,
                 name_en="Coin",
                 name_es="Moneda",
@@ -29,7 +29,7 @@ class TestCurrenciesEndpoint:
                 description_fr="La monnaie principale",
                 icon_url="https://render.guildwars2.com/file/coin.png"
             ),
-            CurrencyData(
+            Currencies(
                 id=2,
                 name_en="Karma",
                 name_es="Karma",
@@ -133,7 +133,7 @@ class TestCurrenciesEndpoint:
         """Test that response follows the expected CurrenciesResponse schema"""
         # Arrange
         mock_currencies_data = [
-            CurrencyData(
+            Currencies(
                 id=23,
                 name_en="Laurels",
                 name_es="Laureles",
@@ -183,7 +183,7 @@ class TestCurrenciesEndpoint:
         """Test response when icon_url is None"""
         # Arrange
         mock_currencies_data = [
-            CurrencyData(
+            Currencies(
                 id=99,
                 name_en="Test Currency",
                 name_es="Moneda de prueba",
@@ -218,7 +218,7 @@ class TestCurrenciesEndpoint:
         """Test response with multiple currencies"""
         # Arrange
         mock_currencies_data = [
-            CurrencyData(
+            Currencies(
                 id=i,
                 name_en=f"Currency {i}",
                 name_es=f"Moneda {i}",
@@ -259,7 +259,7 @@ class TestCurrenciesEndpoint:
         """Test that cache is working (service should only be called once for multiple requests)"""
         # Arrange
         mock_currencies_data = [
-            CurrencyData(
+            Currencies(
                 id=1,
                 name_en="Coin",
                 name_es="Moneda",

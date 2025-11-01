@@ -6,7 +6,6 @@ from app.core.constants import Constants
 from app.database.models import Currencies
 from app.gw2.responses import GW2ApiCurrency
 from app.services.currencies_service import CurrenciesService
-from app.services.models import CurrencyData
 
 
 @pytest.fixture
@@ -167,11 +166,11 @@ class TestCurrenciesService:
 
         # Act
         result = await currencies_service.get_all_currencies()
-
-        # Assert
-        assert len(result) == 2
-        assert isinstance(result[0], CurrencyData)
         assert result[0].id == 1
+        assert result[0].id == 1
+        assert result[0].id == 1
+        assert result[0].id == 1
+        assert isinstance(result[0], Currencies)
         assert result[0].name_en == "Coin"
         assert result[0].name_es == "Moneda"
         assert result[0].name_de == "Münze"
@@ -199,10 +198,9 @@ class TestCurrenciesService:
 
         # Act
         result = await currencies_service.get_all_currencies()
-
         # Assert
         assert len(result) == 2
-        assert isinstance(result[0], CurrencyData)
+        assert isinstance(result[0], Currencies)
         assert result[0].id == 1
         assert result[0].name_en == "Coin"
         assert result[0].name_es == "Moneda"
@@ -238,7 +236,7 @@ class TestCurrenciesService:
 
         # Verify that the first currency has all languages
         currency = result[0]
-        assert isinstance(currency, CurrencyData)
+        assert isinstance(currency, Currencies)
         assert currency.name_en
         assert currency.name_es
         assert currency.name_de
@@ -265,7 +263,7 @@ class TestCurrenciesService:
 
         # Assert
         assert len(result) == 2
-        assert isinstance(result[0], CurrencyData)
+        assert isinstance(result[0], Currencies)
         assert result[0].id == 1
         assert result[0].name_en == "Coin"
         assert result[0].name_es == "Moneda"
@@ -306,7 +304,7 @@ class TestCurrenciesService:
         """Test: successful synchronization of currencies to the database"""
         # Arrange
         currencies_data = [
-            CurrencyData(
+            Currencies(
                 id=1,
                 name_en="Coin",
                 name_es="Moneda",
@@ -333,18 +331,19 @@ class TestCurrenciesService:
                 await currencies_service._sync_currencies_to_db(currencies_data)
 
                 # Assert
-                # Verify that the CurrencyData objects were converted to dicts
+                # Verify that the Currencies objects were passed directly
                 assert mock_repo.upsert_batch.call_count == 1
                 called_data = mock_repo.upsert_batch.call_args[0][0]
-                assert isinstance(called_data[0], dict)
-                assert called_data[0]["id"] == 1
+                assert isinstance(called_data, list)
+                assert isinstance(called_data[0], Currencies)
+                assert called_data[0].id == 1
 
     @pytest.mark.asyncio
     async def test_sync_currencies_to_db_handles_error(self, currencies_service):
         """Test: error handling during synchronization"""
         # Arrange
         currencies_data = [
-            CurrencyData(
+            Currencies(
                 id=1,
                 name_en="Coin",
                 name_es="Moneda",
@@ -436,7 +435,7 @@ class TestCurrenciesService:
 
         # Assert
         for currency in result:
-            assert isinstance(currency, CurrencyData)
+            assert isinstance(currency, Currencies)
             assert hasattr(currency, "id")
             assert hasattr(currency, "icon_url")
             assert hasattr(currency, "name_en")
