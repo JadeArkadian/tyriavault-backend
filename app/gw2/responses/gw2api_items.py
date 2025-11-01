@@ -2,225 +2,9 @@
 GW2 API Items response models.
 Documentation: https://wiki.guildwars2.com/wiki/API:2/items
 """
-from typing import Literal, Union
+from typing import Literal
 
 from pydantic import BaseModel, Field
-
-
-# ===========================
-# Infix Upgrade Models
-# ===========================
-
-class InfixAttribute(BaseModel):
-    """Individual attribute bonus from an infix upgrade."""
-
-    attribute: str = Field(..., description="Attribute name (e.g., 'Power', 'Precision', 'Toughness')")
-    modifier: int = Field(..., description="Modifier value for the attribute")
-
-
-class InfixBuff(BaseModel):
-    """Buff information from an infix upgrade."""
-
-    skill_id: int = Field(..., description="The skill ID of the buff")
-    description: str | None = Field(default=None, description="The buff description")
-
-
-class InfixUpgrade(BaseModel):
-    """Infix upgrade information for items."""
-
-    id: int | None = Field(default=None, description="The itemstat ID")
-    attributes: list[InfixAttribute] = Field(default_factory=list, description="List of attribute bonuses")
-    buff: InfixBuff | None = Field(default=None, description="Buff information")
-
-
-# ===========================
-# Infusion Slot Models
-# ===========================
-
-class InfusionSlot(BaseModel):
-    """Information about an infusion slot."""
-
-    flags: list[str] = Field(default_factory=list, description="Infusion slot type flags")
-    item_id: int | None = Field(default=None, description="The infusion upgrade already in the slot")
-
-
-# ===========================
-# Details Models - Armor
-# ===========================
-
-class ArmorDetails(BaseModel):
-    """Details specific to armor items."""
-
-    type: Literal["Boots", "Coat", "Gloves", "Helm", "HelmAquatic", "Leggings", "Shoulders"] = Field(
-        ..., description="The armor slot type"
-    )
-    weight_class: Literal["Heavy", "Medium", "Light", "Clothing"] = Field(
-        ..., description="The armor weight class"
-    )
-    defense: int = Field(..., description="The defense value of the armor piece")
-    infusion_slots: list[InfusionSlot] = Field(default_factory=list, description="Infusion slot information")
-    attribute_adjustment: float | None = Field(default=None,
-                                               description="The value to be combined with the gradient multiplier and offset value to calculate the value of an attribute using the itemstats")
-    infix_upgrade: InfixUpgrade | None = Field(default=None, description="Infix upgrade information")
-    suffix_item_id: int | None = Field(default=None, description="The suffix item ID")
-    secondary_suffix_item_id: str | None = Field(default=None, description="The secondary suffix item ID")
-    stat_choices: list[int] | None = Field(default=None, description="A list of selectable stat IDs")
-
-
-# ===========================
-# Details Models - Weapon
-# ===========================
-
-class WeaponDetails(BaseModel):
-    """Details specific to weapon items."""
-
-    type: Literal[
-        "Axe", "Dagger", "Mace", "Pistol", "Scepter", "Sword",
-        "Focus", "Shield", "Torch", "Warhorn",
-        "Greatsword", "Hammer", "LongBow", "Rifle", "ShortBow", "Staff",
-        "Harpoon", "Speargun", "Trident"
-    ] = Field(..., description="The weapon type")
-    damage_type: Literal["Fire", "Ice", "Lightning", "Physical", "Choking"] = Field(
-        ..., description="The damage type"
-    )
-    min_power: int = Field(..., description="Minimum weapon strength")
-    max_power: int = Field(..., description="Maximum weapon strength")
-    defense: int = Field(..., description="The defense value of the weapon")
-    infusion_slots: list[InfusionSlot] = Field(default_factory=list, description="Infusion slot information")
-    attribute_adjustment: float | None = Field(default=None,
-                                               description="The value to be combined with the gradient multiplier and offset value")
-    infix_upgrade: InfixUpgrade | None = Field(default=None, description="Infix upgrade information")
-    suffix_item_id: int | None = Field(default=None, description="The suffix item ID")
-    secondary_suffix_item_id: str | None = Field(default=None, description="The secondary suffix item ID")
-    stat_choices: list[int] | None = Field(default=None, description="A list of selectable stat IDs")
-
-
-# ===========================
-# Details Models - Trinket
-# ===========================
-
-class TrinketDetails(BaseModel):
-    """Details specific to trinket items."""
-
-    type: Literal["Accessory", "Amulet", "Ring"] = Field(..., description="The trinket type")
-    infusion_slots: list[InfusionSlot] = Field(default_factory=list, description="Infusion slot information")
-    attribute_adjustment: float | None = Field(default=None,
-                                               description="The value to be combined with the gradient multiplier and offset value")
-    infix_upgrade: InfixUpgrade | None = Field(default=None, description="Infix upgrade information")
-    suffix_item_id: int | None = Field(default=None, description="The suffix item ID")
-    secondary_suffix_item_id: str | None = Field(default=None, description="The secondary suffix item ID")
-    stat_choices: list[int] | None = Field(default=None, description="A list of selectable stat IDs")
-
-
-# ===========================
-# Details Models - Back
-# ===========================
-
-class BackDetails(BaseModel):
-    """Details specific to back items."""
-
-    infusion_slots: list[InfusionSlot] = Field(default_factory=list, description="Infusion slot information")
-    attribute_adjustment: float | None = Field(default=None,
-                                               description="The value to be combined with the gradient multiplier and offset value")
-    infix_upgrade: InfixUpgrade | None = Field(default=None, description="Infix upgrade information")
-    suffix_item_id: int | None = Field(default=None, description="The suffix item ID")
-    secondary_suffix_item_id: str | None = Field(default=None, description="The secondary suffix item ID")
-    stat_choices: list[int] | None = Field(default=None, description="A list of selectable stat IDs")
-
-
-# ===========================
-# Details Models - Consumable
-# ===========================
-
-class ConsumableDetails(BaseModel):
-    """Details specific to consumable items."""
-
-    type: Literal[
-        "AppearanceChange", "Booze", "ContractNpc", "Currency", "Food",
-        "Generic", "Halloween", "Immediate", "MountRandomUnlock",
-        "RandomUnlock", "Transmutation", "Unlock", "UpgradeRemoval", "Utility",
-        "TeleportToFriend"
-    ] = Field(..., description="The consumable type")
-    description: str | None = Field(default=None, description="Effect description for consumables")
-    duration_ms: int | None = Field(default=None, description="Effect duration in milliseconds")
-    unlock_type: str | None = Field(default=None, description="Unlock type for unlock consumables")
-    color_id: int | None = Field(default=None, description="The dye ID for dye unlocks")
-    recipe_id: int | None = Field(default=None, description="The recipe ID for recipe unlocks")
-    extra_recipe_ids: list[int] | None = Field(default=None, description="Additional recipe IDs")
-    guild_upgrade_id: int | None = Field(default=None, description="The guild upgrade ID for guild consumables")
-    apply_count: int | None = Field(default=None, description="The number of stacks of the effect applied")
-    name: str | None = Field(default=None, description="The effect type name")
-    icon: str | None = Field(default=None, description="The effect icon URL")
-    skins: list[int] | None = Field(default=None, description="A list of skin IDs")
-
-
-# ===========================
-# Details Models - Container
-# ===========================
-
-class ContainerDetails(BaseModel):
-    """Details specific to container items."""
-
-    type: Literal["Default", "GiftBox", "Immediate", "OpenUI"] = Field(
-        ..., description="The container type"
-    )
-
-
-# ===========================
-# Details Models - Gathering Tools
-# ===========================
-
-class GatheringDetails(BaseModel):
-    """Details specific to gathering tool items."""
-
-    type: Literal["Foraging", "Logging", "Mining"] = Field(..., description="The gathering tool type")
-
-
-# ===========================
-# Details Models - Bag
-# ===========================
-
-class BagDetails(BaseModel):
-    """Details specific to bag items."""
-
-    size: int = Field(..., description="The number of bag slots")
-    no_sell_or_sort: bool = Field(..., description="Whether the bag is invisible/safe")
-
-
-# ===========================
-# Details Models - Upgrade Component
-# ===========================
-
-class UpgradeComponentDetails(BaseModel):
-    """Details specific to upgrade component items."""
-
-    type: Literal["Default", "Gem", "Rune", "Sigil"] = Field(..., description="The upgrade component type")
-    flags: list[str] = Field(default_factory=list, description="The items that can be upgraded with this component")
-    infusion_upgrade_flags: list[str] = Field(default_factory=list, description="Applicable infusion slot types")
-    suffix: str | None = Field(default=None, description="The suffix appended to the item name when applied")
-    infix_upgrade: InfixUpgrade | None = Field(default=None, description="Infix upgrade information")
-    bonuses: list[str] | None = Field(default=None, description="The bonuses from runes")
-
-
-# ===========================
-# Details Models - Salvage Kit
-# ===========================
-
-class SalvageKitDetails(BaseModel):
-    """Details specific to salvage kit items."""
-
-    type: Literal["Salvage"] = Field(..., description="The salvage kit type")
-    charges: int = Field(..., description="The number of charges")
-
-
-# ===========================
-# Details Models - Miniature
-# ===========================
-
-class MiniatureDetails(BaseModel):
-    """Details specific to miniature items."""
-
-    minipet_id: int = Field(..., description="The miniature ID")
 
 
 # ===========================
@@ -261,6 +45,9 @@ class GW2ApiItem(BaseModel):
     upgrades_from: list[dict] | None = Field(default=None, description="Lists what items this item can be upgraded from")
 
     # Details - Union of all possible detail types
+    # TODO: Details are way too complex to do properly right now -> will be done later
+    # See gw2api_items_details.py.wip for individual detail models
+    """
     details: Union[
         ArmorDetails,
         WeaponDetails,
@@ -276,3 +63,4 @@ class GW2ApiItem(BaseModel):
         dict,
         None
     ] = Field(default=None, description="Additional item details (type-specific)")
+    """
