@@ -25,7 +25,10 @@ async def account_details(
     account_service = get_account_service(db, api_key_data["api_key"])
 
     # Fetch account details using the UUID from validated API key
-    return await account_service.get_account_details(api_key_data["game_account_uuid"])
+    account_dto = await account_service.get_account_details(api_key_data["game_account_uuid"])
+
+    # Convert DTO to response
+    return AccountInfoResponse.from_dto(account_dto)
 
 
 @router.get("/wallet", summary="Account wallet", response_description="Account wallet details", response_model=list[WalletItemResponse])
