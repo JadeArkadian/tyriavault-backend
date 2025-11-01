@@ -6,6 +6,7 @@ from app.core.constants import Constants
 from app.database.models import Currencies
 from app.gw2.responses import GW2ApiCurrency
 from app.services.currencies_service import CurrenciesService
+from app.services.models import CurrencyData
 
 
 @pytest.fixture
@@ -169,15 +170,16 @@ class TestCurrenciesService:
 
         # Assert
         assert len(result) == 2
-        assert result[0]["id"] == 1
-        assert result[0]["name_en"] == "Coin"
-        assert result[0]["name_es"] == "Moneda"
-        assert result[0]["name_de"] == "Münze"
-        assert result[0]["name_fr"] == "Pièce"
-        assert result[0]["icon_url"] == "https://example.com/coin.png"
+        assert isinstance(result[0], CurrencyData)
+        assert result[0].id == 1
+        assert result[0].name_en == "Coin"
+        assert result[0].name_es == "Moneda"
+        assert result[0].name_de == "Münze"
+        assert result[0].name_fr == "Pièce"
+        assert result[0].icon_url == "https://example.com/coin.png"
 
-        assert result[1]["id"] == 2
-        assert result[1]["name_en"] == "Karma"
+        assert result[1].id == 2
+        assert result[1].name_en == "Karma"
 
         # Verify that the API was called for each language
         assert mock_gw2_client.get_currencies.call_count == 4
@@ -200,10 +202,11 @@ class TestCurrenciesService:
 
         # Assert
         assert len(result) == 2
-        assert result[0]["id"] == 1
-        assert result[0]["name_en"] == "Coin"
-        assert result[0]["name_es"] == "Moneda"
-        assert result[1]["id"] == 2
+        assert isinstance(result[0], CurrencyData)
+        assert result[0].id == 1
+        assert result[0].name_en == "Coin"
+        assert result[0].name_es == "Moneda"
+        assert result[1].id == 2
 
         # Verify that the repository was called
         mock_repository.get_all.assert_called_once()
@@ -235,15 +238,16 @@ class TestCurrenciesService:
 
         # Verify that the first currency has all languages
         currency = result[0]
-        assert "name_en" in currency
-        assert "name_es" in currency
-        assert "name_de" in currency
-        assert "name_fr" in currency
-        assert "description_en" in currency
-        assert "description_es" in currency
-        assert "description_de" in currency
-        assert "description_fr" in currency
-        assert "icon_url" in currency
+        assert isinstance(currency, CurrencyData)
+        assert currency.name_en
+        assert currency.name_es
+        assert currency.name_de
+        assert currency.name_fr
+        assert currency.description_en
+        assert currency.description_es
+        assert currency.description_de
+        assert currency.description_fr
+        assert currency.icon_url
 
     @pytest.mark.asyncio
     async def test_get_currencies_from_db_success(
@@ -261,10 +265,11 @@ class TestCurrenciesService:
 
         # Assert
         assert len(result) == 2
-        assert result[0]["id"] == 1
-        assert result[0]["name_en"] == "Coin"
-        assert result[0]["name_es"] == "Moneda"
-        assert result[0]["icon_url"] == "https://example.com/coin.png"
+        assert isinstance(result[0], CurrencyData)
+        assert result[0].id == 1
+        assert result[0].name_en == "Coin"
+        assert result[0].name_es == "Moneda"
+        assert result[0].icon_url == "https://example.com/coin.png"
 
         mock_repository.get_all.assert_called_once()
 
@@ -301,12 +306,18 @@ class TestCurrenciesService:
         """Test: successful synchronization of currencies to the database"""
         # Arrange
         currencies_data = [
-            {
-                "id": 1,
-                "name_en": "Coin",
-                "name_es": "Moneda",
-                "icon_url": "https://example.com/coin.png"
-            }
+            CurrencyData(
+                id=1,
+                name_en="Coin",
+                name_es="Moneda",
+                name_de="Münze",
+                name_fr="Pièce",
+                description_en="The primary currency",
+                description_es="La moneda principal",
+                description_de="Die Hauptwährung",
+                description_fr="La monnaie principale",
+                icon_url="https://example.com/coin.png"
+            )
         ]
 
         mock_session = AsyncMock()
@@ -322,13 +333,30 @@ class TestCurrenciesService:
                 await currencies_service._sync_currencies_to_db(currencies_data)
 
                 # Assert
-                mock_repo.upsert_batch.assert_called_once_with(currencies_data)
+                # Verify that the CurrencyData objects were converted to dicts
+                assert mock_repo.upsert_batch.call_count == 1
+                called_data = mock_repo.upsert_batch.call_args[0][0]
+                assert isinstance(called_data[0], dict)
+                assert called_data[0]["id"] == 1
 
     @pytest.mark.asyncio
     async def test_sync_currencies_to_db_handles_error(self, currencies_service):
         """Test: error handling during synchronization"""
         # Arrange
-        currencies_data = [{"id": 1, "name_en": "Coin"}]
+        currencies_data = [
+            CurrencyData(
+                id=1,
+                name_en="Coin",
+                name_es="Moneda",
+                name_de="Münze",
+                name_fr="Pièce",
+                description_en="The primary currency",
+                description_es="La moneda principal",
+                description_de="Die Hauptwährung",
+                description_fr="La monnaie principale",
+                icon_url="https://example.com/coin.png"
+            )
+        ]
 
         with patch('app.services.currencies_service.async_session_maker') as mock_session_maker:
             mock_session_maker.return_value.__aenter__.side_effect = Exception("DB Connection error")
@@ -408,13 +436,14 @@ class TestCurrenciesService:
 
         # Assert
         for currency in result:
-            assert "id" in currency
-            assert "icon_url" in currency
-            assert "name_en" in currency
-            assert "name_es" in currency
-            assert "name_de" in currency
-            assert "name_fr" in currency
-            assert "description_en" in currency
-            assert "description_es" in currency
-            assert "description_de" in currency
-            assert "description_fr" in currency
+            assert isinstance(currency, CurrencyData)
+            assert hasattr(currency, "id")
+            assert hasattr(currency, "icon_url")
+            assert hasattr(currency, "name_en")
+            assert hasattr(currency, "name_es")
+            assert hasattr(currency, "name_de")
+            assert hasattr(currency, "name_fr")
+            assert hasattr(currency, "description_en")
+            assert hasattr(currency, "description_es")
+            assert hasattr(currency, "description_de")
+            assert hasattr(currency, "description_fr")
