@@ -4,6 +4,7 @@ import httpx
 import pytest
 
 from app.main import api
+from app.services.dtos.dyes_dto import DyeDTO
 from app.services.dyes_service import DyesService
 from app.services.services import get_dyes_service
 
@@ -14,32 +15,32 @@ class TestDyesEndpoint:
 
     async def test_get_dyes_success(self):
         """Test successful response from GET /dyes endpoint"""
-        # Arrange - Mock data from service
+        # Arrange - Mock data from service using DTOs
         mock_dyes_data = [
-            {
-                "id": 1,
-                "name_en": "Black",
-                "name_es": "Negro",
-                "name_de": "Schwarz",
-                "name_fr": "Noir",
-                "color": "#000000"
-            },
-            {
-                "id": 2,
-                "name_en": "White",
-                "name_es": "Blanco",
-                "name_de": "Weiß",
-                "name_fr": "Blanc",
-                "color": "#ffffff"
-            },
-            {
-                "id": 3,
-                "name_en": "Red",
-                "name_es": "Rojo",
-                "name_de": "Rot",
-                "name_fr": "Rouge",
-                "color": "#ff0000"
-            }
+            DyeDTO(
+                id=1,
+                name_en="Black",
+                name_es="Negro",
+                name_de="Schwarz",
+                name_fr="Noir",
+                color="#000000"
+            ),
+            DyeDTO(
+                id=2,
+                name_en="White",
+                name_es="Blanco",
+                name_de="Weiß",
+                name_fr="Blanc",
+                color="#ffffff"
+            ),
+            DyeDTO(
+                id=3,
+                name_en="Red",
+                name_es="Rojo",
+                name_de="Rot",
+                name_fr="Rouge",
+                color="#ff0000"
+            )
         ]
 
         # Mock the service
@@ -134,14 +135,14 @@ class TestDyesEndpoint:
         """Test that response follows the expected DyesResponse schema"""
         # Arrange
         mock_dyes_data = [
-            {
-                "id": 123,
-                "name_en": "Celestial",
-                "name_es": "Celestial",
-                "name_de": "Himmlisch",
-                "name_fr": "Céleste",
-                "color": "#7b2d43"
-            }
+            DyeDTO(
+                id=123,
+                name_en="Celestial",
+                name_es="Celestial",
+                name_de="Himmlisch",
+                name_fr="Céleste",
+                color="#7b2d43"
+            )
         ]
 
         mock_service = AsyncMock(spec=DyesService)
@@ -183,14 +184,14 @@ class TestDyesEndpoint:
         """Test response with multiple dyes"""
         # Arrange
         mock_dyes_data = [
-            {
-                "id": i,
-                "name_en": f"Dye {i}",
-                "name_es": f"Tinte {i}",
-                "name_de": f"Farbe {i}",
-                "name_fr": f"Teinture {i}",
-                "color": f"#{i:06x}"
-            }
+            DyeDTO(
+                id=i,
+                name_en=f"Dye {i}",
+                name_es=f"Tinte {i}",
+                name_de=f"Farbe {i}",
+                name_fr=f"Teinture {i}",
+                color=f"#{i:06x}"
+            )
             for i in range(1, 51)  # 50 dyes
         ]
 
@@ -221,30 +222,30 @@ class TestDyesEndpoint:
         """Test dyes with various hex color values"""
         # Arrange
         mock_dyes_data = [
-            {
-                "id": 1,
-                "name_en": "Black",
-                "name_es": "Negro",
-                "name_de": "Schwarz",
-                "name_fr": "Noir",
-                "color": "#000000"
-            },
-            {
-                "id": 2,
-                "name_en": "White",
-                "name_es": "Blanco",
-                "name_de": "Weiß",
-                "name_fr": "Blanc",
-                "color": "#ffffff"
-            },
-            {
-                "id": 3,
-                "name_en": "Gray",
-                "name_es": "Gris",
-                "name_de": "Grau",
-                "name_fr": "Gris",
-                "color": "#808080"
-            }
+            DyeDTO(
+                id=1,
+                name_en="Black",
+                name_es="Negro",
+                name_de="Schwarz",
+                name_fr="Noir",
+                color="#000000"
+            ),
+            DyeDTO(
+                id=2,
+                name_en="White",
+                name_es="Blanco",
+                name_de="Weiß",
+                name_fr="Blanc",
+                color="#ffffff"
+            ),
+            DyeDTO(
+                id=3,
+                name_en="Gray",
+                name_es="Gris",
+                name_de="Grau",
+                name_fr="Gris",
+                color="#808080"
+            )
         ]
 
         mock_service = AsyncMock(spec=DyesService)
@@ -272,14 +273,14 @@ class TestDyesEndpoint:
         """Test that endpoint is configured for caching"""
         # Arrange
         mock_dyes_data = [
-            {
-                "id": 1,
-                "name_en": "Test Dye",
-                "name_es": "Tinte de prueba",
-                "name_de": "Testfarbe",
-                "name_fr": "Teinture test",
-                "color": "#123456"
-            }
+            DyeDTO(
+                id=1,
+                name_en="Test Dye",
+                name_es="Tinte de prueba",
+                name_de="Testfarbe",
+                name_fr="Teinture test",
+                color="#123456"
+            )
         ]
 
         mock_service = AsyncMock(spec=DyesService)
@@ -325,30 +326,30 @@ class TestDyesEndpoint:
         """Test dyes with primary RGB colors"""
         # Arrange
         mock_dyes_data = [
-            {
-                "id": 1,
-                "name_en": "Red",
-                "name_es": "Rojo",
-                "name_de": "Rot",
-                "name_fr": "Rouge",
-                "color": "#ff0000"
-            },
-            {
-                "id": 2,
-                "name_en": "Green",
-                "name_es": "Verde",
-                "name_de": "Grün",
-                "name_fr": "Vert",
-                "color": "#00ff00"
-            },
-            {
-                "id": 3,
-                "name_en": "Blue",
-                "name_es": "Azul",
-                "name_de": "Blau",
-                "name_fr": "Bleu",
-                "color": "#0000ff"
-            }
+            DyeDTO(
+                id=1,
+                name_en="Red",
+                name_es="Rojo",
+                name_de="Rot",
+                name_fr="Rouge",
+                color="#ff0000"
+            ),
+            DyeDTO(
+                id=2,
+                name_en="Green",
+                name_es="Verde",
+                name_de="Grün",
+                name_fr="Vert",
+                color="#00ff00"
+            ),
+            DyeDTO(
+                id=3,
+                name_en="Blue",
+                name_es="Azul",
+                name_de="Blau",
+                name_fr="Bleu",
+                color="#0000ff"
+            )
         ]
 
         mock_service = AsyncMock(spec=DyesService)
@@ -380,14 +381,14 @@ class TestDyesEndpoint:
         """Test that all language translations are present"""
         # Arrange
         mock_dyes_data = [
-            {
-                "id": 1,
-                "name_en": "English Name",
-                "name_es": "Nombre español",
-                "name_de": "Deutscher Name",
-                "name_fr": "Nom français",
-                "color": "#abcdef"
-            }
+            DyeDTO(
+                id=1,
+                name_en="English Name",
+                name_es="Nombre español",
+                name_de="Deutscher Name",
+                name_fr="Nom français",
+                color="#abcdef"
+            )
         ]
 
         mock_service = AsyncMock(spec=DyesService)
@@ -416,14 +417,14 @@ class TestDyesEndpoint:
         """Test that dye IDs are unique"""
         # Arrange
         mock_dyes_data = [
-            {
-                "id": i,
-                "name_en": f"Dye {i}",
-                "name_es": f"Tinte {i}",
-                "name_de": f"Farbe {i}",
-                "name_fr": f"Teinture {i}",
-                "color": f"#{i:06x}"
-            }
+            DyeDTO(
+                id=i,
+                name_en=f"Dye {i}",
+                name_es=f"Tinte {i}",
+                name_de=f"Farbe {i}",
+                name_fr=f"Teinture {i}",
+                color=f"#{i:06x}"
+            )
             for i in [1, 5, 10, 50, 100]
         ]
 
@@ -452,14 +453,14 @@ class TestDyesEndpoint:
         """Test response with single dye"""
         # Arrange
         mock_dyes_data = [
-            {
-                "id": 42,
-                "name_en": "Only Dye",
-                "name_es": "Único tinte",
-                "name_de": "Einzige Farbe",
-                "name_fr": "Seule teinture",
-                "color": "#424242"
-            }
+            DyeDTO(
+                id=42,
+                name_en="Only Dye",
+                name_es="Único tinte",
+                name_de="Einzige Farbe",
+                name_fr="Seule teinture",
+                color="#424242"
+            )
         ]
 
         mock_service = AsyncMock(spec=DyesService)

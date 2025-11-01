@@ -17,4 +17,4 @@ router = APIRouter(prefix="/dyes", tags=["dyes"])
 @cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="dyes", key_builder=cache_key_builder)
 async def get_dyes(dyes_service: Annotated[DyesService, Depends(get_dyes_service)]) -> list[DyesResponse]:
     dyes_data = await dyes_service.get_all_dyes()
-    return [DyesResponse.map_response(dye) for dye in dyes_data]
+    return [DyesResponse.from_dto(dye) for dye in dyes_data]

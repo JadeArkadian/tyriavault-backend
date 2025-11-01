@@ -1,5 +1,4 @@
 import asyncio
-from typing import Any
 
 from app.core.constants import Constants
 from app.core.logging import logger
@@ -7,6 +6,7 @@ from app.core.utils import rgb_to_hex
 from app.database.repositories.dyes_repository import DyesRepository
 from app.database.session import async_session_maker
 from app.gw2.client import GW2Client
+from app.services.dtos.dyes_dto import DyeDTO
 
 
 class DyesService:
@@ -26,7 +26,7 @@ class DyesService:
         self.gw2_client = gw2_client
         self._background_tasks: set[asyncio.Task] = set()
 
-    async def get_all_dyes(self) -> list[dict]:
+    async def get_all_dyes(self) -> list[DyeDTO]:
         """
         Get all dyes from GW2 API and sync with database in the background.
         If API fails, fallback to database.
@@ -44,26 +44,33 @@ class DyesService:
             logger.warning(f"Failed to fetch dyes from GW2 API: {e}. Falling back to database.")
             return await self._get_dyes_from_db()
 
-    async def _get_dyes_from_api(self) -> list[dict]:
+    async def _get_dyes_from_api(self) -> list[DyeDTO]:
         """Fetch dyes from GW2 API in all supported languages and combine the data."""
         results = await asyncio.gather(
             *(self.gw2_client.get_colors(lang=lang) for lang in Constants.LANGS)
         )
 
-        combined_dyes: dict[int, dict[str, Any]] = {}
+        # Store temporary data for building DTOs
+        dye_data: dict[int, dict[str, str]] = {}
 
         for lang, dyes in zip(Constants.LANGS, results, strict=True):
             for dye in dyes:
                 dye_id = dye.id
-                if dye_id not in combined_dyes:
-                    combined_dyes[dye_id] = {
-                        "id": dye_id,
-                        "color": rgb_to_hex(dye.cloth.rgb)
-                    }
-                combined_dyes[dye_id][f"name_{lang}"] = dye.name
-        return list(combined_dyes.values())
+                dye_data.setdefault(dye_id, {"color": rgb_to_hex(dye.cloth.rgb)})
+                dye_data[dye_id][f"name_{lang}"] = dye.name
 
-    async def _get_dyes_from_db(self) -> list[dict]:
+        # Create DTOs directly from collected data
+        return [
+            DyeDTO(id=dye_id,
+                   name_en=data["name_en"],
+                   name_es=data["name_es"],
+                   name_de=data["name_de"],
+                   name_fr=data["name_fr"],
+                   color=data["color"])
+            for dye_id, data in dye_data.items()
+        ]
+
+    async def _get_dyes_from_db(self) -> list[DyeDTO]:
         """Fetch dyes from database as fallback."""
         try:
             dyes = await self.repository.get_all()
@@ -72,17 +79,8 @@ class DyesService:
                 logger.error("No dyes found in database for fallback")
                 raise RuntimeError("No dyes available from API or database")
 
-            # Convert ORM objects to dictionaries
-            dyes_data = []
-            for dye in dyes:
-                dyes_data.append({
-                    "id": dye.id,
-                    "name_en": dye.name_en,
-                    "name_es": dye.name_es,
-                    "name_de": dye.name_de,
-                    "name_fr": dye.name_fr,
-                    "color": dye.color
-                })
+            # Convert ORM objects to DTOs
+            dyes_data = [DyeDTO.from_orm(dye) for dye in dyes]
 
             logger.info(f"Retrieved {len(dyes_data)} dyes from database as fallback")
             return dyes_data
@@ -90,12 +88,14 @@ class DyesService:
             logger.error(f"Failed to retrieve dyes from database: {e}")
             raise
 
-    async def _sync_dyes_to_db(self, dyes_data: list[dict]) -> None:
+    async def _sync_dyes_to_db(self, dyes_data: list[DyeDTO]) -> None:
         """Sync dyes to database using a new session for background task."""
         try:
             async with async_session_maker() as session:
                 repository = DyesRepository(session)
-                await repository.upsert_batch(dyes_data)
+                # Convert DTOs to ORM objects for repository batch operation
+                dyes_orm_list = [dye.to_orm() for dye in dyes_data]
+                await repository.upsert_batch(dyes_orm_list)
                 await session.commit()
             logger.info(f"Synced {len(dyes_data)} dyes to database")
         except Exception as e:
