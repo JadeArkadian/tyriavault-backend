@@ -38,4 +38,7 @@ async def account_wallet(
     wallet_service = get_wallet_service(db, api_key_data["api_key"])
 
     # Fetch wallet using the UUID from validated API key
-    return await wallet_service.get_wallet(api_key_data["game_account_uuid"])
+    wallet_dtos = await wallet_service.get_wallet(api_key_data["game_account_uuid"])
+
+    # Convert DTOs to responses
+    return [WalletItemResponse.from_dto(item) for item in wallet_dtos]

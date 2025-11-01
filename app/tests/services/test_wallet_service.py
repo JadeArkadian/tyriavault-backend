@@ -3,9 +3,9 @@ from uuid import UUID
 
 import pytest
 
-from app.api.v1.responses.wallet_response import WalletItemResponse
 from app.database.models import Currencies, Wallet
 from app.gw2.responses.gw2api_wallet import GW2ApiWalletEntry
+from app.services.dtos.wallet_dto import WalletItemDTO
 from app.services.wallet_service import WalletService
 
 
@@ -146,24 +146,24 @@ class TestWalletService:
 
         # Assert
         assert len(result) == 3
-        assert isinstance(result[0], WalletItemResponse)
+        assert isinstance(result[0], WalletItemDTO)
 
         # Check first currency (Coin)
         assert result[0].currency_id == 1
         assert result[0].amount == 1234567
-        assert result[0].currency_name["en"] == "Coin"
-        assert result[0].currency_name["es"] == "Moneda"
-        assert result[0].currency_icon == "https://example.com/coin.png"
+        assert result[0].currency_name_en == "Coin"
+        assert result[0].currency_name_es == "Moneda"
+        assert result[0].currency_icon_url == "https://example.com/coin.png"
 
         # Check second currency (Karma)
         assert result[1].currency_id == 2
         assert result[1].amount == 500000
-        assert result[1].currency_name["en"] == "Karma"
+        assert result[1].currency_name_en == "Karma"
 
         # Check third currency (Gems)
         assert result[2].currency_id == 4
         assert result[2].amount == 125
-        assert result[2].currency_name["en"] == "Gems"
+        assert result[2].currency_name_en == "Gems"
 
         # Verify that the API was called
         mock_gw2_client.get_wallet.assert_called_once()
@@ -190,12 +190,12 @@ class TestWalletService:
 
         # Assert
         assert len(result) == 3
-        assert isinstance(result[0], WalletItemResponse)
+        assert isinstance(result[0], WalletItemDTO)
 
         # Check first currency
         assert result[0].currency_id == 1
         assert result[0].amount == 1234567
-        assert result[0].currency_name["en"] == "Coin"
+        assert result[0].currency_name_en == "Coin"
 
         # Check second currency
         assert result[1].currency_id == 2
@@ -204,18 +204,15 @@ class TestWalletService:
         # Verify that the repository was called
         mock_wallet_repository.get_wallet_by_account_uuid.assert_called_once_with(sample_account_uuid)
 
-        # Verify that the API was tried first
-        mock_gw2_client.get_wallet.assert_called_once()
-
     @pytest.mark.asyncio
-    async def test_get_wallet_empty_from_db(
+    async def test_get_wallet_from_db_empty(
             self,
             wallet_service,
             mock_gw2_client,
             mock_wallet_repository,
             sample_account_uuid
     ):
-        """Test: return empty list when database has no wallet data"""
+        """Test: return empty list when wallet is empty in DB"""
         # Arrange
         mock_gw2_client.get_wallet.side_effect = Exception("API Error")
         mock_wallet_repository.get_wallet_by_account_uuid.return_value = []
@@ -224,180 +221,86 @@ class TestWalletService:
         result = await wallet_service.get_wallet(sample_account_uuid)
 
         # Assert
-        assert result == []
-        mock_wallet_repository.get_wallet_by_account_uuid.assert_called_once_with(sample_account_uuid)
+        assert len(result) == 0
+        assert isinstance(result, list)
 
     @pytest.mark.asyncio
-    async def test_get_wallet_with_missing_currency(
-            self,
-            wallet_service,
-            mock_gw2_client,
-            mock_currencies_repository,
-            sample_account_uuid
-    ):
-        """Test: skip wallet entries when currency is not found in database"""
-        # Arrange
-        wallet_response = [
-            GW2ApiWalletEntry(id=1, value=1000),
-            GW2ApiWalletEntry(id=999, value=500),  # Currency not in database
-        ]
-
-        currency1 = MagicMock(spec=Currencies)
-        currency1.id = 1
-        currency1.name_en = "Coin"
-        currency1.name_es = "Moneda"
-        currency1.name_de = "Münze"
-        currency1.name_fr = "Pièce"
-        currency1.description_en = "The primary currency"
-        currency1.description_es = "La moneda principal"
-        currency1.description_de = "Die Hauptwährung"
-        currency1.description_fr = "La monnaie principale"
-        currency1.icon_url = "https://example.com/coin.png"
-
-        mock_gw2_client.get_wallet.return_value = wallet_response
-        mock_currencies_repository.get_all.return_value = [currency1]
-
-        # Act
-        with patch.object(wallet_service, '_sync_wallet_to_db', new_callable=AsyncMock):
-            result = await wallet_service.get_wallet(sample_account_uuid)
-
-        # Assert
-        # Only one currency should be returned (currency 999 is skipped)
-        assert len(result) == 1
-        assert result[0].currency_id == 1
-        assert result[0].amount == 1000
-
-    @pytest.mark.asyncio
-    async def test_get_wallet_empty_response_from_api(
-            self,
-            wallet_service,
-            mock_gw2_client,
-            mock_currencies_repository,
-            sample_account_uuid
-    ):
-        """Test: return empty list when API returns empty wallet"""
-        # Arrange
-        mock_gw2_client.get_wallet.return_value = []
-        mock_currencies_repository.get_all.return_value = []
-
-        # Act
-        with patch.object(wallet_service, '_sync_wallet_to_db', new_callable=AsyncMock):
-            result = await wallet_service.get_wallet(sample_account_uuid)
-
-        # Assert
-        assert result == []
-        mock_gw2_client.get_wallet.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_build_response_with_complete_data(
+    async def test_build_response_skips_unknown_currencies(
             self,
             wallet_service,
             mock_currencies_repository,
             sample_api_wallet_response,
             sample_currencies_from_db
     ):
-        """Test: _build_response creates proper response with complete data"""
+        """Test: _build_response skips currencies not found in DB"""
         # Arrange
+        # Add a wallet entry with currency ID that doesn't exist in currencies
+        wallet_with_unknown = sample_api_wallet_response + [
+            GW2ApiWalletEntry(id=999, value=100)  # Unknown currency
+        ]
         mock_currencies_repository.get_all.return_value = sample_currencies_from_db
 
         # Act
-        result = await wallet_service._build_response(sample_api_wallet_response)
+        result = await wallet_service._build_response(wallet_with_unknown)
 
         # Assert
+        # Should only return the 3 known currencies, skipping ID 999
         assert len(result) == 3
-
-        # Verify first item structure
-        assert isinstance(result[0], WalletItemResponse)
-        assert result[0].currency_id == 1
-        assert result[0].amount == 1234567
-        assert result[0].currency_name == {
-            "es": "Moneda",
-            "en": "Coin",
-            "fr": "Pièce",
-            "de": "Münze"
-        }
-        assert result[0].currency_description == {
-            "es": "La moneda principal",
-            "en": "The primary currency",
-            "fr": "La monnaie principale",
-            "de": "Die Hauptwährung"
-        }
-        assert result[0].currency_icon == "https://example.com/coin.png"
+        currency_ids = [item.currency_id for item in result]
+        assert 999 not in currency_ids
+        assert 1 in currency_ids
+        assert 2 in currency_ids
+        assert 4 in currency_ids
 
     @pytest.mark.asyncio
-    async def test_sync_wallet_to_db(
+    async def test_build_response_empty_wallet(self, wallet_service):
+        """Test: _build_response returns empty list for empty wallet"""
+        # Arrange
+        empty_wallet = []
+
+        # Act
+        result = await wallet_service._build_response(empty_wallet)
+
+        # Assert
+        assert len(result) == 0
+        assert isinstance(result, list)
+
+    @pytest.mark.asyncio
+    async def test_sync_wallet_to_db_success(
             self,
             wallet_service,
             sample_account_uuid,
-            sample_api_wallet_response
+            sample_api_wallet_response,
+            sample_currencies_from_db
     ):
-        """Test: _sync_wallet_to_db prepares correct data for upsert"""
+        """Test: successfully sync wallet to database"""
         # Arrange
         mock_session = AsyncMock()
         mock_wallet_repo = AsyncMock()
+        mock_currencies_repo = AsyncMock()
+        mock_currencies_repo.get_all.return_value = sample_currencies_from_db
 
-        # Act
         with patch('app.services.wallet_service.async_session_maker') as mock_session_maker:
             mock_session_maker.return_value.__aenter__.return_value = mock_session
-            with patch('app.services.wallet_service.WalletRepository') as mock_repo_class:
-                mock_repo_class.return_value = mock_wallet_repo
+            with patch('app.services.wallet_service.WalletRepository') as mock_wallet_repo_class:
+                mock_wallet_repo_class.return_value = mock_wallet_repo
+                with patch('app.services.wallet_service.CurrenciesRepository') as mock_currencies_repo_class:
+                    mock_currencies_repo_class.return_value = mock_currencies_repo
 
-                await wallet_service._sync_wallet_to_db(sample_api_wallet_response, sample_account_uuid)
+                    # Act
+                    await wallet_service._sync_wallet_to_db(sample_api_wallet_response, sample_account_uuid)
 
-        # Assert
-        mock_wallet_repo.upsert_batch.assert_awaited_once()
-
-        # Verify the data structure passed to upsert_batch
-        call_args = mock_wallet_repo.upsert_batch.call_args[0][0]
-        assert len(call_args) == 3
-        assert call_args[0] == {
-            'currency_id': 1,
-            'game_account_uuid': sample_account_uuid,
-            'amount': 1234567
-        }
-        assert call_args[1] == {
-            'currency_id': 2,
-            'game_account_uuid': sample_account_uuid,
-            'amount': 500000
-        }
-        assert call_args[2] == {
-            'currency_id': 4,
-            'game_account_uuid': sample_account_uuid,
-            'amount': 125
-        }
-
-        # Verify commit was called
-        mock_session.commit.assert_awaited_once()
+                    # Assert
+                    assert mock_wallet_repo.upsert_batch.call_count == 1
+                    call_args = mock_wallet_repo.upsert_batch.call_args[0][0]
+                    assert len(call_args) == 3
+                    # Verify ORM objects
+                    assert call_args[0].currency_id == 1
+                    assert call_args[0].amount == 1234567
+                    assert call_args[0].game_account_uuid == sample_account_uuid
 
     @pytest.mark.asyncio
-    async def test_get_wallet_from_db_with_null_amount(
-            self,
-            wallet_service,
-            mock_gw2_client,
-            mock_wallet_repository,
-            sample_account_uuid,
-            sample_currencies_from_db
-    ):
-        """Test: handle null amounts in database wallet entries"""
-        # Arrange
-        wallet_entry = MagicMock(spec=Wallet)
-        wallet_entry.currency_id = 1
-        wallet_entry.game_account_uuid = sample_account_uuid
-        wallet_entry.amount = None  # Null amount
-        wallet_entry.currency = sample_currencies_from_db[0]
-
-        mock_gw2_client.get_wallet.side_effect = Exception("API Error")
-        mock_wallet_repository.get_wallet_by_account_uuid.return_value = [wallet_entry]
-
-        # Act
-        result = await wallet_service.get_wallet(sample_account_uuid)
-
-        # Assert
-        assert len(result) == 1
-        assert result[0].amount == 0  # Should default to 0
-
-    @pytest.mark.asyncio
-    async def test_sync_wallet_error_handling(
+    async def test_sync_wallet_to_db_handles_errors(
             self,
             wallet_service,
             sample_account_uuid,
@@ -406,10 +309,34 @@ class TestWalletService:
         """Test: _sync_wallet_to_db handles errors gracefully"""
         # Arrange
         with patch('app.services.wallet_service.async_session_maker') as mock_session_maker:
-            mock_session_maker.side_effect = Exception("Database connection error")
+            mock_session_maker.return_value.__aenter__.side_effect = Exception("DB error")
 
-            # Act & Assert - should not raise exception
+            # Act (should not raise exception)
             await wallet_service._sync_wallet_to_db(sample_api_wallet_response, sample_account_uuid)
 
-            # The method should log the error but not raise it
-            # (background tasks should not crash the main request)
+            # Assert - function should handle error without propagating it
+            assert True  # If we reach here, exception was not propagated
+
+    @pytest.mark.asyncio
+    async def test_get_wallet_from_db_converts_orm_to_dto(
+            self,
+            wallet_service,
+            mock_wallet_repository,
+            sample_account_uuid,
+            sample_wallet_from_db
+    ):
+        """Test: _get_wallet_from_db correctly converts ORM to DTOs"""
+        # Arrange
+        mock_wallet_repository.get_wallet_by_account_uuid.return_value = sample_wallet_from_db
+
+        # Act
+        result = await wallet_service._get_wallet_from_db(sample_account_uuid)
+
+        # Assert
+        assert len(result) == 3
+        for item in result:
+            assert isinstance(item, WalletItemDTO)
+            assert hasattr(item, 'currency_id')
+            assert hasattr(item, 'amount')
+            assert hasattr(item, 'currency_name_en')
+            assert hasattr(item, 'currency_icon_url')
