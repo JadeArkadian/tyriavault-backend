@@ -20,6 +20,7 @@ from app.gw2.client import GW2Client
 from app.services.account_service import AccountService
 from app.services.apikey_service import ApiKeyService
 from app.services.currencies_service import CurrenciesService
+from app.services.dtos.apikey_dto import ApiKeyDTO
 from app.services.dyes_service import DyesService
 from app.services.health_service import HealthService
 from app.services.wallet_service import WalletService
@@ -72,9 +73,9 @@ def get_wallet_service(db: Annotated[AsyncSession, Depends(get_db)], apikey: str
 @cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="apikey", key_builder=cache_key_builder)
 async def validate_api_key(
         authorization: str = Header(..., description="Authorization header: Bearer <API_KEY>"),
-        api_key_service: ApiKeyService = Depends(get_api_key_service)) -> dict:
+        api_key_service: ApiKeyService = Depends(get_api_key_service)) -> ApiKeyDTO:
     """
-    Dependency to validate API key from Authorization header and return its data.
+    Dependency to validate API key from Authorization header and return ApiKeyDTO.
     Use it in endpoints that require API key authentication.
     Raises HTTPException if API key is invalid or not registered.
     """
@@ -88,13 +89,13 @@ async def validate_api_key(
     try:
         logger.debug("Validating API key...")
         # Check if API key exists in DB
-        api_key_data = await api_key_service.get_apikey_data_from_db(api_key)
+        api_key_dto = await api_key_service.get_apikey_data_from_db(api_key)
 
         # First time using this API key? -> Register it
-        if not api_key_data:
-            api_key_data = await api_key_service.validate_and_register(api_key)
+        if not api_key_dto:
+            api_key_dto = await api_key_service.validate_and_register(api_key)
 
-        return api_key_data
+        return api_key_dto
 
     except RuntimeError as e:
         # World not found or other validation errors

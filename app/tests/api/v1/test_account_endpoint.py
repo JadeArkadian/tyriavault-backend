@@ -8,6 +8,7 @@ import pytest
 from app.main import api
 from app.services.account_service import AccountService
 from app.services.dtos.account_dto import AccountDTO
+from app.services.dtos.apikey_dto import ApiKeyDTO
 from app.services.services import validate_api_key
 
 
@@ -18,11 +19,11 @@ class TestAccountEndpoint:
     async def test_get_account_details_success(self):
         """Test successful response from GET /account endpoint"""
         # Arrange - Mock API key validation
-        mock_api_key_data = {
-            "api_key": "test-api-key-1234",
-            "game_account_uuid": UUID("12345678-1234-1234-1234-123456789abc"),
-            "world_id": 2001
-        }
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-1234",
+            permissions=["account"],
+            game_account_uuid=UUID("12345678-1234-1234-1234-123456789abc")
+        )
 
         # Mock account DTO from service
         mock_account_dto = AccountDTO(
@@ -43,7 +44,7 @@ class TestAccountEndpoint:
         mock_service.get_account_details = AsyncMock(return_value=mock_account_dto)
 
         # Override dependencies
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         # Mock get_account_service to return our mock service
         with patch('app.api.v1.account_endpoint.get_account_service', return_value=mock_service):
@@ -72,18 +73,18 @@ class TestAccountEndpoint:
                 assert "creation_date" in json_response
 
                 # Verify service was called with correct UUID
-                mock_service.get_account_details.assert_called_once_with(mock_api_key_data["game_account_uuid"])
+                mock_service.get_account_details.assert_called_once_with(mock_api_key_dto.game_account_uuid)
             finally:
                 api.dependency_overrides.clear()
 
     async def test_get_account_details_without_world(self):
         """Test response when account has no world"""
         # Arrange
-        mock_api_key_data = {
-            "api_key": "test-api-key-1234",
-            "game_account_uuid": UUID("12345678-1234-1234-1234-123456789abc"),
-            "world_id": None
-        }
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-1234",
+            permissions=["account"],
+            game_account_uuid=UUID("12345678-1234-1234-1234-123456789abc")
+        )
 
         mock_account_dto = AccountDTO(
             uuid=UUID("12345678-1234-1234-1234-123456789abc"),
@@ -101,7 +102,7 @@ class TestAccountEndpoint:
         mock_service = AsyncMock(spec=AccountService)
         mock_service.get_account_details = AsyncMock(return_value=mock_account_dto)
 
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         with patch('app.api.v1.account_endpoint.get_account_service', return_value=mock_service):
             try:
@@ -123,16 +124,16 @@ class TestAccountEndpoint:
     async def test_get_account_details_service_error(self):
         """Test response when service raises an exception"""
         # Arrange
-        mock_api_key_data = {
-            "api_key": "test-api-key-1234",
-            "game_account_uuid": UUID("12345678-1234-1234-1234-123456789abc"),
-            "world_id": 2001
-        }
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-1234",
+            permissions=["account"],
+            game_account_uuid=UUID("12345678-1234-1234-1234-123456789abc")
+        )
 
         mock_service = AsyncMock(spec=AccountService)
         mock_service.get_account_details = AsyncMock(side_effect=RuntimeError("No account data available"))
 
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         with patch('app.api.v1.account_endpoint.get_account_service', return_value=mock_service):
             try:
@@ -146,11 +147,11 @@ class TestAccountEndpoint:
     async def test_get_account_details_response_structure(self):
         """Test that response follows the expected AccountInfoResponse schema"""
         # Arrange
-        mock_api_key_data = {
-            "api_key": "test-api-key-1234",
-            "game_account_uuid": UUID("12345678-1234-1234-1234-123456789abc"),
-            "world_id": 2001
-        }
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-1234",
+            permissions=["account"],
+            game_account_uuid=UUID("12345678-1234-1234-1234-123456789abc")
+        )
 
         mock_account_dto = AccountDTO(
             uuid=UUID("12345678-1234-1234-1234-123456789abc"),
@@ -168,7 +169,7 @@ class TestAccountEndpoint:
         mock_service = AsyncMock(spec=AccountService)
         mock_service.get_account_details = AsyncMock(return_value=mock_account_dto)
 
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         with patch('app.api.v1.account_endpoint.get_account_service', return_value=mock_service):
             try:
@@ -204,11 +205,11 @@ class TestAccountEndpoint:
     async def test_get_account_details_content_type(self):
         """Test that response has correct content type"""
         # Arrange
-        mock_api_key_data = {
-            "api_key": "test-api-key-1234",
-            "game_account_uuid": UUID("12345678-1234-1234-1234-123456789abc"),
-            "world_id": 2001
-        }
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-1234",
+            permissions=["account"],
+            game_account_uuid=UUID("12345678-1234-1234-1234-123456789abc")
+        )
 
         mock_account_dto = AccountDTO(
             uuid=UUID("12345678-1234-1234-1234-123456789abc"),
@@ -222,7 +223,7 @@ class TestAccountEndpoint:
         mock_service = AsyncMock(spec=AccountService)
         mock_service.get_account_details = AsyncMock(return_value=mock_account_dto)
 
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         with patch('app.api.v1.account_endpoint.get_account_service', return_value=mock_service):
             try:
@@ -239,11 +240,11 @@ class TestAccountEndpoint:
     async def test_get_account_details_with_all_expansions(self):
         """Test account with all expansions"""
         # Arrange
-        mock_api_key_data = {
-            "api_key": "test-api-key-1234",
-            "game_account_uuid": UUID("12345678-1234-1234-1234-123456789abc"),
-            "world_id": 2001
-        }
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-1234",
+            permissions=["account"],
+            game_account_uuid=UUID("12345678-1234-1234-1234-123456789abc")
+        )
 
         mock_account_dto = AccountDTO(
             uuid=UUID("12345678-1234-1234-1234-123456789abc"),
@@ -268,7 +269,7 @@ class TestAccountEndpoint:
         mock_service = AsyncMock(spec=AccountService)
         mock_service.get_account_details = AsyncMock(return_value=mock_account_dto)
 
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         with patch('app.api.v1.account_endpoint.get_account_service', return_value=mock_service):
             try:

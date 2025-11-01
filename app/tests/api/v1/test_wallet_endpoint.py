@@ -5,6 +5,7 @@ import httpx
 import pytest
 
 from app.main import api
+from app.services.dtos.apikey_dto import ApiKeyDTO
 from app.services.dtos.wallet_dto import WalletItemDTO
 from app.services.services import validate_api_key
 from app.services.wallet_service import WalletService
@@ -16,12 +17,12 @@ class TestWalletEndpoint:
 
     async def test_get_wallet_success(self):
         """Test successful response from GET /account/wallet endpoint"""
-        # Arrange - Mock API key validation
-        mock_api_key_data = {
-            "api_key": "test-api-key-1234",
-            "game_account_uuid": UUID("12345678-1234-1234-1234-123456789abc"),
-            "world_id": 2001
-        }
+        # Arrange - Mock API key validation with DTO
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-1234",
+            permissions=["account", "wallet"],
+            game_account_uuid=UUID("12345678-1234-1234-1234-123456789abc")
+        )
 
         # Mock wallet DTOs from service
         mock_wallet_dtos = [
@@ -71,7 +72,7 @@ class TestWalletEndpoint:
         mock_service.get_wallet = AsyncMock(return_value=mock_wallet_dtos)
 
         # Override dependencies
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         # Mock get_wallet_service to return our mock service
         with patch('app.api.v1.account_endpoint.get_wallet_service', return_value=mock_service):
@@ -107,24 +108,24 @@ class TestWalletEndpoint:
                 assert third_item["currency_name"]["en"] == "Gems"
 
                 # Verify service was called with correct UUID
-                mock_service.get_wallet.assert_called_once_with(mock_api_key_data["game_account_uuid"])
+                mock_service.get_wallet.assert_called_once_with(mock_api_key_dto.game_account_uuid)
             finally:
                 api.dependency_overrides.clear()
 
     async def test_get_wallet_empty(self):
         """Test response when wallet is empty"""
         # Arrange
-        mock_api_key_data = {
-            "api_key": "test-api-key-1234",
-            "game_account_uuid": UUID("12345678-1234-1234-1234-123456789abc"),
-            "world_id": 2001
-        }
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-1234",
+            permissions=["account", "wallet"],
+            game_account_uuid=UUID("12345678-1234-1234-1234-123456789abc")
+        )
 
         # Mock empty wallet
         mock_service = AsyncMock(spec=WalletService)
         mock_service.get_wallet = AsyncMock(return_value=[])
 
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         with patch('app.api.v1.account_endpoint.get_wallet_service', return_value=mock_service):
             try:
@@ -141,16 +142,16 @@ class TestWalletEndpoint:
     async def test_get_wallet_service_error(self):
         """Test response when service raises an exception"""
         # Arrange
-        mock_api_key_data = {
-            "api_key": "test-api-key-1234",
-            "game_account_uuid": UUID("12345678-1234-1234-1234-123456789abc"),
-            "world_id": 2001
-        }
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-1234",
+            permissions=["account", "wallet"],
+            game_account_uuid=UUID("12345678-1234-1234-1234-123456789abc")
+        )
 
         mock_service = AsyncMock(spec=WalletService)
         mock_service.get_wallet = AsyncMock(side_effect=RuntimeError("Database error"))
 
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         with patch('app.api.v1.account_endpoint.get_wallet_service', return_value=mock_service):
             try:
@@ -164,11 +165,11 @@ class TestWalletEndpoint:
     async def test_get_wallet_response_structure(self):
         """Test that response follows the expected WalletItemResponse schema"""
         # Arrange
-        mock_api_key_data = {
-            "api_key": "test-api-key-1234",
-            "game_account_uuid": UUID("12345678-1234-1234-1234-123456789abc"),
-            "world_id": 2001
-        }
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-1234",
+            permissions=["account", "wallet"],
+            game_account_uuid=UUID("12345678-1234-1234-1234-123456789abc")
+        )
 
         mock_wallet_dtos = [
             WalletItemDTO(
@@ -189,7 +190,7 @@ class TestWalletEndpoint:
         mock_service = AsyncMock(spec=WalletService)
         mock_service.get_wallet = AsyncMock(return_value=mock_wallet_dtos)
 
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         with patch('app.api.v1.account_endpoint.get_wallet_service', return_value=mock_service):
             try:
@@ -227,11 +228,11 @@ class TestWalletEndpoint:
     async def test_get_wallet_multiple_currencies(self):
         """Test response with multiple currencies"""
         # Arrange
-        mock_api_key_data = {
-            "api_key": "test-api-key-1234",
-            "game_account_uuid": UUID("12345678-1234-1234-1234-123456789abc"),
-            "world_id": 2001
-        }
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-1234",
+            permissions=["account", "wallet"],
+            game_account_uuid=UUID("12345678-1234-1234-1234-123456789abc")
+        )
 
         # Create 10 different currencies
         mock_wallet_dtos = [
@@ -254,7 +255,7 @@ class TestWalletEndpoint:
         mock_service = AsyncMock(spec=WalletService)
         mock_service.get_wallet = AsyncMock(return_value=mock_wallet_dtos)
 
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         with patch('app.api.v1.account_endpoint.get_wallet_service', return_value=mock_service):
             try:
@@ -278,16 +279,16 @@ class TestWalletEndpoint:
     async def test_get_wallet_content_type(self):
         """Test that response has correct content type"""
         # Arrange
-        mock_api_key_data = {
-            "api_key": "test-api-key-1234",
-            "game_account_uuid": UUID("12345678-1234-1234-1234-123456789abc"),
-            "world_id": 2001
-        }
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-1234",
+            permissions=["account", "wallet"],
+            game_account_uuid=UUID("12345678-1234-1234-1234-123456789abc")
+        )
 
         mock_service = AsyncMock(spec=WalletService)
         mock_service.get_wallet = AsyncMock(return_value=[])
 
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         with patch('app.api.v1.account_endpoint.get_wallet_service', return_value=mock_service):
             try:
