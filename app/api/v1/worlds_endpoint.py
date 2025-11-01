@@ -17,4 +17,4 @@ router = APIRouter(prefix="/worlds", tags=["worlds"])
 @cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="worlds", key_builder=cache_key_builder)
 async def get_worlds(worlds_service: Annotated[WorldsService, Depends(get_worlds_service)]) -> list[WorldsResponse]:
     worlds_data = await worlds_service.get_all_worlds()
-    return [WorldsResponse.map_response(world) for world in worlds_data]
+    return [WorldsResponse.from_dto(world) for world in worlds_data]
