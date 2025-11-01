@@ -1,11 +1,8 @@
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock
-from uuid import UUID
-
 import pytest
 
 from app.api.v1.responses.account_response import AccountInfoResponse
 from app.database.models import GameAccounts, Worlds
+from app.gw2.responses import GW2ApiAccount
 from app.services.account_service import AccountService
 
 
@@ -49,15 +46,15 @@ def sample_account_uuid():
 @pytest.fixture
 def sample_api_response():
     """Sample response from GW2 API"""
-    return {
-        "id": "12345678-1234-1234-1234-123456789abc",
-        "name": "TestAccount.1234",
-        "created": "2015-06-16T04:31:00Z",
-        "world": 2001,
-        "fractal_level": 75,
-        "access": ["PlayForFree", "GuildWars2", "HeartOfThorns", "PathOfFire"],
-        "last_modified": "2023-12-01T10:00:00Z"
-    }
+    return GW2ApiAccount(
+        id="12345678-1234-1234-1234-123456789abc",
+        name="TestAccount.1234",
+        age=315360000,  # ~10 years in seconds
+        created=datetime(2015, 6, 16, 4, 31, 0, tzinfo=timezone.utc),
+        world=2001,
+        fractal_level=75,
+        access=["PlayForFree", "GuildWars2", "HeartOfThorns", "PathOfFire"]
+    )
 
 
 @pytest.fixture
@@ -110,10 +107,10 @@ class TestAccountService:
 
         # Assert
         assert isinstance(result, AccountInfoResponse)
-        assert result.uuid == UUID(sample_api_response["id"])
-        assert result.account_name == sample_api_response["name"]
-        assert result.fractal_level == sample_api_response["fractal_level"]
-        assert result.content_access == sample_api_response["access"]
+        assert result.uuid == UUID(sample_api_response.id)
+        assert result.account_name == sample_api_response.name
+        assert result.fractal_level == sample_api_response.fractal_level
+        assert result.content_access == sample_api_response.access
         assert result.world_name["en"] == "Anvil Rock"
         assert result.world_name["es"] == "Roca del Yunque"
         assert result.world_name["de"] == "Ambossfelsen"
@@ -170,16 +167,24 @@ class TestAccountService:
     ):
         """Test: account details without world information"""
         # Arrange
-        sample_api_response["world"] = None
-        mock_gw2_client.get_account.return_value = sample_api_response
+        sample_api_response_no_world = GW2ApiAccount(
+            id=sample_api_response.id,
+            name=sample_api_response.name,
+            age=sample_api_response.age,
+            created=sample_api_response.created,
+            world=None,
+            fractal_level=sample_api_response.fractal_level,
+            access=sample_api_response.access
+        )
+        mock_gw2_client.get_account.return_value = sample_api_response_no_world
 
         # Act
         result = await account_service.get_account_details(sample_account_uuid)
 
         # Assert
         assert isinstance(result, AccountInfoResponse)
-        assert result.uuid == UUID(sample_api_response["id"])
-        assert result.account_name == sample_api_response["name"]
+        assert result.uuid == UUID(sample_api_response_no_world.id)
+        assert result.account_name == sample_api_response_no_world.name
         assert result.world_name["en"] is None
         assert result.world_name["es"] is None
         assert result.world_name["de"] is None
@@ -207,8 +212,8 @@ class TestAccountService:
 
         # Assert
         assert isinstance(result, AccountInfoResponse)
-        assert result.uuid == UUID(sample_api_response["id"])
-        assert result.account_name == sample_api_response["name"]
+        assert result.uuid == UUID(sample_api_response.id)
+        assert result.account_name == sample_api_response.name
         assert result.world_name["en"] is None
         assert result.world_name["es"] is None
         assert result.world_name["de"] is None
@@ -255,8 +260,8 @@ class TestAccountService:
 
         # Assert
         assert isinstance(result, AccountInfoResponse)
-        assert result.uuid == UUID(sample_api_response["id"])
-        assert result.account_name == sample_api_response["name"]
+        assert result.uuid == UUID(sample_api_response.id)
+        assert result.account_name == sample_api_response.name
         assert result.world_name["en"] == "Anvil Rock"
         assert result.world_name["es"] == "Roca del Yunque"
         assert result.world_name["de"] == "Ambossfelsen"
@@ -303,3 +308,8 @@ class TestAccountService:
         assert result.uuid == sample_account_uuid
         assert result.account_name == "TestAccount.1234"
         mock_account_repository.get_by_uuid.assert_called_once_with(sample_account_uuid)
+
+
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID

@@ -65,49 +65,33 @@ class AccountService:
                 logger.error(f"No account found in database for UUID: {account_uuid}")
                 raise RuntimeError("No account data available from API or database")
 
-            # Convert DB model to dict format expected by map_response
-            account_data = {
-                "id": str(game_account.uuid),
-                "name": game_account.account_name,
-                "created": game_account.creation_date.isoformat(),
-                "fractal_level": game_account.fractal_level,
-                "access": game_account.content_access or [],
-                "world": game_account.world_id
-            }
-
-            return await self._build_response(account_data)
+            return await self._build_response(game_account)
 
         except Exception as e:
             logger.error(f"Failed to retrieve account from database: {e}")
             raise
 
-    async def _build_response(self, account_data: GW2ApiAccount | dict) -> AccountInfoResponse:
+    async def _build_response(self, account_data: GW2ApiAccount | GameAccounts) -> AccountInfoResponse:
         """Build the response by combining account data with world information."""
-        # Support both Account class and dict for backwards compatibility
+        # Support both GW2ApiAccount and GameAccounts
         if isinstance(account_data, GW2ApiAccount):
             world_id = account_data.world
-            account_dict = account_data.model_dump()
         else:
-            world_id = account_data.get("world")
-            account_dict = account_data
+            world_id = account_data.world_id
 
-        world_info = None
+        world = None
 
         if world_id:
             logger.info(f"Fetching world info for world_id: {world_id}")
             world = await self.worlds_repository.get_by_id(world_id)
-            if world:
-                world_info = {
-                    "name_en": world.name_en,
-                    "name_es": world.name_es,
-                    "name_de": world.name_de,
-                    "name_fr": world.name_fr,
-                }
-            else:
+            if not world:
                 logger.warning(f"World {world_id} not found in database. Consider syncing worlds data.")
 
-        response = AccountInfoResponse.map_response(account_dict, world_info)
-        logger.info(f"Successfully fetched account details for: {account_dict.get('name')}")
+        response = AccountInfoResponse.map_response(account_data, world)
+
+        # Get account name for logging
+        account_name = account_data.name if isinstance(account_data, GW2ApiAccount) else account_data.account_name
+        logger.info(f"Successfully fetched account details for: {account_name}")
         return response
 
     async def _sync_account_to_db(self, account_data: GW2ApiAccount) -> None:
@@ -116,7 +100,6 @@ class AccountService:
             async with async_session_maker() as session:
                 repository = AccountRepository(session)
 
-                # Create GameAccounts entity from API data
                 game_account = GameAccounts(
                     uuid=UUID(account_data.id),
                     account_name=account_data.name,
