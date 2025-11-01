@@ -29,7 +29,7 @@ class CurrenciesRepository(BaseRepository[Currencies]):
         if not currencies_data:
             return
 
-            # Add all objects to the session
+        # Add all objects to the session
         for currency in currencies_data:
             await self.session.merge(currency)
 

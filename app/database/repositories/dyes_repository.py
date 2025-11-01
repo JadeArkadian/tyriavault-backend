@@ -29,7 +29,7 @@ class DyesRepository(BaseRepository[Dyes]):
         if not dyes_data:
             return
 
-            # Add all objects to the session
+        # Add all objects to the session
         for dye in dyes_data:
             await self.session.merge(dye)
 
