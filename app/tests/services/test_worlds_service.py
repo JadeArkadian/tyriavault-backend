@@ -102,13 +102,14 @@ class TestWorldsService:
 
         # Assert
         assert len(result) == 2
-        assert result[0]["id"] == 1001
-        assert result[0]["name_en"] == "Anvil Rock"
-        assert result[0]["name_es"] == "Roca del Yunque"
-        assert result[0]["name_de"] == "Ambossfelsen"
-        assert result[0]["name_fr"] == "Rocher de l'enclume"
-        assert result[1]["id"] == 1002
-        assert result[1]["name_en"] == "Borlis Pass"
+        assert isinstance(result[0], MagicMock)  # Mock object, but represents Worlds
+        assert result[0].id == 1001
+        assert result[0].name_en == "Anvil Rock"
+        assert result[0].name_es == "Roca del Yunque"
+        assert result[0].name_de == "Ambossfelsen"
+        assert result[0].name_fr == "Rocher de l'enclume"
+        assert result[1].id == 1002
+        assert result[1].name_en == "Borlis Pass"
 
         # Verify that only the repository was called
         mock_repository.get_all.assert_called_once()
@@ -135,15 +136,17 @@ class TestWorldsService:
         ]
 
         # Act
-        result = await worlds_service.get_all_worlds()
+        with patch.object(worlds_service, '_sync_worlds_to_db', new_callable=AsyncMock):
+            result = await worlds_service.get_all_worlds()
 
         # Assert
         assert len(result) == 2
-        assert result[0]["id"] == 1001
-        assert result[0]["name_en"] == "Anvil Rock"
-        assert result[0]["name_es"] == "Roca del Yunque"
-        assert result[0]["name_de"] == "Ambossfelsen"
-        assert result[0]["name_fr"] == "Rocher de l'enclume"
+        assert isinstance(result[0], Worlds)
+        assert result[0].id == 1001
+        assert result[0].name_en == "Anvil Rock"
+        assert result[0].name_es == "Roca del Yunque"
+        assert result[0].name_de == "Ambossfelsen"
+        assert result[0].name_fr == "Rocher de l'enclume"
 
         # Verify that DB was tried first
         mock_repository.get_all.assert_called_once()
@@ -173,11 +176,12 @@ class TestWorldsService:
         ]
 
         # Act
-        result = await worlds_service.get_all_worlds()
+        with patch.object(worlds_service, '_sync_worlds_to_db', new_callable=AsyncMock):
+            result = await worlds_service.get_all_worlds()
 
         # Assert
         assert len(result) == 2
-        assert result[0]["id"] == 1001
+        assert result[0].id == 1001
         mock_repository.get_all.assert_called_once()
         assert mock_gw2_client.get_worlds.call_count == 4
 
@@ -207,18 +211,20 @@ class TestWorldsService:
         assert len(result) == 2
 
         # Verify first world
-        world_1001 = next(w for w in result if w["id"] == 1001)
-        assert world_1001["name_en"] == "Anvil Rock"
-        assert world_1001["name_es"] == "Roca del Yunque"
-        assert world_1001["name_de"] == "Ambossfelsen"
-        assert world_1001["name_fr"] == "Rocher de l'enclume"
+        world_1001 = next(w for w in result if w.id == 1001)
+        assert isinstance(world_1001, Worlds)
+        assert world_1001.name_en == "Anvil Rock"
+        assert world_1001.name_es == "Roca del Yunque"
+        assert world_1001.name_de == "Ambossfelsen"
+        assert world_1001.name_fr == "Rocher de l'enclume"
 
         # Verify second world
-        world_1002 = next(w for w in result if w["id"] == 1002)
-        assert world_1002["name_en"] == "Borlis Pass"
-        assert world_1002["name_es"] == "Paso de Borlis"
-        assert world_1002["name_de"] == "Borlispass"
-        assert world_1002["name_fr"] == "Passage de Borlis"
+        world_1002 = next(w for w in result if w.id == 1002)
+        assert isinstance(world_1002, Worlds)
+        assert world_1002.name_en == "Borlis Pass"
+        assert world_1002.name_es == "Paso de Borlis"
+        assert world_1002.name_de == "Borlispass"
+        assert world_1002.name_fr == "Passage de Borlis"
 
         # Verify that API was called for each language
         assert mock_gw2_client.get_worlds.call_count == 4
@@ -244,10 +250,10 @@ class TestWorldsService:
 
         # Assert
         assert len(result) == 2
-        assert result[0]["id"] == 1001
-        assert result[0]["name_en"] == "Anvil Rock"
-        assert result[1]["id"] == 1002
-        assert result[1]["name_en"] == "Borlis Pass"
+        assert result[0].id == 1001
+        assert result[0].name_en == "Anvil Rock"
+        assert result[1].id == 1002
+        assert result[1].name_en == "Borlis Pass"
         mock_repository.get_all.assert_called_once()
 
     @pytest.mark.asyncio
@@ -287,13 +293,8 @@ class TestWorldsService:
         """Test: _sync_worlds_to_db correctly synchronizes data"""
         # Arrange
         worlds_data = [
-            {
-                "id": 1001,
-                "name_en": "Anvil Rock",
-                "name_es": "Roca del Yunque",
-                "name_de": "Ambossfelsen",
-                "name_fr": "Rocher de l'enclume"
-            }
+            Worlds(id=1001, name_en="Anvil Rock", name_es="Roca del Yunque",
+                   name_de="Ambossfelsen", name_fr="Rocher de l'enclume")
         ]
 
         # Mock async_session_maker
@@ -318,7 +319,7 @@ class TestWorldsService:
     ):
         """Test: _sync_worlds_to_db handles errors without propagating exception"""
         # Arrange
-        worlds_data = [{"id": 1001, "name_en": "Test"}]
+        worlds_data = [Worlds(id=1001, name_en="Test", name_es="Test", name_de="Test", name_fr="Test")]
 
         with patch('app.services.worlds_service.async_session_maker') as mock_session_maker:
             mock_session_maker.return_value.__aenter__.side_effect = Exception("DB error")

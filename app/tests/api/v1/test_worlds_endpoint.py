@@ -1,11 +1,23 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
 
+from app.database.models import Worlds
 from app.main import api
 from app.services.services import get_worlds_service
 from app.services.worlds_service import WorldsService
+
+
+def create_mock_world(world_id: int, name_en: str, name_es: str, name_de: str, name_fr: str) -> MagicMock:
+    """Helper function to create a mock Worlds object"""
+    world = MagicMock(spec=Worlds)
+    world.id = world_id
+    world.name_en = name_en
+    world.name_es = name_es
+    world.name_de = name_de
+    world.name_fr = name_fr
+    return world
 
 
 @pytest.mark.asyncio
@@ -16,20 +28,8 @@ class TestWorldsEndpoint:
         """Test successful response from GET /worlds endpoint"""
         # Arrange - Mock data from service
         mock_worlds_data = [
-            {
-                "id": 1001,
-                "name_en": "Anvil Rock",
-                "name_es": "Roca del Yunque",
-                "name_de": "Ambossfelsen",
-                "name_fr": "Rocher de l'enclume"
-            },
-            {
-                "id": 1002,
-                "name_en": "Borlis Pass",
-                "name_es": "Paso de Borlis",
-                "name_de": "Borlispass",
-                "name_fr": "Passage de Borlis"
-            }
+            create_mock_world(1001, "Anvil Rock", "Roca del Yunque", "Ambossfelsen", "Rocher de l'enclume"),
+            create_mock_world(1002, "Borlis Pass", "Paso de Borlis", "Borlispass", "Passage de Borlis")
         ]
 
         # Mock the service
@@ -117,13 +117,7 @@ class TestWorldsEndpoint:
         """Test that response follows the expected WorldsResponse schema"""
         # Arrange
         mock_worlds_data = [
-            {
-                "id": 2001,
-                "name_en": "Fissure of Woe",
-                "name_es": "Fisura del Infortunio",
-                "name_de": "Kluft des Leids",
-                "name_fr": "Fissure du malheur"
-            }
+            create_mock_world(2001, "Fissure of Woe", "Fisura del Infortunio", "Kluft des Leids", "Fissure du malheur")
         ]
 
         mock_service = AsyncMock(spec=WorldsService)
@@ -156,13 +150,7 @@ class TestWorldsEndpoint:
         """Test response with multiple worlds"""
         # Arrange
         mock_worlds_data = [
-            {
-                "id": 1000 + i,
-                "name_en": f"World {i}",
-                "name_es": f"Mundo {i}",
-                "name_de": f"Welt {i}",
-                "name_fr": f"Monde {i}"
-            }
+            create_mock_world(1000 + i, f"World {i}", f"Mundo {i}", f"Welt {i}", f"Monde {i}")
             for i in range(1, 51)  # 50 worlds
         ]
 
@@ -192,13 +180,7 @@ class TestWorldsEndpoint:
         """Test that cache is working (service should only be called once for multiple requests)"""
         # Arrange
         mock_worlds_data = [
-            {
-                "id": 1001,
-                "name_en": "Anvil Rock",
-                "name_es": "Roca del Yunque",
-                "name_de": "Ambossfelsen",
-                "name_fr": "Rocher de l'enclume"
-            }
+            create_mock_world(1001, "Anvil Rock", "Roca del Yunque", "Ambossfelsen", "Rocher de l'enclume")
         ]
 
         mock_service = AsyncMock(spec=WorldsService)
@@ -245,41 +227,11 @@ class TestWorldsEndpoint:
         """Test with actual GW2 world names"""
         # Arrange
         mock_worlds_data = [
-            {
-                "id": 1001,
-                "name_en": "Anvil Rock",
-                "name_es": "Roca del Yunque",
-                "name_de": "Ambossfelsen",
-                "name_fr": "Rocher de l'enclume"
-            },
-            {
-                "id": 1002,
-                "name_en": "Borlis Pass",
-                "name_es": "Paso de Borlis",
-                "name_de": "Borlispass",
-                "name_fr": "Passage de Borlis"
-            },
-            {
-                "id": 1003,
-                "name_en": "Yak's Bend",
-                "name_es": "Recodo del Yak",
-                "name_de": "Yaks Biegung",
-                "name_fr": "Courbe du yak"
-            },
-            {
-                "id": 1004,
-                "name_en": "Henge of Denravi",
-                "name_es": "Círculo de Denravi",
-                "name_de": "Henge von Denravi",
-                "name_fr": "Henge de Denravi"
-            },
-            {
-                "id": 1005,
-                "name_en": "Sorrow's Furnace",
-                "name_es": "Horno del Pesar",
-                "name_de": "Sorrows Ofen",
-                "name_fr": "Fourneau du chagrin"
-            }
+            create_mock_world(1001, "Anvil Rock", "Roca del Yunque", "Ambossfelsen", "Rocher de l'enclume"),
+            create_mock_world(1002, "Borlis Pass", "Paso de Borlis", "Borlispass", "Passage de Borlis"),
+            create_mock_world(1003, "Yak's Bend", "Recodo del Yak", "Yaks Biegung", "Courbe du yak"),
+            create_mock_world(1004, "Henge of Denravi", "Círculo de Denravi", "Henge von Denravi", "Henge de Denravi"),
+            create_mock_world(1005, "Sorrow's Furnace", "Horno del Pesar", "Sorrows Ofen", "Fourneau du chagrin")
         ]
 
         mock_service = AsyncMock(spec=WorldsService)
@@ -314,13 +266,7 @@ class TestWorldsEndpoint:
         """Test that all language keys are present in the response"""
         # Arrange
         mock_worlds_data = [
-            {
-                "id": 2001,
-                "name_en": "Test World EN",
-                "name_es": "Test World ES",
-                "name_de": "Test World DE",
-                "name_fr": "Test World FR"
-            }
+            create_mock_world(2001, "Test World EN", "Test World ES", "Test World DE", "Test World FR")
         ]
 
         mock_service = AsyncMock(spec=WorldsService)
@@ -356,13 +302,7 @@ class TestWorldsEndpoint:
         """Test that all worlds have unique IDs"""
         # Arrange
         mock_worlds_data = [
-            {
-                "id": id_num,
-                "name_en": f"World {id_num}",
-                "name_es": f"Mundo {id_num}",
-                "name_de": f"Welt {id_num}",
-                "name_fr": f"Monde {id_num}"
-            }
+            create_mock_world(id_num, f"World {id_num}", f"Mundo {id_num}", f"Welt {id_num}", f"Monde {id_num}")
             for id_num in [1001, 1002, 1003, 1004, 1005]
         ]
 

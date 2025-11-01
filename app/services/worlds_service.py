@@ -1,8 +1,8 @@
 import asyncio
-from typing import Any
 
 from app.core.constants import Constants
 from app.core.logging import logger
+from app.database.models import Worlds
 from app.database.repositories.worlds_repository import WorldsRepository
 from app.database.session import async_session_maker
 from app.gw2.client import GW2Client
@@ -24,7 +24,7 @@ class WorldsService:
         self.gw2_client = gw2_client
         self._background_tasks: set[asyncio.Task] = set()
 
-    async def get_all_worlds(self) -> list[dict]:
+    async def get_all_worlds(self) -> list[Worlds]:
         """
         Get all worlds from database. If DB is empty, fetch from GW2 API and sync with database in the background.
         """
@@ -40,13 +40,13 @@ class WorldsService:
             task.add_done_callback(self._background_tasks.discard)
             return worlds_data
 
-    async def _get_worlds_from_api(self) -> list[dict]:
+    async def _get_worlds_from_api(self) -> list[Worlds]:
         """Fetch worlds from GW2 API in all supported languages and combine the data."""
         results = await asyncio.gather(
             *(self.gw2_client.get_worlds(lang=lang) for lang in Constants.LANGS)
         )
 
-        combined_worlds: dict[int, dict[str, Any]] = {}
+        combined_worlds: dict[int, dict[str, str | int]] = {}
 
         for lang, worlds in zip(Constants.LANGS, results, strict=True):
             for world in worlds:
@@ -56,9 +56,11 @@ class WorldsService:
                         "id": world_id,
                     }
                 combined_worlds[world_id][f"name_{lang}"] = world.name
-        return list(combined_worlds.values())
 
-    async def _get_worlds_from_db(self) -> list[dict]:
+        # Convert to Worlds objects
+        return [Worlds(**world_dict) for world_dict in combined_worlds.values()]
+
+    async def _get_worlds_from_db(self) -> list[Worlds]:
         """Fetch worlds from database as fallback."""
         try:
             worlds = await self.repository.get_all()
@@ -66,23 +68,13 @@ class WorldsService:
             if not worlds:
                 raise ValueError("No worlds found in database")
 
-            # Convert ORM objects to dictionaries
-            worlds_data = []
-            for world in worlds:
-                worlds_data.append({
-                    "id": world.id,
-                    "name_en": world.name_en,
-                    "name_es": world.name_es,
-                    "name_de": world.name_de,
-                    "name_fr": world.name_fr,
-                })
-
-            return worlds_data
+            logger.info(f"Retrieved {len(worlds)} worlds from database")
+            return worlds
         except Exception as e:
             logger.warning(f"Failed to retrieve worlds from database: {e}")
             raise
 
-    async def _sync_worlds_to_db(self, worlds_data: list[dict]) -> None:
+    async def _sync_worlds_to_db(self, worlds_data: list[Worlds]) -> None:
         """Sync worlds to database using a new session for background task."""
         try:
             async with async_session_maker() as session:
