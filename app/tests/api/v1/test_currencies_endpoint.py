@@ -5,6 +5,7 @@ import pytest
 
 from app.main import api
 from app.services.currencies_service import CurrenciesService
+from app.services.dtos.currencies_dto import CurrencyDTO
 from app.services.services import get_currencies_service
 
 
@@ -14,32 +15,32 @@ class TestCurrenciesEndpoint:
 
     async def test_get_currencies_success(self):
         """Test successful response from GET /currencies endpoint"""
-        # Arrange - Mock data from service
+        # Arrange - Mock data from service using DTOs
         mock_currencies_data = [
-            {
-                "id": 1,
-                "name_en": "Coin",
-                "name_es": "Moneda",
-                "name_de": "Münze",
-                "name_fr": "Pièce",
-                "description_en": "The primary currency",
-                "description_es": "La moneda principal",
-                "description_de": "Die Hauptwährung",
-                "description_fr": "La monnaie principale",
-                "icon_url": "https://render.guildwars2.com/file/coin.png"
-            },
-            {
-                "id": 2,
-                "name_en": "Karma",
-                "name_es": "Karma",
-                "name_de": "Karma",
-                "name_fr": "Karma",
-                "description_en": "Earned by helping others",
-                "description_es": "Ganado ayudando a otros",
-                "description_de": "Verdient durch Hilfe für andere",
-                "description_fr": "Gagné en aidant les autres",
-                "icon_url": "https://render.guildwars2.com/file/karma.png"
-            }
+            CurrencyDTO(
+                id=1,
+                name_en="Coin",
+                name_es="Moneda",
+                name_de="Münze",
+                name_fr="Pièce",
+                description_en="The primary currency",
+                description_es="La moneda principal",
+                description_de="Die Hauptwährung",
+                description_fr="La monnaie principale",
+                icon_url="https://render.guildwars2.com/file/coin.png"
+            ),
+            CurrencyDTO(
+                id=2,
+                name_en="Karma",
+                name_es="Karma",
+                name_de="Karma",
+                name_fr="Karma",
+                description_en="Earned by helping others",
+                description_es="Ganado ayudando a otros",
+                description_de="Verdient durch Hilfe für andere",
+                description_fr="Gagné en aidant les autres",
+                icon_url="https://render.guildwars2.com/file/karma.png"
+            )
         ]
 
         # Mock the service
@@ -132,18 +133,18 @@ class TestCurrenciesEndpoint:
         """Test that response follows the expected CurrenciesResponse schema"""
         # Arrange
         mock_currencies_data = [
-            {
-                "id": 23,
-                "name_en": "Laurels",
-                "name_es": "Laureles",
-                "name_de": "Lorbeeren",
-                "name_fr": "Lauriers",
-                "description_en": "Earned for daily login rewards",
-                "description_es": "Obtenidos por recompensas de inicio de sesión diarias",
-                "description_de": "Verdient für tägliche Anmeldebelohnungen",
-                "description_fr": "Gagné pour les récompenses de connexion quotidiennes",
-                "icon_url": "https://render.guildwars2.com/file/laurel.png"
-            }
+            CurrencyDTO(
+                id=23,
+                name_en="Laurels",
+                name_es="Laureles",
+                name_de="Lorbeeren",
+                name_fr="Lauriers",
+                description_en="Earned for daily login rewards",
+                description_es="Obtenidos por recompensas de inicio de sesión diarias",
+                description_de="Verdient für tägliche Anmeldebelohnungen",
+                description_fr="Gagné pour les récompenses de connexion quotidiennes",
+                icon_url="https://render.guildwars2.com/file/laurel.png"
+            )
         ]
 
         mock_service = AsyncMock(spec=CurrenciesService)
@@ -182,18 +183,18 @@ class TestCurrenciesEndpoint:
         """Test response when icon_url is None"""
         # Arrange
         mock_currencies_data = [
-            {
-                "id": 99,
-                "name_en": "Test Currency",
-                "name_es": "Moneda de prueba",
-                "name_de": "Testwährung",
-                "name_fr": "Monnaie de test",
-                "description_en": "Test description",
-                "description_es": "Descripción de prueba",
-                "description_de": "Testbeschreibung",
-                "description_fr": "Description de test",
-                "icon_url": None
-            }
+            CurrencyDTO(
+                id=99,
+                name_en="Test Currency",
+                name_es="Moneda de prueba",
+                name_de="Testwährung",
+                name_fr="Monnaie de test",
+                description_en="Test description",
+                description_es="Descripción de prueba",
+                description_de="Testbeschreibung",
+                description_fr="Description de test",
+                icon_url=None
+            )
         ]
 
         mock_service = AsyncMock(spec=CurrenciesService)
@@ -217,18 +218,18 @@ class TestCurrenciesEndpoint:
         """Test response with multiple currencies"""
         # Arrange
         mock_currencies_data = [
-            {
-                "id": i,
-                "name_en": f"Currency {i}",
-                "name_es": f"Moneda {i}",
-                "name_de": f"Währung {i}",
-                "name_fr": f"Monnaie {i}",
-                "description_en": f"Description {i}",
-                "description_es": f"Descripción {i}",
-                "description_de": f"Beschreibung {i}",
-                "description_fr": f"Description {i}",
-                "icon_url": f"https://example.com/icon{i}.png"
-            }
+            CurrencyDTO(
+                id=i,
+                name_en=f"Currency {i}",
+                name_es=f"Moneda {i}",
+                name_de=f"Währung {i}",
+                name_fr=f"Monnaie {i}",
+                description_en=f"Description {i}",
+                description_es=f"Descripción {i}",
+                description_de=f"Beschreibung {i}",
+                description_fr=f"Description {i}",
+                icon_url=f"https://example.com/icon{i}.png"
+            )
             for i in range(1, 51)  # 50 currencies
         ]
 
@@ -258,18 +259,18 @@ class TestCurrenciesEndpoint:
         """Test that cache is working (service should only be called once for multiple requests)"""
         # Arrange
         mock_currencies_data = [
-            {
-                "id": 1,
-                "name_en": "Coin",
-                "name_es": "Moneda",
-                "name_de": "Münze",
-                "name_fr": "Pièce",
-                "description_en": "The primary currency",
-                "description_es": "La moneda principal",
-                "description_de": "Die Hauptwährung",
-                "description_fr": "La monnaie principale",
-                "icon_url": "https://render.guildwars2.com/file/coin.png"
-            }
+            CurrencyDTO(
+                id=1,
+                name_en="Coin",
+                name_es="Moneda",
+                name_de="Münze",
+                name_fr="Pièce",
+                description_en="The primary currency",
+                description_es="La moneda principal",
+                description_de="Die Hauptwährung",
+                description_fr="La monnaie principale",
+                icon_url="https://render.guildwars2.com/file/coin.png"
+            )
         ]
 
         mock_service = AsyncMock(spec=CurrenciesService)

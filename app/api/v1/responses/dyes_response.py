@@ -23,20 +23,3 @@ class DyesResponse(BaseModel):
             },
             hexcolor=dye.color
         )
-
-    @classmethod
-    def map_response(cls, dye: dict) -> Self:
-        """
-        Legacy method for backward compatibility.
-        Deprecated: Use from_dto instead.
-        """
-        return cls(
-            id=dye['id'],
-            name={
-                "es": dye['name_es'],
-                "en": dye['name_en'],
-                "fr": dye['name_fr'],
-                "de": dye['name_de']
-            },
-            hexcolor=dye['color']
-        )
