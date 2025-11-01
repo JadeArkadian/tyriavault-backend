@@ -2,6 +2,8 @@ from typing import Self
 
 from pydantic import BaseModel
 
+from app.database.models import Dyes
+
 
 class DyesResponse(BaseModel):
     id: int
@@ -9,15 +11,15 @@ class DyesResponse(BaseModel):
     hexcolor: str
 
     @classmethod
-    def map_response(cls, dye: dict) -> Self:
+    def map_response(cls, dye: Dyes) -> Self:
         mapped = DyesResponse(
-            id=dye['id'],
+            id=dye.id,
             name={
-                "es": dye['name_es'],
-                "en": dye['name_en'],
-                "fr": dye['name_fr'],
-                "de": dye['name_de']
+                "es": dye.name_es,
+                "en": dye.name_en,
+                "fr": dye.name_fr,
+                "de": dye.name_de
             },
-            hexcolor=dye['color']
+            hexcolor=dye.color
         )
         return mapped
