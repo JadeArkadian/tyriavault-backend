@@ -1,4 +1,22 @@
+from typing import Any, Generator
+
 from app.core import settings
+
+
+def chunked(items: list[Any], chunk_size: int) -> Generator[list[Any], Any, None]:
+    """
+    Splits a list of items into smaller chunks of a specified size.
+
+    Args:
+        items (list[Any]): The list of items to be chunked.
+        chunk_size (int): The size of each chunk.
+
+    Yields:
+        list[Any]: A chunk of the original list.
+    """
+
+    for i in range(0, len(items), chunk_size):
+        yield items[i:i + chunk_size]
 
 
 def rgb_to_hex(rgb: tuple[int, int, int] | list[int]) -> str:

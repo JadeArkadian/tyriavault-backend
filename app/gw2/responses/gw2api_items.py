@@ -2,7 +2,6 @@
 GW2 API Items response models.
 Documentation: https://wiki.guildwars2.com/wiki/API:2/items
 """
-from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -17,20 +16,13 @@ class GW2ApiItem(BaseModel):
     # Required fields
     id: int = Field(..., description="The item ID")
     name: str = Field(..., description="The item name")
-    type: Literal[
-        "Armor", "Back", "Bag", "Consumable", "Container", "CraftingMaterial",
-        "Gathering", "Gizmo", "JadeTechModule", "Key", "MiniPet", "PowerCore",
-        "Relic", "Tool", "Trait", "Trinket", "Trophy", "UpgradeComponent",
-        "Weapon"
-    ] = Field(..., description="The item type")
+    type: str = Field(..., description="The item type")
     chat_link: str = Field(..., description="The chat link code")
     icon: str | None = Field(default=None, description="The full icon URL")
 
     # Optional common fields
     description: str | None = Field(default=None, description="The item description")
-    rarity: Literal["Junk", "Basic", "Fine", "Masterwork", "Rare", "Exotic", "Ascended", "Legendary"] | None = Field(
-        default=None, description="The item rarity"
-    )
+    rarity: str | None = Field(default=None, description="The item rarity")
     level: int | None = Field(default=None, description="The required level")
     vendor_value: int | None = Field(default=None, description="The value in coins when selling to a vendor")
     default_skin: int | None = Field(default=None, description="The default skin ID")
