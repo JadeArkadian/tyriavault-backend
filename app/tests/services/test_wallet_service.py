@@ -350,21 +350,23 @@ class TestWalletService:
         # Verify the data structure passed to upsert_batch
         call_args = mock_wallet_repo.upsert_batch.call_args[0][0]
         assert len(call_args) == 3
-        assert call_args[0] == {
-            'currency_id': 1,
-            'game_account_uuid': sample_account_uuid,
-            'amount': 1234567
-        }
-        assert call_args[1] == {
-            'currency_id': 2,
-            'game_account_uuid': sample_account_uuid,
-            'amount': 500000
-        }
-        assert call_args[2] == {
-            'currency_id': 4,
-            'game_account_uuid': sample_account_uuid,
-            'amount': 125
-        }
+
+        # Verify that Wallet objects were created
+        from app.database.models import Wallet
+        assert isinstance(call_args[0], Wallet)
+        assert call_args[0].currency_id == 1
+        assert call_args[0].game_account_uuid == sample_account_uuid
+        assert call_args[0].amount == 1234567
+
+        assert isinstance(call_args[1], Wallet)
+        assert call_args[1].currency_id == 2
+        assert call_args[1].game_account_uuid == sample_account_uuid
+        assert call_args[1].amount == 500000
+
+        assert isinstance(call_args[2], Wallet)
+        assert call_args[2].currency_id == 4
+        assert call_args[2].game_account_uuid == sample_account_uuid
+        assert call_args[2].amount == 125
 
         # Verify commit was called
         mock_session.commit.assert_awaited_once()

@@ -3,6 +3,7 @@ from uuid import UUID
 
 from app.api.v1.responses.wallet_response import WalletItemResponse
 from app.core.logging import logger
+from app.database.models import Wallet
 from app.database.repositories.currencies_repository import CurrenciesRepository
 from app.database.repositories.wallet_repository import WalletRepository
 from app.database.session import async_session_maker
@@ -66,22 +67,7 @@ class WalletService:
             wallet_data = []
             for entry in wallet_entries:
                 currency = entry.currency
-                wallet_item = {
-                    'currency_id': entry.currency_id,
-                    'amount': entry.amount or 0
-                }
-                currency_info = {
-                    'name_en': currency.name_en,
-                    'name_es': currency.name_es,
-                    'name_de': currency.name_de,
-                    'name_fr': currency.name_fr,
-                    'description_en': currency.description_en,
-                    'description_es': currency.description_es,
-                    'description_de': currency.description_de,
-                    'description_fr': currency.description_fr,
-                    'icon_url': currency.icon_url
-                }
-                wallet_data.append(WalletItemResponse.map_response(wallet_item, currency_info))
+                wallet_data.append(WalletItemResponse.map_response(entry, currency))
 
             logger.info(f"Retrieved {len(wallet_data)} wallet entries from database")
             return wallet_data
@@ -111,24 +97,14 @@ class WalletService:
                 logger.warning(f"Currency {currency_id} not found in database. Skipping wallet entry.")
                 continue
 
-            currency_info = {
-                'name_en': currency.name_en,
-                'name_es': currency.name_es,
-                'name_de': currency.name_de,
-                'name_fr': currency.name_fr,
-                'description_en': currency.description_en,
-                'description_es': currency.description_es,
-                'description_de': currency.description_de,
-                'description_fr': currency.description_fr,
-                'icon_url': currency.icon_url
-            }
+            # Create a Wallet-like object for the response mapper
+            wallet_entry = Wallet(
+                currency_id=currency_id,
+                game_account_uuid=None,  # Not needed for response
+                amount=wallet_item.value
+            )
 
-            wallet_entry = {
-                'currency_id': currency_id,
-                'amount': wallet_item.value
-            }
-
-            responses.append(WalletItemResponse.map_response(wallet_entry, currency_info))
+            responses.append(WalletItemResponse.map_response(wallet_entry, currency))
 
         logger.info(f"Successfully built response with {len(responses)} wallet entries")
         return responses
@@ -142,16 +118,15 @@ class WalletService:
                 # Prepare wallet entries for batch upsert
                 wallet_entries = []
                 for item in wallet_data:
-                    wallet_entries.append({
-                        'currency_id': item.id,
-                        'game_account_uuid': account_uuid,
-                        'amount': item.value
-                    })
+                    wallet_entries.append(Wallet(
+                        currency_id=item.id,
+                        game_account_uuid=account_uuid,
+                        amount=item.value
+                    ))
 
                 await wallet_repository.upsert_batch(wallet_entries)
                 await session.commit()
 
-                logger.info(f"Synced {len(wallet_entries)} wallet entries to database for account {account_uuid}")
-
+            logger.info(f"Synced {len(wallet_entries)} wallet entries to database")
         except Exception as e:
             logger.error(f"Error syncing wallet to database: {e}")
