@@ -1,6 +1,7 @@
 import asyncio
-import datetime
 import time
+
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.core.constants import Constants
 from app.core.logging import logger
@@ -12,9 +13,9 @@ from app.gw2.client import GW2Client
 
 
 class ItemsCrawler(BaseCrawler):
-    def __init__(self, gw2_client: GW2Client, item_repository: ItemsRepository):
+    def __init__(self, gw2_client: GW2Client, session_factory: async_sessionmaker):
         self.gw2_client = gw2_client
-        self.item_repository = item_repository
+        self.session_factory = session_factory
 
     async def crawl(self):
         """Crawl items data from GW2 API and upsert into the database."""
@@ -22,44 +23,48 @@ class ItemsCrawler(BaseCrawler):
         logger.info("Starting items crawl...")
 
         start_time = time.time()
-        # Get all item IDs from GW2 API
-        item_ids = await self.gw2_client.get_all_item_ids()
-        logger.info(f"Found {len(item_ids)} items to crawl.")
 
-        # Fetch item details for every language in chunks and upsert into the database
-        for chunk in chunked(item_ids, 150):
-            items_merged = await asyncio.gather(
-                *(self.gw2_client.get_item_details(chunk, lang=lang) for lang in Constants.LANGS)
-            )
+        async with self.session_factory() as session:
+            item_repository = ItemsRepository(session)
 
-            # Store temporary data for building Items objects
-            items_data: dict[int, dict] = {}
+            # Get all item IDs from GW2 API
+            item_ids = await self.gw2_client.get_all_item_ids()
+            logger.info(f"Found {len(item_ids)} items to crawl.")
 
-            for lang, items in zip(Constants.LANGS, items_merged, strict=True):
-                for item in items:
-                    item_id = item.id
-                    if item_id not in items_data:
-                        # Initialize with common fields from first language
-                        items_data[item_id] = {
-                            "id": item.id,
-                            "chat_link": item.chat_link,
-                            "icon_url": item.icon,
-                            "rarity_id": self._map_rarity_to_id(item.rarity),
-                            "item_type_id": self._map_type_to_id(item.type),
-                            "required_level": item.level,
-                            "vendor_value": item.vendor_value or 0,
-                            "flags": item.flags if item.flags else None,
-                            "last_fetched": datetime.datetime.now(datetime.UTC),
-                        }
-                    # Add language-specific fields
-                    items_data[item_id][f"name_{lang}"] = item.name
-                    items_data[item_id][f"description_{lang}"] = item.description
+            # Fetch item details for every language in chunks and upsert into the database
+            for chunk in chunked(item_ids, 150):
+                items_merged = await asyncio.gather(
+                    *(self.gw2_client.get_item_details(chunk, lang=lang) for lang in Constants.LANGS)
+                )
 
-            # Create list of Items objects
-            items_list = [Items(**data) for data in items_data.values()]
+                # Store temporary data for building Items objects
+                items_data: dict[int, dict] = {}
 
-            # Upsert into database
-            await self.item_repository.upsert_batch(items_list)
+                for lang, items in zip(Constants.LANGS, items_merged, strict=True):
+                    for item in items:
+                        item_id = item.get("id")
+                        if item_id not in items_data:
+                            # Initialize with common fields from first language
+                            items_data[item_id] = {
+                                "id": item.get("id"),
+                                "chat_link": item.get("chat_link"),
+                                "icon_url": item.get("icon"),
+                                "rarity_id": self._map_rarity_to_id(item.get("rarity")),
+                                "item_type_id": self._map_type_to_id(item.get("type")),
+                                "required_level": item.get("level"),
+                                "vendor_value": item.get("vendor_value", 0),
+                                "flags": item.get("flags", None)
+                            }
+                        # Add language-specific fields
+                        items_data[item_id][f"name_{lang}"] = item.get("name", "")
+                        items_data[item_id][f"description_{lang}"] = item.get("description", "")
+
+                # Create list of Items objects
+                items_list = [Items(**data) for data in items_data.values()]
+
+                # Upsert into database
+                await item_repository.upsert_batch(items_list)
+                await session.commit()
 
         elapsed = time.time() - start_time
         logger.info(f"Items crawl completed in {elapsed:.2f}s")
