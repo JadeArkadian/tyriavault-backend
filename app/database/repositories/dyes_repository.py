@@ -1,7 +1,6 @@
-from typing import Optional, Any
+from typing import Optional
 
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Dyes
@@ -25,21 +24,13 @@ class DyesRepository(BaseRepository[Dyes]):
     async def upsert(self, entity: Dyes) -> Dyes:
         raise NotImplementedError("Upsert is not implemented for Dyes.")
 
-    async def upsert_batch(self, dyes_data: list[dict[str, Any]]) -> None:
+    async def upsert_batch(self, dyes_data: list[Dyes]) -> None:
         """Insert or update multiple dyes in a batch operation."""
         if not dyes_data:
             return
 
-        stmt = pg_insert(Dyes).values(dyes_data)
-        stmt = stmt.on_conflict_do_update(
-            index_elements=[Dyes.id],
-            set_={
-                'name_en': stmt.excluded.name_en,
-                'name_es': stmt.excluded.name_es,
-                'name_de': stmt.excluded.name_de,
-                'name_fr': stmt.excluded.name_fr,
-                'color': stmt.excluded.color
-            }
-        )
-        await self.session.execute(stmt)
+        # Add all objects to the session
+        for dye in dyes_data:
+            await self.session.merge(dye)
+
         await self.session.flush()

@@ -26,6 +26,9 @@ class ApikeysRepository(BaseRepository[ApiKeys]):
         await self.session.refresh(merged_entity)
         return merged_entity
 
+    async def upsert_batch(self, entities: list[ApiKeys]) -> None:
+        raise NotImplementedError("upsert_batch is not implemented for ApiKeys.")
+
     async def get_by_apikey(self, apikey: str) -> Optional[ApiKeys]:
         """Get an apikey by its ApiKey."""
         result = await self.session.execute(

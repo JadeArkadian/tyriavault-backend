@@ -21,3 +21,8 @@ class BaseRepository(ABC, Generic[T]):
     async def upsert(self, entity: T) -> T:
         """Insert or update entity (most common operation for syncing API data)."""
         ...
+
+    @abstractmethod
+    async def upsert_batch(self, entities: list[T]) -> None:
+        """Insert or update multiple entities in a batch operation."""
+        ...

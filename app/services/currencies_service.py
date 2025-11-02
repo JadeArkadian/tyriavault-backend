@@ -1,11 +1,11 @@
 import asyncio
-from typing import Any
 
 from app.core.constants import Constants
 from app.core.logging import logger
 from app.database.repositories.currencies_repository import CurrenciesRepository
 from app.database.session import async_session_maker
 from app.gw2.client import GW2Client
+from app.services.dtos.currencies_dto import CurrencyDTO
 
 
 class CurrenciesService:
@@ -24,7 +24,7 @@ class CurrenciesService:
         self.gw2_client = gw2_client
         self._background_tasks: set[asyncio.Task] = set()
 
-    async def get_all_currencies(self) -> list[dict]:
+    async def get_all_currencies(self) -> list[CurrencyDTO]:
         """
         Get all currencies from GW2 API and sync with database in the background.
         If API fails, fallback to database.
@@ -42,27 +42,40 @@ class CurrenciesService:
             logger.warning(f"Failed to fetch currencies from GW2 API: {e}. Falling back to database.")
             return await self._get_currencies_from_db()
 
-    async def _get_currencies_from_api(self) -> list[dict]:
+    async def _get_currencies_from_api(self) -> list[CurrencyDTO]:
         """Fetch currencies from GW2 API in all supported languages and combine the data."""
         results = await asyncio.gather(
             *(self.gw2_client.get_currencies(lang=lang) for lang in Constants.LANGS)
         )
 
-        combined_currencies: dict[int, dict[str, Any]] = {}
+        # Store temporary data for building DTOs
+        currency_data: dict[int, dict[str, str]] = {}
 
         for lang, currencies in zip(Constants.LANGS, results, strict=True):
             for currency in currencies:
                 currency_id = currency.id
-                if currency_id not in combined_currencies:
-                    combined_currencies[currency_id] = {
-                        "id": currency_id,
-                        "icon_url": currency.icon
-                    }
-                combined_currencies[currency_id][f"name_{lang}"] = currency.name
-                combined_currencies[currency_id][f"description_{lang}"] = currency.description
-        return list(combined_currencies.values())
+                currency_data.setdefault(currency_id, {"icon_url": currency.icon})
+                currency_data[currency_id][f"name_{lang}"] = currency.name
+                currency_data[currency_id][f"description_{lang}"] = currency.description
 
-    async def _get_currencies_from_db(self) -> list[dict]:
+        # Create DTOs directly from collected data
+        return [
+            CurrencyDTO(
+                id=currency_id,
+                name_en=data.get("name_en", ""),
+                name_es=data.get("name_es") or data.get("name_en", ""),
+                name_de=data.get("name_de") or data.get("name_en", ""),
+                name_fr=data.get("name_fr") or data.get("name_en", ""),
+                description_en=data.get("description_en"),
+                description_es=data.get("description_es") or data.get("description_en"),
+                description_de=data.get("description_de") or data.get("description_en"),
+                description_fr=data.get("description_fr") or data.get("description_en"),
+                icon_url=data["icon_url"]
+            )
+            for currency_id, data in currency_data.items()
+        ]
+
+    async def _get_currencies_from_db(self) -> list[CurrencyDTO]:
         """Fetch currencies from database as fallback."""
         try:
             currencies = await self.repository.get_all()
@@ -71,21 +84,8 @@ class CurrenciesService:
                 logger.error("No currencies found in database for fallback")
                 raise RuntimeError("No currencies available from API or database")
 
-            # Convert ORM objects to dictionaries
-            currencies_data = []
-            for currency in currencies:
-                currencies_data.append({
-                    "id": currency.id,
-                    "name_en": currency.name_en,
-                    "name_es": currency.name_es,
-                    "name_de": currency.name_de,
-                    "name_fr": currency.name_fr,
-                    "description_en": currency.description_en,
-                    "description_es": currency.description_es,
-                    "description_de": currency.description_de,
-                    "description_fr": currency.description_fr,
-                    "icon_url": currency.icon_url
-                })
+            # Convert ORM objects to DTOs
+            currencies_data = [CurrencyDTO.from_orm(currency) for currency in currencies]
 
             logger.info(f"Retrieved {len(currencies_data)} currencies from database as fallback")
             return currencies_data
@@ -93,12 +93,14 @@ class CurrenciesService:
             logger.error(f"Failed to retrieve currencies from database: {e}")
             raise
 
-    async def _sync_currencies_to_db(self, currencies_data: list[dict]) -> None:
+    async def _sync_currencies_to_db(self, currencies_data: list[CurrencyDTO]) -> None:
         """Sync currencies to database using a new session for background task."""
         try:
             async with async_session_maker() as session:
                 repository = CurrenciesRepository(session)
-                await repository.upsert_batch(currencies_data)
+                # Convert DTOs to ORM objects for repository batch operation
+                currencies_orm_list = [currency.to_orm() for currency in currencies_data]
+                await repository.upsert_batch(currencies_orm_list)
                 await session.commit()
             logger.info(f"Synced {len(currencies_data)} currencies to database")
         except Exception as e:

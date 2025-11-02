@@ -1,8 +1,7 @@
-from typing import Optional, Any
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -34,15 +33,13 @@ class WalletRepository(BaseRepository[Wallet]):
         )
         return list(result.scalars().all())
 
-    async def upsert_batch(self, wallet_data: list[dict[str, Any]]) -> None:
+    async def upsert_batch(self, wallet_data: list[Wallet]) -> None:
         """Insert or update multiple wallet tuples in a batch operation."""
         if not wallet_data:
             return
 
-        stmt = pg_insert(Wallet).values(wallet_data)
-        stmt = stmt.on_conflict_do_update(
-            index_elements=[Wallet.currency_id, Wallet.game_account_uuid],
-            set_={'amount': stmt.excluded.amount}
-        )
-        await self.session.execute(stmt)
+        # Add all objects to the session
+        for wallet in wallet_data:
+            await self.session.merge(wallet)
+
         await self.session.flush()

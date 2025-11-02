@@ -1,7 +1,6 @@
-from typing import Optional, Any
+from typing import Optional
 
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Currencies
@@ -25,25 +24,13 @@ class CurrenciesRepository(BaseRepository[Currencies]):
     async def upsert(self, entity: Currencies) -> Currencies:
         raise NotImplementedError("Upsert is not implemented for Currencies.")
 
-    async def upsert_batch(self, currencies_data: list[dict[str, Any]]) -> None:
+    async def upsert_batch(self, currencies_data: list[Currencies]) -> None:
         """Insert or update multiple currencies in a batch operation."""
         if not currencies_data:
             return
 
-        stmt = pg_insert(Currencies).values(currencies_data)
-        stmt = stmt.on_conflict_do_update(
-            index_elements=[Currencies.id],
-            set_={
-                'name_en': stmt.excluded.name_en,
-                'name_es': stmt.excluded.name_es,
-                'name_de': stmt.excluded.name_de,
-                'name_fr': stmt.excluded.name_fr,
-                'description_en': stmt.excluded.description_en,
-                'description_es': stmt.excluded.description_es,
-                'description_de': stmt.excluded.description_de,
-                'description_fr': stmt.excluded.description_fr,
-                'icon_url': stmt.excluded.icon_url
-            }
-        )
-        await self.session.execute(stmt)
+        # Add all objects to the session
+        for currency in currencies_data:
+            await self.session.merge(currency)
+
         await self.session.flush()

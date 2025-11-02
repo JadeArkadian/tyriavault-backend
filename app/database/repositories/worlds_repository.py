@@ -1,7 +1,6 @@
-from typing import Optional, Any
+from typing import Optional
 
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Worlds
@@ -29,20 +28,13 @@ class WorldsRepository(BaseRepository[Worlds]):
     async def upsert(self, entity: Worlds) -> Worlds:
         raise NotImplementedError("Upsert is not implemented for Worlds.")
 
-    async def upsert_batch(self, worlds_data: list[dict[str, Any]]) -> None:
+    async def upsert_batch(self, worlds_data: list[Worlds]) -> None:
         """Insert or update multiple worlds in a batch operation."""
         if not worlds_data:
             return
 
-        stmt = pg_insert(Worlds).values(worlds_data)
-        stmt = stmt.on_conflict_do_update(
-            index_elements=[Worlds.id],
-            set_={
-                'name_en': stmt.excluded.name_en,
-                'name_es': stmt.excluded.name_es,
-                'name_de': stmt.excluded.name_de,
-                'name_fr': stmt.excluded.name_fr
-            }
-        )
-        await self.session.execute(stmt)
+            # Add all objects to the session
+        for world in worlds_data:
+            await self.session.merge(world)
+
         await self.session.flush()

@@ -1,11 +1,11 @@
 import asyncio
-from typing import Any
 
 from app.core.constants import Constants
 from app.core.logging import logger
 from app.database.repositories.worlds_repository import WorldsRepository
 from app.database.session import async_session_maker
 from app.gw2.client import GW2Client
+from app.services.dtos.worlds_dto import WorldDTO
 
 
 class WorldsService:
@@ -24,7 +24,7 @@ class WorldsService:
         self.gw2_client = gw2_client
         self._background_tasks: set[asyncio.Task] = set()
 
-    async def get_all_worlds(self) -> list[dict]:
+    async def get_all_worlds(self) -> list[WorldDTO]:
         """
         Get all worlds from database. If DB is empty, fetch from GW2 API and sync with database in the background.
         """
@@ -40,25 +40,34 @@ class WorldsService:
             task.add_done_callback(self._background_tasks.discard)
             return worlds_data
 
-    async def _get_worlds_from_api(self) -> list[dict]:
+    async def _get_worlds_from_api(self) -> list[WorldDTO]:
         """Fetch worlds from GW2 API in all supported languages and combine the data."""
         results = await asyncio.gather(
             *(self.gw2_client.get_worlds(lang=lang) for lang in Constants.LANGS)
         )
 
-        combined_worlds: dict[int, dict[str, Any]] = {}
+        # Store temporary data for building DTOs
+        world_data: dict[int, dict[str, str]] = {}
 
         for lang, worlds in zip(Constants.LANGS, results, strict=True):
             for world in worlds:
                 world_id = world.id
-                if world_id not in combined_worlds:
-                    combined_worlds[world_id] = {
-                        "id": world_id,
-                    }
-                combined_worlds[world_id][f"name_{lang}"] = world.name
-        return list(combined_worlds.values())
+                world_data.setdefault(world_id, {})
+                world_data[world_id][f"name_{lang}"] = world.name
 
-    async def _get_worlds_from_db(self) -> list[dict]:
+        # Create DTOs directly from collected data
+        return [
+            WorldDTO(
+                id=world_id,
+                name_en=data["name_en"],
+                name_es=data["name_es"],
+                name_de=data["name_de"],
+                name_fr=data["name_fr"]
+            )
+            for world_id, data in world_data.items()
+        ]
+
+    async def _get_worlds_from_db(self) -> list[WorldDTO]:
         """Fetch worlds from database as fallback."""
         try:
             worlds = await self.repository.get_all()
@@ -66,28 +75,22 @@ class WorldsService:
             if not worlds:
                 raise ValueError("No worlds found in database")
 
-            # Convert ORM objects to dictionaries
-            worlds_data = []
-            for world in worlds:
-                worlds_data.append({
-                    "id": world.id,
-                    "name_en": world.name_en,
-                    "name_es": world.name_es,
-                    "name_de": world.name_de,
-                    "name_fr": world.name_fr,
-                })
+            # Convert ORM objects to DTOs
+            worlds_data = [WorldDTO.from_orm(world) for world in worlds]
 
             return worlds_data
         except Exception as e:
             logger.warning(f"Failed to retrieve worlds from database: {e}")
             raise
 
-    async def _sync_worlds_to_db(self, worlds_data: list[dict]) -> None:
+    async def _sync_worlds_to_db(self, worlds_data: list[WorldDTO]) -> None:
         """Sync worlds to database using a new session for background task."""
         try:
             async with async_session_maker() as session:
                 repository = WorldsRepository(session)
-                await repository.upsert_batch(worlds_data)
+                # Convert DTOs to ORM objects for repository batch operation
+                worlds_orm_list = [world.to_orm() for world in worlds_data]
+                await repository.upsert_batch(worlds_orm_list)
                 await session.commit()
             logger.info(f"Synced {len(worlds_data)} worlds to database")
         except Exception as e:

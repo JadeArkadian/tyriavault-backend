@@ -2,6 +2,8 @@ from typing import Self, Optional
 
 from pydantic import BaseModel
 
+from app.services.dtos.currencies_dto import CurrencyDTO
+
 
 class CurrenciesResponse(BaseModel):
     id: int
@@ -10,21 +12,21 @@ class CurrenciesResponse(BaseModel):
     description: dict[str, str]
 
     @classmethod
-    def map_response(cls, currency: dict) -> Self:
-        mapped = CurrenciesResponse(
-            id=currency['id'],
-            icon_url=currency['icon_url'],
+    def from_dto(cls, currency: CurrencyDTO) -> Self:
+        """Create a CurrenciesResponse from a CurrencyDTO."""
+        return cls(
+            id=currency.id,
+            icon_url=currency.icon_url,
             name={
-                "es": currency['name_es'],
-                "en": currency['name_en'],
-                "fr": currency['name_fr'],
-                "de": currency['name_de']
+                "es": currency.name_es,
+                "en": currency.name_en,
+                "fr": currency.name_fr,
+                "de": currency.name_de
             },
             description={
-                "es": currency['description_es'],
-                "en": currency['description_en'],
-                "fr": currency['description_fr'],
-                "de": currency['description_de']
+                "es": currency.description_es,
+                "en": currency.description_en,
+                "fr": currency.description_fr,
+                "de": currency.description_de
             }
         )
-        return mapped
