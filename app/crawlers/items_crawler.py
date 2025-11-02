@@ -63,7 +63,10 @@ class ItemsCrawler(BaseCrawler):
                 items_list = [Items(**data) for data in items_data.values()]
 
                 # Upsert into database
+                start_sql_time = time.time()
                 await item_repository.upsert_batch(items_list)
+                elapsed_sql = time.time() - start_sql_time
+                logger.info(f"Upserted {len(items_list)} items in {elapsed_sql:.2f}s")
                 await session.commit()
 
         elapsed = time.time() - start_time
