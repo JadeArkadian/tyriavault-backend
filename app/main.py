@@ -10,6 +10,8 @@ from app.api.v1 import api_router
 from app.core.cache import init_cache
 from app.core.config import settings
 from app.core.logging import logger
+from app.database.seeding.seeder import DatabaseSeeder
+from app.database.session import async_session_maker
 from app.gw2.client import startup_gw2_client, shutdown_gw2_client
 
 # Install uvloop for better async performance (Unix-like systems only)
@@ -31,6 +33,10 @@ async def lifespan(app: FastAPI):
 
     # Initialize the TTL cache
     await init_cache()
+
+    async with async_session_maker() as session:
+        seeder = DatabaseSeeder(session)
+        await seeder.seed_all()
 
     logger.info("Server is up and running!")
     yield
