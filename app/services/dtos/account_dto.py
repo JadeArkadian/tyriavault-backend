@@ -62,7 +62,7 @@ class AccountDTO:
         )
 
     @classmethod
-    def from_api_with_world(cls, api_account: GW2ApiAccount, world_model=None) -> "AccountDTO":
+    def from_api_with_world(cls, api_account: GW2ApiAccount, world_model: Optional[Worlds]) -> "AccountDTO":
         """Create an AccountDTO from API data with world information."""
         dto = cls.from_api(api_account)
 
