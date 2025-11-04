@@ -47,22 +47,22 @@ class ItemsCrawler(BaseCrawler):
 
                 for lang, items in zip(Constants.LANGS, items_merged, strict=True):
                     for item in items:
-                        item_id = item.get("id")
+                        item_id = item.id
                         if item_id not in items_data:
                             # Initialize with common fields from first language
                             items_data[item_id] = {
-                                "id": item.get("id"),
-                                "chat_link": item.get("chat_link"),
-                                "icon_url": item.get("icon"),
-                                "rarity_id": self._map_rarity_to_id(item.get("rarity")),
-                                "item_type_id": self._map_type_to_id(item.get("type")),
-                                "required_level": item.get("level"),
-                                "vendor_value": item.get("vendor_value", 0),
-                                "flags": item.get("flags", None)
+                                "id": item.id,
+                                "chat_link": item.chat_link,
+                                "icon_url": item.icon,
+                                "rarity_id": self._map_rarity_to_id(item.rarity),
+                                "item_type_id": self._map_type_to_id(item.type),
+                                "required_level": item.level,
+                                "vendor_value": item.vendor_value or 0,
+                                "flags": item.flags
                             }
                         # Add language-specific fields
-                        items_data[item_id][f"name_{lang}"] = item.get("name", "")
-                        items_data[item_id][f"description_{lang}"] = item.get("description", "")
+                        items_data[item_id][f"name_{lang}"] = item.name or ""
+                        items_data[item_id][f"description_{lang}"] = item.description or ""
 
                 # Create list of Items objects
                 items_list = [Items(**data) for data in items_data.values()]

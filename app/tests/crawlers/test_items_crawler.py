@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.crawlers.items_crawler import ItemsCrawler
+from app.gw2.responses.gw2api_items import GW2ApiItem
 
 
 @pytest.mark.asyncio
@@ -25,9 +26,18 @@ async def test_crawl_upserts_new_items():
     gw2_client.get_all_item_ids = AsyncMock(return_value=[1, 2, 3])
 
     async def item_details(chunk, lang):
-        return [{"id": i, "name": f"name_{lang}_{i}", "description": f"desc_{lang}_{i}",
-                 "chat_link": "cl", "icon": "url", "rarity": "Rare",
-                 "type": "Weapon", "level": 80, "vendor_value": 100, "flags": []} for i in chunk]
+        return [GW2ApiItem(
+            id=i,
+            name=f"name_{lang}_{i}",
+            description=f"desc_{lang}_{i}",
+            chat_link="[&AgEwMAAA]",
+            icon="https://render.guildwars2.com/file/test.png",
+            rarity="Rare",
+            type="Weapon",
+            level=80,
+            vendor_value=100,
+            flags=[]
+        ) for i in chunk]
 
     gw2_client.get_item_details = AsyncMock(side_effect=item_details)
 
@@ -101,9 +111,18 @@ async def test_crawl_filters_existing_items():
     gw2_client.get_all_item_ids = AsyncMock(return_value=[1, 2, 3, 4])
 
     async def item_details(chunk, lang):
-        return [{"id": i, "name": f"name_{lang}_{i}", "description": f"desc_{lang}_{i}",
-                 "chat_link": "cl", "icon": "url", "rarity": "Rare",
-                 "type": "Weapon", "level": 80, "vendor_value": 100, "flags": []} for i in chunk]
+        return [GW2ApiItem(
+            id=i,
+            name=f"name_{lang}_{i}",
+            description=f"desc_{lang}_{i}",
+            chat_link="[&AgEwMAAA]",
+            icon="https://render.guildwars2.com/file/test.png",
+            rarity="Rare",
+            type="Weapon",
+            level=80,
+            vendor_value=100,
+            flags=[]
+        ) for i in chunk]
 
     gw2_client.get_item_details = AsyncMock(side_effect=item_details)
 
