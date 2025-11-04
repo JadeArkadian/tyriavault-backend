@@ -28,11 +28,11 @@ class ItemsCrawler(BaseCrawler):
             item_repository = ItemsRepository(session)
 
             # Get all item IDs from GW2 API
-            item_ids = self.gw2_client.get_all_item_ids()
-            db_item_ids = await item_repository.get_all_ids()
+            api_item_ids = await self.gw2_client.get_all_item_ids()
+            db_item_ids = set(await item_repository.get_all_ids())
 
             # Filter out item IDs that are already in the database
-            item_ids = [item_id for item_id in await item_ids if item_id not in db_item_ids]
+            item_ids = [item_id for item_id in api_item_ids if item_id not in db_item_ids]
 
             logger.info(f"Found {len(item_ids)} items to crawl.")
 

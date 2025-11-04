@@ -3,7 +3,7 @@
 # This data is used to populate the database with initial values.
 ################################################
 
-from app.database.models import Genders, Races, Rarities  # Ajusta la ruta según tu estructura
+from app.database.models import Genders, Races, Rarities  # Adjust the path according to your structure
 
 GENDERS_DATA = [
     Genders(id=1, name_en="Male", name_es="Masculino", name_de="Männlich", name_fr="Homme"),

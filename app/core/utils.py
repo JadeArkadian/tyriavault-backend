@@ -14,6 +14,8 @@ def chunked(items: list[Any], chunk_size: int) -> Generator[list[Any], Any, None
     Yields:
         list[Any]: A chunk of the original list.
     """
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be a positive integer")
 
     for i in range(0, len(items), chunk_size):
         yield items[i:i + chunk_size]

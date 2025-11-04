@@ -253,7 +253,9 @@ class TestGW2ClientMethods:
         mock_response = [{
             "id": 12345,
             "name": "Legendary Sword",
-            "type": "Weapon"
+            "type": "Weapon",
+            "chat_link": "[&AgEwMAAA]",
+            "icon": "https://render.guildwars2.com/file/test.png"
         }]
 
         mock_http_client = mocker.AsyncMock()
@@ -268,8 +270,10 @@ class TestGW2ClientMethods:
         client = GW2Client()
         result = await client.get_item_details(item_ids=[12345], lang="en")
 
-        assert result == mock_response
-        assert result[0]['id'] == 12345
+        assert len(result) == 1
+        assert result[0].id == 12345
+        assert result[0].name == "Legendary Sword"
+        assert result[0].type == "Weapon"
 
 
 @pytest.mark.asyncio

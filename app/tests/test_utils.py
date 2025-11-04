@@ -140,3 +140,17 @@ def test_chunked_chunk_size_divisor():
     items = [1, 2, 3, 4]
     result = list(chunked(items, 2))
     assert result == [[1, 2], [3, 4]]
+
+
+def test_chunked_chunk_size_zero():
+    items = [1, 2, 3]
+    with pytest.raises(ValueError) as exc:
+        list(chunked(items, 0))
+    assert "chunk_size must be a positive integer" in str(exc.value)
+
+
+def test_chunked_chunk_size_negative():
+    items = [1, 2, 3]
+    with pytest.raises(ValueError) as exc:
+        list(chunked(items, -1))
+    assert "chunk_size must be a positive integer" in str(exc.value)

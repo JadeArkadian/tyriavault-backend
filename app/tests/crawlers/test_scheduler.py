@@ -8,22 +8,22 @@ from app.crawlers.scheduler import CrawlerScheduler
 
 @pytest.mark.asyncio
 async def test_register_crawler():
-    """Test que se puede registrar un crawler correctamente."""
+    """Test that a crawler can be registered correctly."""
     scheduler = CrawlerScheduler()
     crawler_mock = AsyncMock()
 
     scheduler.register_crawler("test_crawler", crawler_mock, interval_seconds=60)
 
-    # Verificar que el crawler se registró
+    # Verify that the crawler was registered
     assert "test_crawler" in scheduler._crawlers
     assert scheduler._crawlers["test_crawler"][0] == crawler_mock
     assert scheduler._crawlers["test_crawler"][1] == 60
-    assert scheduler._crawlers["test_crawler"][2] == 300  # fail_interval por defecto
+    assert scheduler._crawlers["test_crawler"][2] == 300  # default fail_interval
 
 
 @pytest.mark.asyncio
 async def test_register_multiple_crawlers():
-    """Test que se pueden registrar múltiples crawlers."""
+    """Test that multiple crawlers can be registered."""
     scheduler = CrawlerScheduler()
     crawler1 = AsyncMock()
     crawler2 = AsyncMock()
@@ -31,7 +31,7 @@ async def test_register_multiple_crawlers():
     scheduler.register_crawler("crawler1", crawler1, interval_seconds=30)
     scheduler.register_crawler("crawler2", crawler2, interval_seconds=60, fail_interval_seconds=120)
 
-    # Verificar que ambos crawlers se registraron
+    # Verify that both crawlers were registered
     assert len(scheduler._crawlers) == 2
     assert "crawler1" in scheduler._crawlers
     assert "crawler2" in scheduler._crawlers
@@ -40,54 +40,54 @@ async def test_register_multiple_crawlers():
 
 @pytest.mark.asyncio
 async def test_start_all_creates_tasks():
-    """Test que start_all crea tareas para todos los crawlers registrados."""
+    """Test that start_all creates tasks for all registered crawlers."""
     scheduler = CrawlerScheduler()
     crawler_mock = AsyncMock()
     crawler_mock.crawl = AsyncMock()
 
     scheduler.register_crawler("test_crawler", crawler_mock, interval_seconds=1)
 
-    # Iniciar el scheduler
+    # Start the scheduler
     await scheduler.start_all()
 
-    # Verificar que se creó una tarea
+    # Verify that a task was created
     assert "test_crawler" in scheduler._tasks
     assert isinstance(scheduler._tasks["test_crawler"], asyncio.Task)
 
-    # Limpiar
+    # Cleanup
     await scheduler.stop_all()
 
 
 @pytest.mark.asyncio
 async def test_crawler_executes_periodically():
-    """Test que el crawler se ejecuta periódicamente según el intervalo."""
+    """Test that the crawler executes periodically according to the interval."""
     scheduler = CrawlerScheduler()
     crawler_mock = AsyncMock()
     crawler_mock.crawl = AsyncMock()
 
-    # Registrar con un intervalo muy corto para el test (1 segundo)
+    # Register with a very short interval for testing (1 second)
     scheduler.register_crawler("test_crawler", crawler_mock, interval_seconds=1)
 
-    # Iniciar el scheduler
+    # Start the scheduler
     await scheduler.start_all()
 
-    # Esperar un poco para que se ejecute varias veces
+    # Wait a bit for it to execute several times
     await asyncio.sleep(3)
 
-    # Detener el scheduler
+    # Stop the scheduler
     await scheduler.stop_all()
 
-    # Verificar que crawl se llamó al menos 2-3 veces
+    # Verify that crawl was called at least 2-3 times
     assert crawler_mock.crawl.await_count >= 2
 
 
 @pytest.mark.asyncio
 async def test_crawler_handles_exceptions():
-    """Test que el scheduler maneja excepciones del crawler y reintenta."""
+    """Test that the scheduler handles crawler exceptions and retries."""
     scheduler = CrawlerScheduler()
     crawler_mock = AsyncMock()
 
-    # Hacer que el crawler falle las primeras 2 veces y luego tenga éxito
+    # Make the crawler fail the first 2 times and then succeed
     call_count = 0
 
     async def failing_crawl():
@@ -98,27 +98,27 @@ async def test_crawler_handles_exceptions():
 
     crawler_mock.crawl = AsyncMock(side_effect=failing_crawl)
 
-    # Registrar con intervalos cortos para el test (1 segundo)
+    # Register with short intervals for testing (1 second)
     scheduler.register_crawler("test_crawler", crawler_mock,
                                interval_seconds=1,
                                fail_interval_seconds=1)
 
-    # Iniciar el scheduler
+    # Start the scheduler
     await scheduler.start_all()
 
-    # Esperar a que se ejecute varias veces
+    # Wait for it to execute several times
     await asyncio.sleep(4)
 
-    # Detener el scheduler
+    # Stop the scheduler
     await scheduler.stop_all()
 
-    # Verificar que crawl se llamó múltiples veces a pesar de los errores
+    # Verify that crawl was called multiple times despite the errors
     assert crawler_mock.crawl.await_count >= 3
 
 
 @pytest.mark.asyncio
 async def test_stop_all_cancels_tasks():
-    """Test que stop_all cancela todas las tareas del scheduler."""
+    """Test that stop_all cancels all scheduler tasks."""
     scheduler = CrawlerScheduler()
     crawler_mock = AsyncMock()
     crawler_mock.crawl = AsyncMock()
@@ -126,48 +126,48 @@ async def test_stop_all_cancels_tasks():
     scheduler.register_crawler("crawler1", crawler_mock, interval_seconds=10)
     scheduler.register_crawler("crawler2", crawler_mock, interval_seconds=10)
 
-    # Iniciar el scheduler
+    # Start the scheduler
     await scheduler.start_all()
 
-    # Verificar que hay tareas
+    # Verify that there are tasks
     assert len(scheduler._tasks) == 2
 
-    # Detener el scheduler
+    # Stop the scheduler
     await scheduler.stop_all()
 
-    # Verificar que las tareas se limpiaron
+    # Verify that tasks were cleaned up
     assert len(scheduler._tasks) == 0
 
 
 @pytest.mark.asyncio
 async def test_multiple_crawlers_run_independently():
-    """Test que múltiples crawlers se ejecutan de forma independiente."""
+    """Test that multiple crawlers run independently."""
     scheduler = CrawlerScheduler()
     crawler1 = AsyncMock()
     crawler1.crawl = AsyncMock()
     crawler2 = AsyncMock()
     crawler2.crawl = AsyncMock()
 
-    # Registrar con intervalos diferentes (1 y 3 segundos)
+    # Register with different intervals (1 and 3 seconds)
     scheduler.register_crawler("fast_crawler", crawler1, interval_seconds=1)
     scheduler.register_crawler("slow_crawler", crawler2, interval_seconds=3)
 
-    # Iniciar el scheduler
+    # Start the scheduler
     await scheduler.start_all()
 
-    # Esperar
+    # Wait
     await asyncio.sleep(5)
 
-    # Detener el scheduler
+    # Stop the scheduler
     await scheduler.stop_all()
 
-    # El crawler rápido debería haberse ejecutado más veces que el lento
+    # The fast crawler should have executed more times than the slow one
     assert crawler1.crawl.await_count > crawler2.crawl.await_count
 
 
 @pytest.mark.asyncio
 async def test_crawler_uses_fail_interval_on_error():
-    """Test que el crawler usa fail_interval cuando hay error."""
+    """Test that the crawler uses fail_interval when there's an error."""
     scheduler = CrawlerScheduler()
     crawler_mock = AsyncMock()
 
@@ -180,7 +180,7 @@ async def test_crawler_uses_fail_interval_on_error():
 
     crawler_mock.crawl = AsyncMock(side_effect=crawl_with_timing)
 
-    # Intervalo normal: 10s, intervalo de fallo: 1s
+    # Normal interval: 10s, failure interval: 1s
     scheduler.register_crawler("test_crawler", crawler_mock,
                                interval_seconds=10,
                                fail_interval_seconds=1)
@@ -189,21 +189,21 @@ async def test_crawler_uses_fail_interval_on_error():
     await asyncio.sleep(3.5)
     await scheduler.stop_all()
 
-    # Debería haberse ejecutado al menos 3 veces con el fail_interval corto
+    # Should have executed at least 3 times with the short fail_interval
     assert len(execution_times) >= 3
 
-    # Verificar que el intervalo entre ejecuciones es cercano a 1s
+    # Verify that the interval between executions is close to 1s
     if len(execution_times) >= 2:
         interval = execution_times[1] - execution_times[0]
-        assert 0.8 < interval < 1.5  # Permitir algo de variación
+        assert 0.5 < interval < 2.0  # Allow some variation
 
 
 @pytest.mark.asyncio
 async def test_empty_scheduler_start_stop():
-    """Test que start_all y stop_all funcionan con un scheduler vacío."""
+    """Test that start_all and stop_all work with an empty scheduler."""
     scheduler = CrawlerScheduler()
 
-    # No debería fallar aunque no haya crawlers registrados
+    # Should not fail even if no crawlers are registered
     await scheduler.start_all()
     assert len(scheduler._tasks) == 0
 

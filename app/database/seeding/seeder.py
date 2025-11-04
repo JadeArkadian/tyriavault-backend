@@ -32,7 +32,7 @@ class DatabaseSeeder:
             logger.error(f"Error seeding database: {e}")
             raise
 
-    async def upsert_data(cls, repo: BaseRepository, data: list) -> None:
+    async def upsert_data(self, repo: BaseRepository, data: list) -> None:
         """Upsert data using the provided repository."""
 
         logger.info(f"Seeding data for {repo.__class__.__name__}...")

@@ -7,21 +7,21 @@ from app.crawlers.items_crawler import ItemsCrawler
 
 @pytest.mark.asyncio
 async def test_crawl_upserts_new_items():
-    """Test que el crawler upserta items nuevos correctamente."""
+    """Test that the crawler upserts new items correctly."""
     gw2_client = MagicMock()
     session_mock = AsyncMock()
 
-    # Configurar el session_factory para devolver un contexto asíncrono
+    # Configure session_factory to return an async context
     session_factory = MagicMock()
     session_factory.return_value.__aenter__ = AsyncMock(return_value=session_mock)
     session_factory.return_value.__aexit__ = AsyncMock(return_value=None)
 
-    # Mock del repositorio
+    # Repository mock
     repo_mock = AsyncMock()
     repo_mock.get_all_ids = AsyncMock(return_value=[])
     repo_mock.upsert_batch = AsyncMock()
 
-    # Configurar respuestas del GW2 client
+    # Configure GW2 client responses
     gw2_client.get_all_item_ids = AsyncMock(return_value=[1, 2, 3])
 
     async def item_details(chunk, lang):
@@ -35,35 +35,35 @@ async def test_crawl_upserts_new_items():
         crawler = ItemsCrawler(gw2_client, session_factory)
         await crawler.crawl()
 
-        # Verificar que se llamó a get_all_ids
+        # Verify that get_all_ids was called
         repo_mock.get_all_ids.assert_awaited_once()
 
-        # Verificar que se llamó a upsert_batch con 3 items
+        # Verify that upsert_batch was called with 3 items
         repo_mock.upsert_batch.assert_awaited_once()
         args = repo_mock.upsert_batch.await_args[0]
         assert len(args[0]) == 3
 
-        # Verificar que se llamó a commit
+        # Verify that commit was called
         session_mock.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio
 async def test_crawl_no_new_items():
-    """Test que el crawler no upserta cuando no hay items nuevos."""
+    """Test that the crawler doesn't upsert when there are no new items."""
     gw2_client = MagicMock()
     session_mock = AsyncMock()
 
-    # Configurar el session_factory para devolver un contexto asíncrono
+    # Configure session_factory to return an async context
     session_factory = MagicMock()
     session_factory.return_value.__aenter__ = AsyncMock(return_value=session_mock)
     session_factory.return_value.__aexit__ = AsyncMock(return_value=None)
 
-    # Mock del repositorio
+    # Repository mock
     repo_mock = AsyncMock()
     repo_mock.get_all_ids = AsyncMock(return_value=[1, 2])
     repo_mock.upsert_batch = AsyncMock()
 
-    # Configurar respuestas del GW2 client
+    # Configure GW2 client responses
     gw2_client.get_all_item_ids = AsyncMock(return_value=[1, 2])
     gw2_client.get_item_details = AsyncMock()
 
@@ -71,33 +71,33 @@ async def test_crawl_no_new_items():
         crawler = ItemsCrawler(gw2_client, session_factory)
         await crawler.crawl()
 
-        # Verificar que se llamó a get_all_ids
+        # Verify that get_all_ids was called
         repo_mock.get_all_ids.assert_awaited_once()
 
-        # Verificar que NO se llamó a upsert_batch (no hay items nuevos)
+        # Verify that upsert_batch was NOT called (no new items)
         repo_mock.upsert_batch.assert_not_awaited()
 
-        # Verificar que NO se llamó a commit (no hay cambios)
+        # Verify that commit was NOT called (no changes)
         session_mock.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio
 async def test_crawl_filters_existing_items():
-    """Test que el crawler filtra items que ya existen en la base de datos."""
+    """Test that the crawler filters items that already exist in the database."""
     gw2_client = MagicMock()
     session_mock = AsyncMock()
 
-    # Configurar el session_factory
+    # Configure session_factory
     session_factory = MagicMock()
     session_factory.return_value.__aenter__ = AsyncMock(return_value=session_mock)
     session_factory.return_value.__aexit__ = AsyncMock(return_value=None)
 
-    # Mock del repositorio - items 1 y 2 ya existen
+    # Repository mock - items 1 and 2 already exist
     repo_mock = AsyncMock()
     repo_mock.get_all_ids = AsyncMock(return_value=[1, 2])
     repo_mock.upsert_batch = AsyncMock()
 
-    # API devuelve items 1, 2, 3, 4
+    # API returns items 1, 2, 3, 4
     gw2_client.get_all_item_ids = AsyncMock(return_value=[1, 2, 3, 4])
 
     async def item_details(chunk, lang):
@@ -111,7 +111,7 @@ async def test_crawl_filters_existing_items():
         crawler = ItemsCrawler(gw2_client, session_factory)
         await crawler.crawl()
 
-        # Solo debe upsertar los items 3 y 4 (los nuevos)
+        # Should only upsert items 3 and 4 (the new ones)
         repo_mock.upsert_batch.assert_awaited_once()
         args = repo_mock.upsert_batch.await_args[0]
         assert len(args[0]) == 2
@@ -120,7 +120,7 @@ async def test_crawl_filters_existing_items():
 
 @pytest.mark.asyncio
 async def test_map_rarity_to_id():
-    """Test del mapeo de rareza a ID."""
+    """Test rarity to ID mapping."""
     crawler = ItemsCrawler(MagicMock(), MagicMock())
     assert crawler._map_rarity_to_id("Junk") == 1
     assert crawler._map_rarity_to_id("Basic") == 2
@@ -131,12 +131,12 @@ async def test_map_rarity_to_id():
     assert crawler._map_rarity_to_id("Ascended") == 7
     assert crawler._map_rarity_to_id("Legendary") == 8
     assert crawler._map_rarity_to_id(None) == 2
-    assert crawler._map_rarity_to_id("Desconocido") == 2
+    assert crawler._map_rarity_to_id("Unknown") == 2
 
 
 @pytest.mark.asyncio
 async def test_map_type_to_id():
-    """Test del mapeo de tipo a ID."""
+    """Test type to ID mapping."""
     crawler = ItemsCrawler(MagicMock(), MagicMock())
     assert crawler._map_type_to_id("Weapon") is None
     assert crawler._map_type_to_id(None) is None

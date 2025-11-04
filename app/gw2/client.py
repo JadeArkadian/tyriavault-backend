@@ -151,4 +151,5 @@ class GW2Client:
            Please note that the GW2 API limits the number of IDs per request.
         """
         item_ids_str = ",".join(map(str, item_ids))
-        return await self._get(f"/items?lang={lang}&ids={item_ids_str}")
+        data = await self._get(f"/items?lang={lang}&ids={item_ids_str}")
+        return [GW2ApiItem(**item) for item in data]
