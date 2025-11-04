@@ -109,19 +109,19 @@ CREATE  TABLE schema_tyriavault.game_accounts (
 	CONSTRAINT fk_game_accounts_worlds FOREIGN KEY ( world_id ) REFERENCES schema_tyriavault.worlds( id ) ON DELETE SET NULL ON UPDATE CASCADE 
  );
 
-CREATE  TABLE schema_tyriavault.items_cache ( 
+CREATE  TABLE schema_tyriavault.items ( 
 	id                   bigint  NOT NULL  ,
-	chat_link            varchar  NOT NULL  ,
 	name_es              varchar(200)  NOT NULL  ,
 	name_fr              varchar(200)  NOT NULL  ,
 	name_en              varchar(200)  NOT NULL  ,
 	name_de              varchar(200)  NOT NULL  ,
-	description_es       text    ,
+	item_type_id         integer    ,
+	chat_link            varchar  NOT NULL  ,
 	icon_url             text    ,
+	description_es       text    ,
 	description_fr       text    ,
 	description_en       text    ,
 	description_de       text    ,
-	item_type_id         integer  NOT NULL  ,
 	rarity_id            integer  NOT NULL  ,
 	required_level       integer    ,
 	vendor_value         integer DEFAULT 0   ,
@@ -132,9 +132,9 @@ CREATE  TABLE schema_tyriavault.items_cache (
 	CONSTRAINT fk_items_cache_rarities FOREIGN KEY ( rarity_id ) REFERENCES schema_tyriavault.rarities( id ) ON DELETE CASCADE ON UPDATE CASCADE 
  );
 
-CREATE INDEX idx_items_cache_1 ON schema_tyriavault.items_cache  ( rarity_id );
+CREATE INDEX idx_items_cache_1 ON schema_tyriavault.items  ( rarity_id );
 
-CREATE INDEX idx_items_cache_0 ON schema_tyriavault.items_cache  ( item_type_id );
+CREATE INDEX idx_items_cache_0 ON schema_tyriavault.items  ( item_type_id );
 
 CREATE  TABLE schema_tyriavault.miniatures ( 
 	id                   integer  NOT NULL  ,
@@ -145,7 +145,7 @@ CREATE  TABLE schema_tyriavault.miniatures (
 	name_de              varchar(200)  NOT NULL  ,
 	item_id              bigint    ,
 	CONSTRAINT pk_miniatures PRIMARY KEY ( id ),
-	CONSTRAINT fk_miniatures_items_cache FOREIGN KEY ( item_id ) REFERENCES schema_tyriavault.items_cache( id )   
+	CONSTRAINT fk_miniatures_items_cache FOREIGN KEY ( item_id ) REFERENCES schema_tyriavault.items( id )   
  );
 
 CREATE  TABLE schema_tyriavault.unlocked_dyes ( 
@@ -222,7 +222,7 @@ CREATE  TABLE schema_tyriavault.bank (
 	CONSTRAINT fk_bank_dyes_03 FOREIGN KEY ( dye03_id ) REFERENCES schema_tyriavault.dyes( id )   ,
 	CONSTRAINT fk_bank_dyes_04 FOREIGN KEY ( dye04_id ) REFERENCES schema_tyriavault.dyes( id )   ,
 	CONSTRAINT fk_bank_game_accounts FOREIGN KEY ( game_account_uuid ) REFERENCES schema_tyriavault.game_accounts( uuid ) ON DELETE CASCADE ON UPDATE CASCADE ,
-	CONSTRAINT fk_bank_items_cache FOREIGN KEY ( item_id ) REFERENCES schema_tyriavault.items_cache( id ) ON DELETE SET NULL ON UPDATE CASCADE 
+	CONSTRAINT fk_bank_items_cache FOREIGN KEY ( item_id ) REFERENCES schema_tyriavault.items( id ) ON DELETE SET NULL ON UPDATE CASCADE 
  );
 
 CREATE  TABLE schema_tyriavault.characters ( 
@@ -250,14 +250,14 @@ CREATE  TABLE schema_tyriavault.emotes (
 	unlocking_item_id    bigint    ,
 	CONSTRAINT pk_emotes_0 PRIMARY KEY ( id ),
 	CONSTRAINT unq_emotes_name UNIQUE ( name ) ,
-	CONSTRAINT fk_emotes_items_cache FOREIGN KEY ( unlocking_item_id ) REFERENCES schema_tyriavault.items_cache( id ) ON DELETE SET NULL ON UPDATE CASCADE 
+	CONSTRAINT fk_emotes_items_cache FOREIGN KEY ( unlocking_item_id ) REFERENCES schema_tyriavault.items( id ) ON DELETE SET NULL ON UPDATE CASCADE 
  );
 
 CREATE  TABLE schema_tyriavault.item_details ( 
 	item_id              bigint  NOT NULL  ,
 	details              jsonb  NOT NULL  ,
 	CONSTRAINT pk_item_details PRIMARY KEY ( item_id ),
-	CONSTRAINT fk_item_details_items_cache FOREIGN KEY ( item_id ) REFERENCES schema_tyriavault.items_cache( id ) ON DELETE CASCADE ON UPDATE CASCADE 
+	CONSTRAINT fk_item_details_items_cache FOREIGN KEY ( item_id ) REFERENCES schema_tyriavault.items( id ) ON DELETE CASCADE ON UPDATE CASCADE 
  );
 
 CREATE INDEX idx_item_details ON schema_tyriavault.item_details USING GIN ( details );
@@ -381,37 +381,39 @@ COMMENT ON COLUMN schema_tyriavault.game_accounts.content_access IS 'The flags a
 
 COMMENT ON COLUMN schema_tyriavault.game_accounts.last_fetched IS 'Last time the data of this item was fetched from the API';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.id IS 'The item ID, given by the GW2 API';
+COMMENT ON COLUMN schema_tyriavault.items.id IS 'The item ID, given by the GW2 API';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.chat_link IS 'String with the ingame chat link';
+COMMENT ON COLUMN schema_tyriavault.items.name_es IS 'Name in spanish';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.name_es IS 'Name in spanish';
+COMMENT ON COLUMN schema_tyriavault.items.name_fr IS 'Name in french';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.name_fr IS 'Name in french';
+COMMENT ON COLUMN schema_tyriavault.items.name_en IS 'Name in english';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.name_en IS 'Name in english';
+COMMENT ON COLUMN schema_tyriavault.items.name_de IS 'Name in german';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.name_de IS 'Name in german';
+COMMENT ON COLUMN schema_tyriavault.items.item_type_id IS 'The id of the Item Type';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.description_es IS 'Description in spanish';
+COMMENT ON COLUMN schema_tyriavault.items.chat_link IS 'String with the ingame chat link';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.icon_url IS 'Icon URL';
+COMMENT ON COLUMN schema_tyriavault.items.icon_url IS 'Icon URL';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.description_fr IS 'Description in french';
+COMMENT ON COLUMN schema_tyriavault.items.description_es IS 'Description in spanish';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.description_en IS 'Description in english';
+COMMENT ON COLUMN schema_tyriavault.items.description_fr IS 'Description in french';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.description_de IS 'Description in german';
+COMMENT ON COLUMN schema_tyriavault.items.description_en IS 'Description in english';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.rarity_id IS 'The rarity of the item';
+COMMENT ON COLUMN schema_tyriavault.items.description_de IS 'Description in german';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.required_level IS 'The minimum level required level to use this item';
+COMMENT ON COLUMN schema_tyriavault.items.rarity_id IS 'The rarity of the item';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.vendor_value IS 'The value in coins when selling to a vendor. (Can be non-zero even when the item has the NoSell flag.)';
+COMMENT ON COLUMN schema_tyriavault.items.required_level IS 'The minimum level required level to use this item';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.flags IS 'Flags applying to the item.';
+COMMENT ON COLUMN schema_tyriavault.items.vendor_value IS 'The value in coins when selling to a vendor. (Can be non-zero even when the item has the NoSell flag.)';
 
-COMMENT ON COLUMN schema_tyriavault.items_cache.last_fetched IS 'Last time the data of this item was fetched from the API';
+COMMENT ON COLUMN schema_tyriavault.items.flags IS 'Flags applying to the item.';
+
+COMMENT ON COLUMN schema_tyriavault.items.last_fetched IS 'Last time the data of this item was fetched from the API';
 
 COMMENT ON TABLE schema_tyriavault.miniatures IS 'Table enumerating every mini found in the game';
 

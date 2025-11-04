@@ -96,7 +96,7 @@
 			<fk name="fk_bank_game_accounts" to_schema="schema_tyriavault" to_table="game_accounts" delete_action="cascade" update_action="cascade" options="" >
 				<fk_column name="game_account_uuid" pk="uuid" />
 			</fk>
-			<fk name="fk_bank_items_cache" to_schema="schema_tyriavault" to_table="items_cache" delete_action="setNull" update_action="cascade" >
+			<fk name="fk_bank_items_cache" to_schema="schema_tyriavault" to_table="items" delete_action="setNull" update_action="cascade" >
 				<fk_column name="item_id" pk="id" />
 			</fk>
 		</table>
@@ -219,7 +219,7 @@
 			<index name="unq_emotes_name" unique="UNIQUE_KEY" >
 				<column name="name" />
 			</index>
-			<fk name="fk_emotes_items_cache" to_schema="schema_tyriavault" to_table="items_cache" delete_action="setNull" update_action="cascade" >
+			<fk name="fk_emotes_items_cache" to_schema="schema_tyriavault" to_table="items" delete_action="setNull" update_action="cascade" >
 				<fk_column name="unlocking_item_id" pk="id" />
 			</fk>
 		</table>
@@ -290,7 +290,7 @@
 			<index name="idx_item_details" unique="NORMAL" spec="USING GIN" >
 				<column name="details" />
 			</index>
-			<fk name="fk_item_details_items_cache" to_schema="schema_tyriavault" to_table="items_cache" delete_action="cascade" update_action="cascade" >
+			<fk name="fk_item_details_items_cache" to_schema="schema_tyriavault" to_table="items" delete_action="cascade" update_action="cascade" >
 				<fk_column name="item_id" pk="id" />
 			</fk>
 		</table>
@@ -306,12 +306,9 @@
 				<column name="id" />
 			</index>
 		</table>
-		<table name="items_cache" prior="items_cache " generator_rows="150" >
+		<table name="items" prior="items_cache" generator_rows="150" >
 			<column name="id" type="bigint" mandatory="y" >
 				<comment><![CDATA[The item ID, given by the GW2 API]]></comment>
-			</column>
-			<column name="chat_link" type="varchar" mandatory="y" >
-				<comment><![CDATA[String with the ingame chat link]]></comment>
 			</column>
 			<column name="name_es" prior="name" type="varchar" length="200" mandatory="y" >
 				<comment><![CDATA[Name in spanish]]></comment>
@@ -325,11 +322,17 @@
 			<column name="name_de" type="varchar" length="200" mandatory="y" >
 				<comment><![CDATA[Name in german]]></comment>
 			</column>
-			<column name="description_es" type="text" >
-				<comment><![CDATA[Description in spanish]]></comment>
+			<column name="item_type_id" type="integer" >
+				<comment><![CDATA[The id of the Item Type]]></comment>
+			</column>
+			<column name="chat_link" type="varchar" mandatory="y" >
+				<comment><![CDATA[String with the ingame chat link]]></comment>
 			</column>
 			<column name="icon_url" type="text" >
 				<comment><![CDATA[Icon URL]]></comment>
+			</column>
+			<column name="description_es" type="text" >
+				<comment><![CDATA[Description in spanish]]></comment>
 			</column>
 			<column name="description_fr" type="text" >
 				<comment><![CDATA[Description in french]]></comment>
@@ -340,7 +343,6 @@
 			<column name="description_de" type="text" >
 				<comment><![CDATA[Description in german]]></comment>
 			</column>
-			<column name="item_type_id" type="integer" mandatory="y" />
 			<column name="rarity_id" type="integer" mandatory="y" >
 				<comment><![CDATA[The rarity of the item]]></comment>
 			</column>
@@ -400,7 +402,7 @@
 			<index name="pk_miniatures" unique="PRIMARY_KEY" >
 				<column name="id" />
 			</index>
-			<fk name="fk_miniatures_items_cache" to_schema="schema_tyriavault" to_table="items_cache" >
+			<fk name="fk_miniatures_items_cache" to_schema="schema_tyriavault" to_table="items" >
 				<fk_column name="item_id" pk="id" />
 			</fk>
 		</table>
@@ -614,27 +616,27 @@
 		</table>
 	</schema>
 	<layout name="Default Diagram" id="5ffc9b5e-f2bb-43b6-9c1b-c3a79de8faea" show_relation="columns" >
-		<entity schema="schema_tyriavault" name="dyes" color="C1D8EE" x="1216" y="95" />
-		<entity schema="schema_tyriavault" name="currencies" color="C8EEC1" x="114" y="323" />
-		<entity schema="schema_tyriavault" name="rarities" color="FFFF39" x="1786" y="1425" />
-		<entity schema="schema_tyriavault" name="characters" color="EEC1C8" x="1178" y="570" />
-		<entity schema="schema_tyriavault" name="races" color="EEC1C8" x="1083" y="893" />
-		<entity schema="schema_tyriavault" name="professions" color="EEC1C8" x="1368" y="893" />
-		<entity schema="schema_tyriavault" name="api_keys" color="C1D8EE" x="722" y="57" />
-		<entity schema="schema_tyriavault" name="emotes" color="C1D8EE" x="665" y="1026" />
-		<entity schema="schema_tyriavault" name="bank" color="39C1A5" x="1672" y="95" />
-		<entity schema="schema_tyriavault" name="item_types" color="FFFF39" x="1577" y="1425" />
-		<entity schema="schema_tyriavault" name="game_accounts" color="C1D8EE" x="665" y="399" />
-		<entity schema="schema_tyriavault" name="miniatures" color="C1D8EE" x="475" y="1178" />
-		<entity schema="schema_tyriavault" name="items_cache" color="FFFF39" x="1691" y="950" />
-		<entity schema="schema_tyriavault" name="genders" color="EEC1C8" x="1235" y="893" />
+		<entity schema="schema_tyriavault" name="dyes" color="C1D8EE" x="1387" y="95" />
+		<entity schema="schema_tyriavault" name="currencies" color="C8EEC1" x="285" y="323" />
+		<entity schema="schema_tyriavault" name="rarities" color="FFFF39" x="1957" y="1425" />
+		<entity schema="schema_tyriavault" name="characters" color="EEC1C8" x="1349" y="570" />
+		<entity schema="schema_tyriavault" name="races" color="EEC1C8" x="1254" y="893" />
+		<entity schema="schema_tyriavault" name="professions" color="EEC1C8" x="1539" y="893" />
+		<entity schema="schema_tyriavault" name="api_keys" color="C1D8EE" x="893" y="57" />
+		<entity schema="schema_tyriavault" name="emotes" color="C1D8EE" x="836" y="1026" />
+		<entity schema="schema_tyriavault" name="bank" color="39C1A5" x="1843" y="95" />
+		<entity schema="schema_tyriavault" name="game_accounts" color="C1D8EE" x="836" y="399" />
+		<entity schema="schema_tyriavault" name="miniatures" color="C1D8EE" x="646" y="1178" />
+		<entity schema="schema_tyriavault" name="genders" color="EEC1C8" x="1406" y="893" />
+		<entity schema="schema_tyriavault" name="worlds" color="C1D8EE" x="1292" y="342" />
+		<entity schema="schema_tyriavault" name="item_details" color="FFFF39" x="2223" y="950" />
+		<entity schema="schema_tyriavault" name="wallet_history" color="C8EEC1" x="532" y="456" />
+		<entity schema="schema_tyriavault" name="wallet" color="C8EEC1" x="532" y="285" />
+		<entity schema="schema_tyriavault" name="unlocked_minis" color="C1D8EE" x="589" y="741" />
+		<entity schema="schema_tyriavault" name="unlocked_emotes" color="C1D8EE" x="855" y="741" />
+		<entity schema="schema_tyriavault" name="unlocked_dyes" color="C1D8EE" x="1140" y="114" />
+		<entity schema="schema_tyriavault" name="item_types" color="FFFF39" x="1748" y="1425" />
+		<entity schema="schema_tyriavault" name="items" color="FFFF39" x="1862" y="950" />
 		<entity schema="schema_tyriavault" name="achievements" color="EED8C1" x="57" y="1064" />
-		<entity schema="schema_tyriavault" name="worlds" color="C1D8EE" x="1121" y="342" />
-		<entity schema="schema_tyriavault" name="item_details" color="FFFF39" x="2052" y="950" />
-		<entity schema="schema_tyriavault" name="wallet_history" color="C8EEC1" x="361" y="456" />
-		<entity schema="schema_tyriavault" name="wallet" color="C8EEC1" x="361" y="285" />
-		<entity schema="schema_tyriavault" name="unlocked_minis" color="C1D8EE" x="418" y="741" />
-		<entity schema="schema_tyriavault" name="unlocked_emotes" color="C1D8EE" x="684" y="741" />
-		<entity schema="schema_tyriavault" name="unlocked_dyes" color="C1D8EE" x="969" y="114" />
 	</layout>
 </project>
