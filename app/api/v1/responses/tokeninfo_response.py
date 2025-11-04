@@ -2,14 +2,13 @@ from typing import List, Self
 
 from pydantic import BaseModel
 
+from app.services.dtos.apikey_dto import ApiKeyDTO
+
 
 class TokenInfoResponse(BaseModel):
     permissions: List[str]
 
     @classmethod
-    def map_response(cls, token_info: dict) -> Self:
-        try:
-            return TokenInfoResponse(
-                permissions=token_info.get("permissions", []))
-        except KeyError as ke:
-            raise ValueError(f"Missing required key in token_info: {ke.args[0]}") from ke
+    def from_dto(cls, apikey: ApiKeyDTO) -> Self:
+        """Create a TokenInfoResponse from an ApiKeyDTO."""
+        return cls(permissions=apikey.permissions)

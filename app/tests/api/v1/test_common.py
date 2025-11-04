@@ -5,6 +5,7 @@ import pytest
 
 from app.main import api
 from app.services.apikey_service import ApiKeyService
+from app.services.dtos.apikey_dto import ApiKeyDTO
 from app.services.health_service import HealthService
 from app.services.services import get_api_key_service, validate_api_key, get_health_service
 
@@ -58,14 +59,12 @@ class TestCommonEndpoint:
     async def test_tokeninfo_success(self):
         """Test successful tokeninfo response with valid API key"""
         # Arrange - Mock validate_api_key dependency
-        mock_api_key_data = {
-            "id": "test-api-key-123",
-            "permissions": ["account", "characters", "inventories"],
-            "name": "Test Key"
-        }
-
-        # Override the validate_api_key dependency
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-123",
+            permissions=["account", "characters", "inventories"],
+            game_account_uuid=None
+        )
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         try:
             # Act
@@ -89,13 +88,13 @@ class TestCommonEndpoint:
     async def test_tokeninfo_empty_permissions(self):
         """Test tokeninfo response when API key has no permissions"""
         # Arrange
-        mock_api_key_data = {
-            "id": "test-api-key-empty",
-            "permissions": [],
-            "name": "Empty Key"
-        }
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-empty",
+            permissions=[],
+            game_account_uuid=None
+        )
 
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         try:
             # Act
@@ -172,9 +171,9 @@ class TestCommonEndpoint:
     async def test_tokeninfo_all_permissions(self):
         """Test tokeninfo with API key that has all permissions"""
         # Arrange
-        mock_api_key_data = {
-            "id": "test-api-key-full",
-            "permissions": [
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-full",
+            permissions=[
                 "account",
                 "builds",
                 "characters",
@@ -186,10 +185,10 @@ class TestCommonEndpoint:
                 "unlocks",
                 "wallet"
             ],
-            "name": "Full Access Key"
-        }
+            game_account_uuid=None
+        )
 
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         try:
             # Act
@@ -211,13 +210,13 @@ class TestCommonEndpoint:
     async def test_tokeninfo_response_structure(self):
         """Test that tokeninfo response follows the TokenInfoResponse schema"""
         # Arrange
-        mock_api_key_data = {
-            "id": "test-api-key-schema",
-            "permissions": ["account", "characters"],
-            "name": "Schema Test Key"
-        }
+        mock_api_key_dto = ApiKeyDTO(
+            api_key="test-api-key-schema",
+            permissions=["account", "characters"],
+            game_account_uuid=None
+        )
 
-        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_data
+        api.dependency_overrides[validate_api_key] = lambda: mock_api_key_dto
 
         try:
             # Act

@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from app.services.dtos.account_dto import AccountDTO
+
 
 class AccountInfoResponse(BaseModel):
     uuid: UUID
@@ -14,18 +16,18 @@ class AccountInfoResponse(BaseModel):
     content_access: list[str]
 
     @classmethod
-    def map_response(cls, game_account: dict, world_info: dict) -> Self:
-        mapped = AccountInfoResponse(
-            uuid=game_account["id"],
-            account_name=game_account["name"],
-            creation_date=game_account["created"],
-            fractal_level=game_account.get("fractal_level", 1),
-            content_access=game_account.get("access", []),
+    def from_dto(cls, account: AccountDTO) -> Self:
+        """Create an AccountInfoResponse from an AccountDTO."""
+        return cls(
+            uuid=account.uuid,
+            account_name=account.account_name,
+            creation_date=account.creation_date,
+            fractal_level=account.fractal_level,
+            content_access=account.content_access,
             world_name={
-                "es": world_info["name_es"] if world_info else None,
-                "en": world_info["name_en"] if world_info else None,
-                "fr": world_info["name_fr"] if world_info else None,
-                "de": world_info["name_de"] if world_info else None
+                "es": account.world_name_es,
+                "en": account.world_name_en,
+                "fr": account.world_name_fr,
+                "de": account.world_name_de
             }
         )
-        return mapped

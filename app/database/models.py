@@ -69,8 +69,7 @@ class Dyes(Base):
     name_fr: Mapped[str] = mapped_column(String(90), nullable=False, comment='Name in french')
     name_en: Mapped[str] = mapped_column(String(90), nullable=False, comment='Name in english')
     name_de: Mapped[str] = mapped_column(String(90), nullable=False, comment='Name in german')
-    color: Mapped[str] = mapped_column(CHAR(14), nullable=False,
-                                       comment='Color in rgb format like "[RRR,GGG,BBB]" being RRR GGG and BBB parseable integer numbers')
+    color: Mapped[str] = mapped_column(CHAR(8), nullable=False, comment='Hex code for color')
 
     bank: Mapped[list['Bank']] = relationship('Bank', foreign_keys='[Bank.dye01_id]', back_populates='dye01')
     bank_: Mapped[list['Bank']] = relationship('Bank', foreign_keys='[Bank.dye02_id]', back_populates='dye02')
@@ -110,7 +109,7 @@ class ItemTypes(Base):
     name_en: Mapped[str] = mapped_column(String(100), nullable=False)
     name_de: Mapped[str] = mapped_column(String(100), nullable=False)
 
-    items_cache: Mapped[list['ItemsCache']] = relationship('ItemsCache', back_populates='item_type')
+    items: Mapped[list['Items']] = relationship('Items', back_populates='item_type')
 
 
 class Professions(Base):
@@ -164,7 +163,7 @@ class Rarities(Base):
     color: Mapped[str] = mapped_column(CHAR(14), nullable=False,
                                        comment='The representing color tied to the rarity. For example, ascended gear is pink')
 
-    items_cache: Mapped[list['ItemsCache']] = relationship('ItemsCache', back_populates='rarity')
+    items: Mapped[list['Items']] = relationship('Items', back_populates='rarity')
 
 
 class Worlds(Base):
@@ -220,8 +219,8 @@ class GameAccounts(Base):
     unlocked_minis: Mapped[list['UnlockedMinis']] = relationship('UnlockedMinis', back_populates='game_accounts')
 
 
-class ItemsCache(Base):
-    __tablename__ = 'items_cache'
+class Items(Base):
+    __tablename__ = 'items'
     __table_args__ = (
         ForeignKeyConstraint(['item_type_id'], ['schema_tyriavault.item_types.id'], ondelete='CASCADE', onupdate='CASCADE',
                              name='fk_items_cache_item_type'),
@@ -239,7 +238,6 @@ class ItemsCache(Base):
     name_fr: Mapped[str] = mapped_column(String(200), nullable=False, comment='Name in french')
     name_en: Mapped[str] = mapped_column(String(200), nullable=False, comment='Name in english')
     name_de: Mapped[str] = mapped_column(String(200), nullable=False, comment='Name in german')
-    item_type_id: Mapped[int] = mapped_column(Integer, nullable=False)
     rarity_id: Mapped[int] = mapped_column(Integer, nullable=False, comment='The rarity of the item')
     last_fetched: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('CURRENT_TIMESTAMP'),
                                                             comment='Last time the data of this item was fetched from the API')
@@ -248,13 +246,14 @@ class ItemsCache(Base):
     description_fr: Mapped[Optional[str]] = mapped_column(Text, comment='Description in french')
     description_en: Mapped[Optional[str]] = mapped_column(Text, comment='Description in english')
     description_de: Mapped[Optional[str]] = mapped_column(Text, comment='Description in german')
+    item_type_id: Mapped[Optional[int]] = mapped_column(Integer, comment='The id of the Item Type')
     required_level: Mapped[Optional[int]] = mapped_column(Integer, comment='The minimum level required level to use this item')
     vendor_value: Mapped[Optional[int]] = mapped_column(Integer, server_default=text('0'),
                                                         comment='The value in coins when selling to a vendor. (Can be non-zero even when the item has the NoSell flag.)')
     flags: Mapped[Optional[dict]] = mapped_column(JSONB, comment='Flags applying to the item.')
 
-    item_type: Mapped['ItemTypes'] = relationship('ItemTypes', back_populates='items_cache')
-    rarity: Mapped['Rarities'] = relationship('Rarities', back_populates='items_cache')
+    item_type: Mapped[Optional['ItemTypes']] = relationship('ItemTypes', back_populates='items')
+    rarity: Mapped['Rarities'] = relationship('Rarities', back_populates='items')
     bank: Mapped[list['Bank']] = relationship('Bank', back_populates='item')
     emotes: Mapped[list['Emotes']] = relationship('Emotes', back_populates='unlocking_item')
     miniatures: Mapped[list['Miniatures']] = relationship('Miniatures', back_populates='item')
@@ -291,7 +290,7 @@ class Bank(Base):
         ForeignKeyConstraint(['dye04_id'], ['schema_tyriavault.dyes.id'], name='fk_bank_dyes_04'),
         ForeignKeyConstraint(['game_account_uuid'], ['schema_tyriavault.game_accounts.uuid'], ondelete='CASCADE', onupdate='CASCADE',
                              name='fk_bank_game_accounts'),
-        ForeignKeyConstraint(['item_id'], ['schema_tyriavault.items_cache.id'], ondelete='SET NULL', onupdate='CASCADE',
+        ForeignKeyConstraint(['item_id'], ['schema_tyriavault.items.id'], ondelete='SET NULL', onupdate='CASCADE',
                              name='fk_bank_items_cache'),
         PrimaryKeyConstraint('id', name='pk_bank'),
         {'comment': 'Table holding info about every single slot in bank storage for '
@@ -319,7 +318,7 @@ class Bank(Base):
     dye03: Mapped[Optional['Dyes']] = relationship('Dyes', foreign_keys=[dye03_id], back_populates='bank1')
     dye04: Mapped[Optional['Dyes']] = relationship('Dyes', foreign_keys=[dye04_id], back_populates='bank2')
     game_accounts: Mapped['GameAccounts'] = relationship('GameAccounts', back_populates='bank')
-    item: Mapped[Optional['ItemsCache']] = relationship('ItemsCache', back_populates='bank')
+    item: Mapped[Optional['Items']] = relationship('Items', back_populates='bank')
 
 
 class Characters(Base):
@@ -357,7 +356,7 @@ class Characters(Base):
 class Emotes(Base):
     __tablename__ = 'emotes'
     __table_args__ = (
-        ForeignKeyConstraint(['unlocking_item_id'], ['schema_tyriavault.items_cache.id'], ondelete='SET NULL', onupdate='CASCADE',
+        ForeignKeyConstraint(['unlocking_item_id'], ['schema_tyriavault.items.id'], ondelete='SET NULL', onupdate='CASCADE',
                              name='fk_emotes_items_cache'),
         PrimaryKeyConstraint('id', name='pk_emotes_0'),
         UniqueConstraint('name', name='unq_emotes_name'),
@@ -371,14 +370,14 @@ class Emotes(Base):
     name: Mapped[Optional[str]] = mapped_column(String(100), comment="Unique name of the emote. It's the id from GW2 API")
     unlocking_item_id: Mapped[Optional[int]] = mapped_column(BigInteger, comment='First item that allows the unlocking of the emote')
 
-    unlocking_item: Mapped[Optional['ItemsCache']] = relationship('ItemsCache', back_populates='emotes')
+    unlocking_item: Mapped[Optional['Items']] = relationship('Items', back_populates='emotes')
     unlocked_emotes: Mapped[list['UnlockedEmotes']] = relationship('UnlockedEmotes', back_populates='emote')
 
 
-class ItemDetails(ItemsCache):
+class ItemDetails(Items):
     __tablename__ = 'item_details'
     __table_args__ = (
-        ForeignKeyConstraint(['item_id'], ['schema_tyriavault.items_cache.id'], ondelete='CASCADE', onupdate='CASCADE',
+        ForeignKeyConstraint(['item_id'], ['schema_tyriavault.items.id'], ondelete='CASCADE', onupdate='CASCADE',
                              name='fk_item_details_items_cache'),
         PrimaryKeyConstraint('item_id', name='pk_item_details'),
         Index('idx_item_details', 'details'),
@@ -392,7 +391,7 @@ class ItemDetails(ItemsCache):
 class Miniatures(Base):
     __tablename__ = 'miniatures'
     __table_args__ = (
-        ForeignKeyConstraint(['item_id'], ['schema_tyriavault.items_cache.id'], name='fk_miniatures_items_cache'),
+        ForeignKeyConstraint(['item_id'], ['schema_tyriavault.items.id'], name='fk_miniatures_items_cache'),
         PrimaryKeyConstraint('id', name='pk_miniatures'),
         {'comment': 'Table enumerating every mini found in the game',
          'schema': 'schema_tyriavault'}
@@ -406,7 +405,7 @@ class Miniatures(Base):
     icon_url: Mapped[Optional[str]] = mapped_column(Text, comment='The icon URL')
     item_id: Mapped[Optional[int]] = mapped_column(BigInteger, comment='The item associated to this mini')
 
-    item: Mapped[Optional['ItemsCache']] = relationship('ItemsCache', back_populates='miniatures')
+    item: Mapped[Optional['Items']] = relationship('Items', back_populates='miniatures')
     unlocked_minis: Mapped[list['UnlockedMinis']] = relationship('UnlockedMinis', back_populates='mini')
 
 

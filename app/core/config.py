@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     CACHE_TTL_STATIC_SECONDS: int = 2592000  # 30 days
     CACHE_TTL_NORMAL_SECONDS: int = 300  # 5 minutes
     LOG_LEVEL: str = "INFO"
+    ITEMS_CRAWLER_INTERVAL_SECONDS: int = 24 * 60 * 60
 
     model_config = SettingsConfigDict(env_file=env_file, env_file_encoding="utf-8")
 

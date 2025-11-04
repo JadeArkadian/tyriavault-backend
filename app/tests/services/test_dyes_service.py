@@ -4,6 +4,7 @@ import pytest
 
 from app.database.models import Dyes
 from app.gw2.responses import GW2ApiColor, MaterialColor
+from app.services.dtos.dyes_dto import DyeDTO
 from app.services.dyes_service import DyesService
 
 
@@ -136,19 +137,21 @@ class TestDyesService:
 
         # Assert
         assert len(result) == 2
-        assert result[0]["id"] == 1
-        assert result[0]["name_en"] == "Black"
-        assert result[0]["name_es"] == "Negro"
-        assert result[0]["name_de"] == "Schwarz"
-        assert result[0]["name_fr"] == "Noir"
-        assert result[0]["color"] == "#000000"
+        assert isinstance(result[0], DyeDTO)
+        assert result[0].id == 1
+        assert result[0].name_en == "Black"
+        assert result[0].name_es == "Negro"
+        assert result[0].name_de == "Schwarz"
+        assert result[0].name_fr == "Noir"
+        assert result[0].color == "#000000"
 
-        assert result[1]["id"] == 2
-        assert result[1]["name_en"] == "White"
-        assert result[1]["name_es"] == "Blanco"
-        assert result[1]["name_de"] == "Weiß"
-        assert result[1]["name_fr"] == "Blanc"
-        assert result[1]["color"] == "#ffffff"
+        assert isinstance(result[1], DyeDTO)
+        assert result[1].id == 2
+        assert result[1].name_en == "White"
+        assert result[1].name_es == "Blanco"
+        assert result[1].name_de == "Weiß"
+        assert result[1].name_fr == "Blanc"
+        assert result[1].color == "#ffffff"
 
         # Verify that the API was called for each language
         assert mock_gw2_client.get_colors.call_count == 4
@@ -171,13 +174,15 @@ class TestDyesService:
 
         # Assert
         assert len(result) == 2
-        assert result[0]["id"] == 1
-        assert result[0]["name_en"] == "Black"
-        assert result[0]["name_es"] == "Negro"
-        assert result[0]["color"] == "#000000"
+        assert isinstance(result[0], DyeDTO)
+        assert result[0].id == 1
+        assert result[0].name_en == "Black"
+        assert result[0].name_es == "Negro"
+        assert result[0].color == "#000000"
 
-        assert result[1]["id"] == 2
-        assert result[1]["name_en"] == "White"
+        assert isinstance(result[1], DyeDTO)
+        assert result[1].id == 2
+        assert result[1].name_en == "White"
 
         # Verify that the repository was called
         mock_repository.get_all.assert_called_once()
@@ -207,14 +212,15 @@ class TestDyesService:
         # Assert
         assert len(result) == 2
 
-        # Verify first dye has all language fields
+        # Verify first dye has all language fields and is a DTO
         first_dye = result[0]
-        assert "name_en" in first_dye
-        assert "name_es" in first_dye
-        assert "name_de" in first_dye
-        assert "name_fr" in first_dye
-        assert "color" in first_dye
-        assert "id" in first_dye
+        assert isinstance(first_dye, DyeDTO)
+        assert hasattr(first_dye, 'name_en')
+        assert hasattr(first_dye, 'name_es')
+        assert hasattr(first_dye, 'name_de')
+        assert hasattr(first_dye, 'name_fr')
+        assert hasattr(first_dye, 'color')
+        assert hasattr(first_dye, 'id')
 
     @pytest.mark.asyncio
     async def test_get_dyes_from_db_success(
@@ -232,9 +238,10 @@ class TestDyesService:
 
         # Assert
         assert len(result) == 2
-        assert result[0]["id"] == 1
-        assert result[0]["name_en"] == "Black"
-        assert result[0]["color"] == "#000000"
+        assert isinstance(result[0], DyeDTO)
+        assert result[0].id == 1
+        assert result[0].name_en == "Black"
+        assert result[0].color == "#000000"
         mock_repository.get_all.assert_called_once()
 
     @pytest.mark.asyncio
@@ -273,8 +280,8 @@ class TestDyesService:
         """Test: successfully sync dyes to database"""
         # Arrange
         dyes_data = [
-            {"id": 1, "name_en": "Black", "name_es": "Negro", "name_de": "Schwarz", "name_fr": "Noir", "color": "#000000"},
-            {"id": 2, "name_en": "White", "name_es": "Blanco", "name_de": "Weiß", "name_fr": "Blanc", "color": "#ffffff"}
+            DyeDTO(id=1, name_en="Black", name_es="Negro", name_de="Schwarz", name_fr="Noir", color="#000000"),
+            DyeDTO(id=2, name_en="White", name_es="Blanco", name_de="Weiß", name_fr="Blanc", color="#ffffff")
         ]
 
         mock_session = AsyncMock()
@@ -288,8 +295,16 @@ class TestDyesService:
 
                 await dyes_service._sync_dyes_to_db(dyes_data)
 
-        # Assert
-        mock_dyes_repo.upsert_batch.assert_called_once_with(dyes_data)
+        # Assert - DTOs should be converted to ORM objects before calling upsert_batch
+        # We verify that upsert_batch was called once and the argument is a list of the same length
+        assert mock_dyes_repo.upsert_batch.call_count == 1
+        call_args = mock_dyes_repo.upsert_batch.call_args[0][0]
+        assert len(call_args) == 2
+        # Verify the ORM objects have the correct data
+        assert call_args[0].id == 1
+        assert call_args[0].name_en == "Black"
+        assert call_args[1].id == 2
+        assert call_args[1].name_en == "White"
         mock_session.commit.assert_called_once()
 
     @pytest.mark.asyncio
@@ -299,7 +314,7 @@ class TestDyesService:
     ):
         """Test: handle errors during database sync gracefully"""
         # Arrange
-        dyes_data = [{"id": 1, "name_en": "Black", "color": "#000000"}]
+        dyes_data = [DyeDTO(id=1, name_en="Black", name_es="Negro", name_de="Schwarz", name_fr="Noir", color="#000000")]
 
         with patch('app.services.dyes_service.async_session_maker') as mock_session_maker:
             mock_session_maker.side_effect = Exception("Database connection error")
@@ -367,16 +382,17 @@ class TestDyesService:
         assert len(result) == 1
         dye = result[0]
 
-        # Verify all required fields are present
-        assert "id" in dye
-        assert "name_en" in dye
-        assert "name_es" in dye
-        assert "name_de" in dye
-        assert "name_fr" in dye
-        assert "color" in dye
+        # Verify it's a DTO with all required fields
+        assert isinstance(dye, DyeDTO)
+        assert hasattr(dye, 'id')
+        assert hasattr(dye, 'name_en')
+        assert hasattr(dye, 'name_es')
+        assert hasattr(dye, 'name_de')
+        assert hasattr(dye, 'name_fr')
+        assert hasattr(dye, 'color')
 
         # Verify correct hex color conversion
-        assert dye["color"] == "#7b2d43"
+        assert dye.color == "#7b2d43"
 
     @pytest.mark.asyncio
     async def test_get_dyes_from_api_with_different_rgb_values(
@@ -409,9 +425,9 @@ class TestDyesService:
 
         # Assert
         assert len(result) == 3
-        assert result[0]["color"] == "#ff0000"  # Red
-        assert result[1]["color"] == "#00ff00"  # Green
-        assert result[2]["color"] == "#0000ff"  # Blue
+        assert result[0].color == "#ff0000"  # Red
+        assert result[1].color == "#00ff00"  # Green
+        assert result[2].color == "#0000ff"  # Blue
 
     @pytest.mark.asyncio
     async def test_get_all_dyes_with_single_dye(
@@ -430,8 +446,8 @@ class TestDyesService:
 
         # Assert
         assert len(result) == 1
-        assert result[0]["id"] == 1
-        assert result[0]["color"] == "#808080"
+        assert result[0].id == 1
+        assert result[0].color == "#808080"
 
     @pytest.mark.asyncio
     async def test_get_all_dyes_with_many_dyes(
@@ -460,7 +476,7 @@ class TestDyesService:
             dyes_service,
             mock_repository
     ):
-        """Test: verify ORM objects are correctly converted to dictionaries"""
+        """Test: verify ORM objects are correctly converted to DTOs"""
         # Arrange
         dye = MagicMock(spec=Dyes)
         dye.id = 123
@@ -477,13 +493,13 @@ class TestDyesService:
 
         # Assert
         assert len(result) == 1
-        assert isinstance(result[0], dict)
-        assert result[0]["id"] == 123
-        assert result[0]["name_en"] == "Test Dye"
-        assert result[0]["name_es"] == "Tinte de prueba"
-        assert result[0]["name_de"] == "Testfarbe"
-        assert result[0]["name_fr"] == "Teinture test"
-        assert result[0]["color"] == "#abcdef"
+        assert isinstance(result[0], DyeDTO)
+        assert result[0].id == 123
+        assert result[0].name_en == "Test Dye"
+        assert result[0].name_es == "Tinte de prueba"
+        assert result[0].name_de == "Testfarbe"
+        assert result[0].name_fr == "Teinture test"
+        assert result[0].color == "#abcdef"
 
     @pytest.mark.asyncio
     async def test_get_dyes_from_api_deduplicates_by_id(
@@ -505,8 +521,8 @@ class TestDyesService:
 
         # Assert - Should only have 1 dye, not 4
         assert len(result) == 1
-        assert result[0]["id"] == 1
-        assert result[0]["name_en"] == "English Name"
-        assert result[0]["name_es"] == "Spanish Name"
-        assert result[0]["name_de"] == "German Name"
-        assert result[0]["name_fr"] == "French Name"
+        assert result[0].id == 1
+        assert result[0].name_en == "English Name"
+        assert result[0].name_es == "Spanish Name"
+        assert result[0].name_de == "German Name"
+        assert result[0].name_fr == "French Name"

@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from app.core.utils import split_bearer_token, get_db_url
+from app.core.utils import split_bearer_token, get_db_url, chunked
 
 
 # Header Ok
@@ -103,3 +103,54 @@ def test_rgb_to_hex_red():
     from app.core.utils import rgb_to_hex
     result = rgb_to_hex((255, 0, 0))
     assert result == "#ff0000"
+
+
+# Tests for chunked function
+
+def test_chunked_empty_list():
+    result = list(chunked([], 3))
+    assert result == []
+
+
+def test_chunked_chunk_size_greater_than_list():
+    items = [1, 2]
+    result = list(chunked(items, 5))
+    assert result == [[1, 2]]
+
+
+def test_chunked_chunk_size_one():
+    items = [1, 2, 3]
+    result = list(chunked(items, 1))
+    assert result == [[1], [2], [3]]
+
+
+def test_chunked_chunk_size_equals_list_length():
+    items = [1, 2, 3]
+    result = list(chunked(items, 3))
+    assert result == [[1, 2, 3]]
+
+
+def test_chunked_chunk_size_not_divisor():
+    items = [1, 2, 3, 4, 5]
+    result = list(chunked(items, 2))
+    assert result == [[1, 2], [3, 4], [5]]
+
+
+def test_chunked_chunk_size_divisor():
+    items = [1, 2, 3, 4]
+    result = list(chunked(items, 2))
+    assert result == [[1, 2], [3, 4]]
+
+
+def test_chunked_chunk_size_zero():
+    items = [1, 2, 3]
+    with pytest.raises(ValueError) as exc:
+        list(chunked(items, 0))
+    assert "chunk_size must be a positive integer" in str(exc.value)
+
+
+def test_chunked_chunk_size_negative():
+    items = [1, 2, 3]
+    with pytest.raises(ValueError) as exc:
+        list(chunked(items, -1))
+    assert "chunk_size must be a positive integer" in str(exc.value)

@@ -250,11 +250,13 @@ class TestGW2ClientMethods:
 
     async def test_get_item_success(self, mocker: MockerFixture):
         """Test get_item method returns item information"""
-        mock_response = {
+        mock_response = [{
             "id": 12345,
             "name": "Legendary Sword",
-            "type": "Weapon"
-        }
+            "type": "Weapon",
+            "chat_link": "[&AgEwMAAA]",
+            "icon": "https://render.guildwars2.com/file/test.png"
+        }]
 
         mock_http_client = mocker.AsyncMock()
         mock_http_client.get = AsyncMock(return_value=MagicMock(
@@ -266,10 +268,12 @@ class TestGW2ClientMethods:
         mocker.patch("app.gw2.client.get_gw2_http_client", return_value=mock_http_client)
 
         client = GW2Client()
-        result = await client.get_item(item_id=12345)
+        result = await client.get_item_details(item_ids=[12345], lang="en")
 
-        assert result == mock_response
-        assert result["id"] == 12345
+        assert len(result) == 1
+        assert result[0].id == 12345
+        assert result[0].name == "Legendary Sword"
+        assert result[0].type == "Weapon"
 
 
 @pytest.mark.asyncio
@@ -526,7 +530,7 @@ class TestGW2ClientErrorHandling:
         client = GW2Client()
 
         with pytest.raises(httpx.HTTPStatusError) as exc:
-            await client.get_item(999999)
+            await client.get_item_details([999999])
 
         assert exc.value.response.status_code == 404
 

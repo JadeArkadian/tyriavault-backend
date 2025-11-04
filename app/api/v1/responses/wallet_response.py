@@ -2,6 +2,8 @@ from typing import Optional, Self
 
 from pydantic import BaseModel
 
+from app.services.dtos.wallet_dto import WalletItemDTO
+
 
 class WalletItemResponse(BaseModel):
     currency_id: int
@@ -11,26 +13,22 @@ class WalletItemResponse(BaseModel):
     currency_description: dict[str, Optional[str]]
 
     @classmethod
-    def map_response(cls, wallet_entry: dict, currency: dict) -> Self:
-        # Validate required keys
-        if 'currency_id' not in wallet_entry or 'amount' not in wallet_entry:
-            raise ValueError(f"Invalid wallet_entry structure: {wallet_entry}")
-
-        mapped = WalletItemResponse(
-            currency_id=wallet_entry['currency_id'],
-            amount=wallet_entry['amount'] or 0,
+    def from_dto(cls, wallet_item: WalletItemDTO) -> Self:
+        """Create a WalletItemResponse from a WalletItemDTO."""
+        return cls(
+            currency_id=wallet_item.currency_id,
+            amount=wallet_item.amount,
             currency_name={
-                "es": currency['name_es'],
-                "en": currency['name_en'],
-                "fr": currency['name_fr'],
-                "de": currency['name_de']
+                "es": wallet_item.currency_name_es,
+                "en": wallet_item.currency_name_en,
+                "fr": wallet_item.currency_name_fr,
+                "de": wallet_item.currency_name_de
             },
-            currency_icon=currency['icon_url'],
+            currency_icon=wallet_item.currency_icon_url,
             currency_description={
-                "es": currency['description_es'],
-                "en": currency['description_en'],
-                "fr": currency['description_fr'],
-                "de": currency['description_de']
+                "es": wallet_item.currency_description_es,
+                "en": wallet_item.currency_description_en,
+                "fr": wallet_item.currency_description_fr,
+                "de": wallet_item.currency_description_de
             }
         )
-        return mapped

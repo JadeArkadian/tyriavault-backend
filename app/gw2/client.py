@@ -5,9 +5,7 @@ import httpx
 import orjson
 
 from app.core.logging import logger
-from app.gw2.responses import GW2ApiAccount, GW2ApiColor, GW2ApiCurrency, GW2ApiTokenInfo, GW2ApiWalletEntry, GW2ApiWorld
-
-from app.core.logging import logger
+from app.gw2.responses import GW2ApiAccount, GW2ApiColor, GW2ApiCurrency, GW2ApiTokenInfo, GW2ApiWalletEntry, GW2ApiWorld, GW2ApiItem
 
 BASE_URL = "https://api.guildwars2.com/v2"
 
@@ -144,5 +142,14 @@ class GW2Client:
         data = await self._get("/account/wallet", require_token=True)
         return [GW2ApiWalletEntry(**entry) for entry in data]
 
-    async def get_item(self, item_id: int) -> dict:
-        return await self._get(f"/items/{item_id}")
+    async def get_all_item_ids(self) -> list[int]:
+        """Get all item IDs available in the game."""
+        return await self._get("/items", require_token=False)
+
+    async def get_item_details(self, item_ids: list[int], lang: str = "en") -> list[GW2ApiItem]:
+        """Get item details for given item IDs.
+           Please note that the GW2 API limits the number of IDs per request.
+        """
+        item_ids_str = ",".join(map(str, item_ids))
+        data = await self._get(f"/items?lang={lang}&ids={item_ids_str}")
+        return [GW2ApiItem(**item) for item in data]

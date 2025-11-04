@@ -33,3 +33,6 @@ class AccountRepository(BaseRepository[GameAccounts]):
         await self.session.flush()
         await self.session.refresh(merged_entity)
         return merged_entity
+
+    async def upsert_batch(self, entities: list[GameAccounts]) -> None:
+        raise NotImplementedError("upsert_batch is not implemented for GameAccounts.")

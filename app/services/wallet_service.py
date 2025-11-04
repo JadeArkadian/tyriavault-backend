@@ -1,13 +1,13 @@
 import asyncio
 from uuid import UUID
 
-from app.api.v1.responses.wallet_response import WalletItemResponse
 from app.core.logging import logger
 from app.database.repositories.currencies_repository import CurrenciesRepository
 from app.database.repositories.wallet_repository import WalletRepository
 from app.database.session import async_session_maker
 from app.gw2.client import GW2Client
 from app.gw2.responses import GW2ApiWalletEntry
+from app.services.dtos.wallet_dto import WalletItemDTO
 
 
 class WalletService:
@@ -31,7 +31,7 @@ class WalletService:
         self.gw2_client = gw2_client
         self._background_tasks: set[asyncio.Task] = set()
 
-    async def get_wallet(self, account_uuid: UUID) -> list[WalletItemResponse]:
+    async def get_wallet(self, account_uuid: UUID) -> list[WalletItemDTO]:
         """
         Get wallet data from GW2 API and sync with database in the background.
         If API fails, fallback to database.
@@ -53,7 +53,7 @@ class WalletService:
         wallet_data = await self.gw2_client.get_wallet()
         return wallet_data
 
-    async def _get_wallet_from_db(self, account_uuid: UUID) -> list[WalletItemResponse]:
+    async def _get_wallet_from_db(self, account_uuid: UUID) -> list[WalletItemDTO]:
         """Fetch wallet from database as fallback."""
         try:
             wallet_entries = await self.wallet_repository.get_wallet_by_account_uuid(account_uuid)
@@ -62,26 +62,11 @@ class WalletService:
                 logger.warning(f"No wallet data found in database for account: {account_uuid}")
                 return []
 
-            # Convert DB models to response format
-            wallet_data = []
-            for entry in wallet_entries:
-                currency = entry.currency
-                wallet_item = {
-                    'currency_id': entry.currency_id,
-                    'amount': entry.amount or 0
-                }
-                currency_info = {
-                    'name_en': currency.name_en,
-                    'name_es': currency.name_es,
-                    'name_de': currency.name_de,
-                    'name_fr': currency.name_fr,
-                    'description_en': currency.description_en,
-                    'description_es': currency.description_es,
-                    'description_de': currency.description_de,
-                    'description_fr': currency.description_fr,
-                    'icon_url': currency.icon_url
-                }
-                wallet_data.append(WalletItemResponse.map_response(wallet_item, currency_info))
+            # Convert DB models to DTOs
+            wallet_data = [
+                WalletItemDTO.from_orm_with_currency(entry, entry.currency)
+                for entry in wallet_entries
+            ]
 
             logger.info(f"Retrieved {len(wallet_data)} wallet entries from database")
             return wallet_data
@@ -90,7 +75,7 @@ class WalletService:
             logger.error(f"Failed to retrieve wallet from database: {e}")
             raise
 
-    async def _build_response(self, wallet_data: list[GW2ApiWalletEntry]) -> list[WalletItemResponse]:
+    async def _build_response(self, wallet_data: list[GW2ApiWalletEntry]) -> list[WalletItemDTO]:
         """Build the response by combining wallet data with currency information."""
         if not wallet_data:
             return []
@@ -101,7 +86,7 @@ class WalletService:
         # Create a lookup dict for currencies
         currency_lookup = {currency.id: currency for currency in currencies}
 
-        # Build responses
+        # Build DTOs
         responses = []
         for wallet_item in wallet_data:
             currency_id = wallet_item.id
@@ -111,24 +96,8 @@ class WalletService:
                 logger.warning(f"Currency {currency_id} not found in database. Skipping wallet entry.")
                 continue
 
-            currency_info = {
-                'name_en': currency.name_en,
-                'name_es': currency.name_es,
-                'name_de': currency.name_de,
-                'name_fr': currency.name_fr,
-                'description_en': currency.description_en,
-                'description_es': currency.description_es,
-                'description_de': currency.description_de,
-                'description_fr': currency.description_fr,
-                'icon_url': currency.icon_url
-            }
-
-            wallet_entry = {
-                'currency_id': currency_id,
-                'amount': wallet_item.value
-            }
-
-            responses.append(WalletItemResponse.map_response(wallet_entry, currency_info))
+            dto = WalletItemDTO.from_api_with_currency(wallet_item, currency)
+            responses.append(dto)
 
         logger.info(f"Successfully built response with {len(responses)} wallet entries")
         return responses
@@ -138,20 +107,24 @@ class WalletService:
         try:
             async with async_session_maker() as session:
                 wallet_repository = WalletRepository(session)
+                currencies_repository = CurrenciesRepository(session)
 
-                # Prepare wallet entries for batch upsert
-                wallet_entries = []
+                # Get currencies to build DTOs
+                currencies = await currencies_repository.get_all()
+                currency_lookup = {currency.id: currency for currency in currencies}
+
+                # Convert API data to ORM objects
+                wallet_orm_list = []
                 for item in wallet_data:
-                    wallet_entries.append({
-                        'currency_id': item.id,
-                        'game_account_uuid': account_uuid,
-                        'amount': item.value
-                    })
+                    currency = currency_lookup.get(item.id)
+                    if currency:
+                        dto = WalletItemDTO.from_api_with_currency(item, currency)
+                        wallet_orm = dto.to_wallet_orm(account_uuid)
+                        wallet_orm_list.append(wallet_orm)
 
-                await wallet_repository.upsert_batch(wallet_entries)
+                await wallet_repository.upsert_batch(wallet_orm_list)
                 await session.commit()
 
-                logger.info(f"Synced {len(wallet_entries)} wallet entries to database for account {account_uuid}")
-
+            logger.info(f"Synced {len(wallet_orm_list)} wallet entries to database")
         except Exception as e:
             logger.error(f"Error syncing wallet to database: {e}")

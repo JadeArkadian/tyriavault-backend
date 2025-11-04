@@ -13,6 +13,7 @@ dependencies = [
     "fastapi-cache2==0.2.2",
     "pydantic-settings==2.11.0",
     "sqlalchemy[asyncio]==2.0.44",
+    "APScheduler==3.11.1",
     "asyncpg==0.30.0",
     "alembic==1.17.0",
     "python-dotenv==1.1.1",

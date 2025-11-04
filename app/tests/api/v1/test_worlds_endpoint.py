@@ -4,6 +4,7 @@ import httpx
 import pytest
 
 from app.main import api
+from app.services.dtos.worlds_dto import WorldDTO
 from app.services.services import get_worlds_service
 from app.services.worlds_service import WorldsService
 
@@ -14,22 +15,22 @@ class TestWorldsEndpoint:
 
     async def test_get_worlds_success(self):
         """Test successful response from GET /worlds endpoint"""
-        # Arrange - Mock data from service
+        # Arrange - Mock data from service using DTOs
         mock_worlds_data = [
-            {
-                "id": 1001,
-                "name_en": "Anvil Rock",
-                "name_es": "Roca del Yunque",
-                "name_de": "Ambossfelsen",
-                "name_fr": "Rocher de l'enclume"
-            },
-            {
-                "id": 1002,
-                "name_en": "Borlis Pass",
-                "name_es": "Paso de Borlis",
-                "name_de": "Borlispass",
-                "name_fr": "Passage de Borlis"
-            }
+            WorldDTO(
+                id=1001,
+                name_en="Anvil Rock",
+                name_es="Roca del Yunque",
+                name_de="Ambossfelsen",
+                name_fr="Rocher de l'enclume"
+            ),
+            WorldDTO(
+                id=1002,
+                name_en="Borlis Pass",
+                name_es="Paso de Borlis",
+                name_de="Borlispass",
+                name_fr="Passage de Borlis"
+            )
         ]
 
         # Mock the service
@@ -96,16 +97,15 @@ class TestWorldsEndpoint:
         # Arrange
         mock_service = AsyncMock(spec=WorldsService)
         mock_service.get_all_worlds = AsyncMock(
-            side_effect=RuntimeError("No worlds available from API or database")
+            side_effect=RuntimeError("No worlds available")
         )
 
         api.dependency_overrides[get_worlds_service] = lambda: mock_service
 
         try:
             # Act & Assert - Exception should be raised
-            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test",
-                                         follow_redirects=True) as ac:
-                with pytest.raises(RuntimeError, match="No worlds available from API or database"):
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test", follow_redirects=True) as ac:
+                with pytest.raises(RuntimeError, match="No worlds available"):
                     await ac.get("/api/v1/worlds")
 
             # Verify service was called
@@ -117,13 +117,13 @@ class TestWorldsEndpoint:
         """Test that response follows the expected WorldsResponse schema"""
         # Arrange
         mock_worlds_data = [
-            {
-                "id": 2001,
-                "name_en": "Fissure of Woe",
-                "name_es": "Fisura del Infortunio",
-                "name_de": "Kluft des Leids",
-                "name_fr": "Fissure du malheur"
-            }
+            WorldDTO(
+                id=2001,
+                name_en="Test World",
+                name_es="Mundo de prueba",
+                name_de="Testwelt",
+                name_fr="Monde de test"
+            )
         ]
 
         mock_service = AsyncMock(spec=WorldsService)
@@ -149,6 +149,9 @@ class TestWorldsEndpoint:
             # Verify name is a dict with all languages
             assert isinstance(world["name"], dict)
             assert set(world["name"].keys()) == {"en", "es", "de", "fr"}
+
+            # Verify data types
+            assert isinstance(world["id"], int)
         finally:
             api.dependency_overrides.clear()
 
@@ -156,13 +159,13 @@ class TestWorldsEndpoint:
         """Test response with multiple worlds"""
         # Arrange
         mock_worlds_data = [
-            {
-                "id": 1000 + i,
-                "name_en": f"World {i}",
-                "name_es": f"Mundo {i}",
-                "name_de": f"Welt {i}",
-                "name_fr": f"Monde {i}"
-            }
+            WorldDTO(
+                id=1000 + i,
+                name_en=f"World {i}",
+                name_es=f"Mundo {i}",
+                name_de=f"Welt {i}",
+                name_fr=f"Monde {i}"
+            )
             for i in range(1, 51)  # 50 worlds
         ]
 
@@ -192,13 +195,13 @@ class TestWorldsEndpoint:
         """Test that cache is working (service should only be called once for multiple requests)"""
         # Arrange
         mock_worlds_data = [
-            {
-                "id": 1001,
-                "name_en": "Anvil Rock",
-                "name_es": "Roca del Yunque",
-                "name_de": "Ambossfelsen",
-                "name_fr": "Rocher de l'enclume"
-            }
+            WorldDTO(
+                id=1001,
+                name_en="Anvil Rock",
+                name_es="Roca del Yunque",
+                name_de="Ambossfelsen",
+                name_fr="Rocher de l'enclume"
+            )
         ]
 
         mock_service = AsyncMock(spec=WorldsService)
@@ -245,41 +248,41 @@ class TestWorldsEndpoint:
         """Test with actual GW2 world names"""
         # Arrange
         mock_worlds_data = [
-            {
-                "id": 1001,
-                "name_en": "Anvil Rock",
-                "name_es": "Roca del Yunque",
-                "name_de": "Ambossfelsen",
-                "name_fr": "Rocher de l'enclume"
-            },
-            {
-                "id": 1002,
-                "name_en": "Borlis Pass",
-                "name_es": "Paso de Borlis",
-                "name_de": "Borlispass",
-                "name_fr": "Passage de Borlis"
-            },
-            {
-                "id": 1003,
-                "name_en": "Yak's Bend",
-                "name_es": "Recodo del Yak",
-                "name_de": "Yaks Biegung",
-                "name_fr": "Courbe du yak"
-            },
-            {
-                "id": 1004,
-                "name_en": "Henge of Denravi",
-                "name_es": "Círculo de Denravi",
-                "name_de": "Henge von Denravi",
-                "name_fr": "Henge de Denravi"
-            },
-            {
-                "id": 1005,
-                "name_en": "Sorrow's Furnace",
-                "name_es": "Horno del Pesar",
-                "name_de": "Sorrows Ofen",
-                "name_fr": "Fourneau du chagrin"
-            }
+            WorldDTO(
+                id=1001,
+                name_en="Anvil Rock",
+                name_es="Roca del Yunque",
+                name_de="Ambossfelsen",
+                name_fr="Rocher de l'enclume"
+            ),
+            WorldDTO(
+                id=1002,
+                name_en="Borlis Pass",
+                name_es="Paso de Borlis",
+                name_de="Borlispass",
+                name_fr="Passage de Borlis"
+            ),
+            WorldDTO(
+                id=1003,
+                name_en="Yak's Bend",
+                name_es="Recodo del Yak",
+                name_de="Yaks Biegung",
+                name_fr="Courbe du yak"
+            ),
+            WorldDTO(
+                id=1004,
+                name_en="Henge of Denravi",
+                name_es="Círculo de Denravi",
+                name_de="Henge von Denravi",
+                name_fr="Henge de Denravi"
+            ),
+            WorldDTO(
+                id=1005,
+                name_en="Sorrow's Furnace",
+                name_es="Horno del Pesar",
+                name_de="Sorrows Ofen",
+                name_fr="Fourneau du chagrin"
+            )
         ]
 
         mock_service = AsyncMock(spec=WorldsService)
@@ -302,25 +305,24 @@ class TestWorldsEndpoint:
             assert anvil_rock["name"]["en"] == "Anvil Rock"
             assert anvil_rock["name"]["es"] == "Roca del Yunque"
 
-            sorrows_furnace = next(w for w in json_response if w["id"] == 1005)
-            assert sorrows_furnace["name"]["en"] == "Sorrow's Furnace"
-            assert sorrows_furnace["name"]["fr"] == "Fourneau du chagrin"
+            yaks_bend = next(w for w in json_response if w["id"] == 1003)
+            assert yaks_bend["name"]["en"] == "Yak's Bend"
 
             mock_service.get_all_worlds.assert_called_once()
         finally:
             api.dependency_overrides.clear()
 
     async def test_get_worlds_all_languages_present(self):
-        """Test that all language keys are present in the response"""
+        """Test that all language translations are present"""
         # Arrange
         mock_worlds_data = [
-            {
-                "id": 2001,
-                "name_en": "Test World EN",
-                "name_es": "Test World ES",
-                "name_de": "Test World DE",
-                "name_fr": "Test World FR"
-            }
+            WorldDTO(
+                id=1001,
+                name_en="English Name",
+                name_es="Nombre español",
+                name_de="Deutscher Name",
+                name_fr="Nom français"
+            )
         ]
 
         mock_service = AsyncMock(spec=WorldsService)
@@ -336,34 +338,27 @@ class TestWorldsEndpoint:
             # Assert
             assert response.status_code == 200
             json_response = response.json()
+
             world = json_response[0]
-
-            # Verify all languages are present
-            assert "en" in world["name"]
-            assert "es" in world["name"]
-            assert "de" in world["name"]
-            assert "fr" in world["name"]
-
-            # Verify correct values
-            assert world["name"]["en"] == "Test World EN"
-            assert world["name"]["es"] == "Test World ES"
-            assert world["name"]["de"] == "Test World DE"
-            assert world["name"]["fr"] == "Test World FR"
+            assert world["name"]["en"] == "English Name"
+            assert world["name"]["es"] == "Nombre español"
+            assert world["name"]["de"] == "Deutscher Name"
+            assert world["name"]["fr"] == "Nom français"
         finally:
             api.dependency_overrides.clear()
 
     async def test_get_worlds_unique_ids(self):
-        """Test that all worlds have unique IDs"""
+        """Test that world IDs are unique"""
         # Arrange
         mock_worlds_data = [
-            {
-                "id": id_num,
-                "name_en": f"World {id_num}",
-                "name_es": f"Mundo {id_num}",
-                "name_de": f"Welt {id_num}",
-                "name_fr": f"Monde {id_num}"
-            }
-            for id_num in [1001, 1002, 1003, 1004, 1005]
+            WorldDTO(
+                id=i,
+                name_en=f"World {i}",
+                name_es=f"Mundo {i}",
+                name_de=f"Welt {i}",
+                name_fr=f"Monde {i}"
+            )
+            for i in [1001, 1002, 1003, 2001, 2002]
         ]
 
         mock_service = AsyncMock(spec=WorldsService)
@@ -380,11 +375,41 @@ class TestWorldsEndpoint:
             assert response.status_code == 200
             json_response = response.json()
 
-            # Extract all IDs
+            # Verify IDs are unique
             ids = [world["id"] for world in json_response]
+            assert len(ids) == len(set(ids))  # No duplicates
+            assert ids == [1001, 1002, 1003, 2001, 2002]
+        finally:
+            api.dependency_overrides.clear()
 
-            # Verify all IDs are unique
-            assert len(ids) == len(set(ids))
-            assert set(ids) == {1001, 1002, 1003, 1004, 1005}
+    async def test_get_worlds_single_world(self):
+        """Test response with single world"""
+        # Arrange
+        mock_worlds_data = [
+            WorldDTO(
+                id=1001,
+                name_en="Only World",
+                name_es="Único mundo",
+                name_de="Einzige Welt",
+                name_fr="Seul monde"
+            )
+        ]
+
+        mock_service = AsyncMock(spec=WorldsService)
+        mock_service.get_all_worlds = AsyncMock(return_value=mock_worlds_data)
+
+        api.dependency_overrides[get_worlds_service] = lambda: mock_service
+
+        try:
+            # Act
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=api), base_url="http://test") as ac:
+                response = await ac.get("/api/v1/worlds")
+
+            # Assert
+            assert response.status_code == 200
+            json_response = response.json()
+            assert len(json_response) == 1
+            assert json_response[0]["id"] == 1001
+            assert json_response[0]["name"]["en"] == "Only World"
         finally:
             api.dependency_overrides.clear()

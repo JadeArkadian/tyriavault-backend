@@ -7,6 +7,7 @@ from app.database.models import GameAccounts, ApiKeys
 from app.database.repositories.apikeys_repository import ApikeysRepository
 from app.database.repositories.worlds_repository import WorldsRepository
 from app.gw2.client import GW2Client
+from app.services.dtos.apikey_dto import ApiKeyDTO
 
 
 class ApiKeyService:
@@ -19,19 +20,15 @@ class ApiKeyService:
         self.api_keys_repo = api_keys_repository
         self.worlds_repo = worlds_repository
 
-    async def get_apikey_data_from_db(self, api_key: str) -> Optional[dict]:
+    async def get_apikey_data_from_db(self, api_key: str) -> Optional[ApiKeyDTO]:
         api_key_record = await self.api_keys_repo.get_by_apikey(api_key)
 
         if not api_key_record:
             return None
 
-        return {
-            "api_key": api_key_record.api_key,
-            "permissions": api_key_record.permissions or [],
-            "game_account_uuid": api_key_record.game_account_uuid
-        }
+        return ApiKeyDTO.from_orm(api_key_record)
 
-    async def validate_and_register(self, api_key: str) -> dict:
+    async def validate_and_register(self, api_key: str) -> ApiKeyDTO:
         """Validate the API key with GW2 API and register it in the database if valid."""
 
         gw2_client = GW2Client(api_key=api_key)
@@ -69,6 +66,7 @@ class ApiKeyService:
             )
 
             await self.api_keys_repo.upsert_game_account(game_account)
+
             # 5. Upsert API key with the game_account_uuid
             logger.info(f"Upserting API key for account: {account_data.name}")
             api_key_entity = ApiKeys(
@@ -80,12 +78,13 @@ class ApiKeyService:
             await self.api_keys_repo.upsert(api_key_entity)
             await self.api_keys_repo.session.commit()
 
-            return {
-                "api_key": api_key,
-                "permissions": permissions,
-                "game_account_uuid": account_uuid,
-                "account_name": account_data.name
-            }
+            # Return DTO with validation data
+            return ApiKeyDTO.from_validation(
+                api_key=api_key,
+                permissions=permissions,
+                account_uuid=account_uuid,
+                account_name=account_data.name
+            )
         except Exception as e:
             logger.error(f"Error validating API key: {e}")
             raise
