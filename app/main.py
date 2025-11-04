@@ -11,7 +11,6 @@ from app.core.cache import init_cache
 from app.core.config import settings
 from app.core.logging import logger
 from app.crawlers import CrawlerScheduler, ItemsCrawler
-from app.crawlers.config import ITEMS_CRAWLER_INTERVAL
 from app.database.seeding.seeder import DatabaseSeeder
 from app.database.session import async_session_maker
 from app.gw2.client import startup_gw2_client, shutdown_gw2_client, GW2Client
@@ -45,12 +44,13 @@ async def lifespan(app: FastAPI):
 
     # Initialize and start crawlers
     logger.info("Initializing crawlers...")
-    gw2_client = GW2Client()
+    gw2_client = GW2Client(max_retries=5, backoff_factor=1.0)
     items_crawler = ItemsCrawler(gw2_client, async_session_maker)
     crawler_scheduler.register_crawler(
         name="items_crawler",
         crawler=items_crawler,
-        interval_seconds=ITEMS_CRAWLER_INTERVAL
+        interval_seconds=settings.ITEMS_CRAWLER_INTERVAL_SECONDS,
+        fail_interval_seconds=150
     )
 
     # Start all crawlers (fire and forget)

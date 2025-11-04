@@ -78,3 +78,8 @@ class ItemsRepository(BaseRepository[Items]):
 
         await self.session.execute(stmt)
         await self.session.flush()
+
+    async def get_all_ids(self) -> list[int]:
+        """Get all item IDs."""
+        result = await self.session.execute(select(Items.id))
+        return list(result.scalars().all())
