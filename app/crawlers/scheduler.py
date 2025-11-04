@@ -38,6 +38,9 @@ class CrawlerScheduler:
                 await crawler.crawl()
                 logger.info(f"Crawler '{name}' completed. Next run in {interval_seconds}s")
                 await asyncio.sleep(interval_seconds)
+            except asyncio.CancelledError:
+                logger.info(f"Cancellation received for crawler '{name}'. Stopping loop.")
+                raise
             except Exception as e:
                 logger.error(f"Error in crawler '{name}': {e}", exc_info=True)
                 logger.info(f"Crawler '{name}' will retry in {fail_interval_seconds}s")
