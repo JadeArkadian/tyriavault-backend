@@ -11,14 +11,16 @@ async def test_seed_all_success():
     gender_repo = AsyncMock()
     race_repo = AsyncMock()
     rarity_repo = AsyncMock()
+    item_type_repo = AsyncMock()
 
     with patch('app.database.seeding.seeder.GendersRepository', return_value=gender_repo), \
             patch('app.database.seeding.seeder.RacesRepository', return_value=race_repo), \
-            patch('app.database.seeding.seeder.RaritiesRepository', return_value=rarity_repo):
+            patch('app.database.seeding.seeder.RaritiesRepository', return_value=rarity_repo), \
+            patch('app.database.seeding.seeder.ItemTypesRepository', return_value=item_type_repo):
         seeder = DatabaseSeeder(session)
         seeder.upsert_data = AsyncMock()
         await seeder.seed_all()
-        assert seeder.upsert_data.await_count == 3
+        assert seeder.upsert_data.await_count == 4
         session.commit.assert_awaited_once()
 
 
@@ -28,10 +30,12 @@ async def test_seed_all_exception_rolls_back():
     gender_repo = AsyncMock()
     race_repo = AsyncMock()
     rarity_repo = AsyncMock()
+    item_type_repo = AsyncMock()
 
     with patch('app.database.seeding.seeder.GendersRepository', return_value=gender_repo), \
             patch('app.database.seeding.seeder.RacesRepository', return_value=race_repo), \
-            patch('app.database.seeding.seeder.RaritiesRepository', return_value=rarity_repo):
+            patch('app.database.seeding.seeder.RaritiesRepository', return_value=rarity_repo), \
+            patch('app.database.seeding.seeder.ItemTypesRepository', return_value=item_type_repo):
         seeder = DatabaseSeeder(session)
         seeder.upsert_data = AsyncMock(side_effect=Exception('fail'))
         with pytest.raises(Exception):

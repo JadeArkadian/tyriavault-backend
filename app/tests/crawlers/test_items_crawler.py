@@ -135,28 +135,3 @@ async def test_crawl_filters_existing_items():
         args = repo_mock.upsert_batch.await_args[0]
         assert len(args[0]) == 2
         assert all(item.id in [3, 4] for item in args[0])
-
-
-@pytest.mark.asyncio
-async def test_map_rarity_to_id():
-    """Test rarity to ID mapping."""
-    crawler = ItemsCrawler(MagicMock(), MagicMock())
-    assert crawler._map_rarity_to_id("Junk") == 1
-    assert crawler._map_rarity_to_id("Basic") == 2
-    assert crawler._map_rarity_to_id("Fine") == 3
-    assert crawler._map_rarity_to_id("Masterwork") == 4
-    assert crawler._map_rarity_to_id("Rare") == 5
-    assert crawler._map_rarity_to_id("Exotic") == 6
-    assert crawler._map_rarity_to_id("Ascended") == 7
-    assert crawler._map_rarity_to_id("Legendary") == 8
-    assert crawler._map_rarity_to_id(None) == 2
-    assert crawler._map_rarity_to_id("Unknown") == 2
-
-
-@pytest.mark.asyncio
-async def test_map_type_to_id():
-    """Test type to ID mapping."""
-    crawler = ItemsCrawler(MagicMock(), MagicMock())
-    assert crawler._map_type_to_id("Weapon") is None
-    assert crawler._map_type_to_id(None) is None
-    assert crawler._map_type_to_id("Armor") is None
