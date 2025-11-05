@@ -3,11 +3,11 @@ import time
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from app.core import settings
 from app.core.constants import Constants
 from app.core.logging import logger
-from app.core.utils import chunked
+from app.core.utils import chunked, map_rarity_to_id, map_type_to_id
 from app.database.repositories.items_repository import ItemsRepository
-from app.database.seeding.seed_data import RARITIES_DATA, ITEM_TYPES_DATA
 from app.gw2.client import GW2Client
 from app.services.dtos.items_dto import ItemDTO
 
@@ -34,23 +34,31 @@ class ItemsService:
         async with self.session_factory() as session:
             item_repository = ItemsRepository(session)
 
-            # Get all item IDs from API
+            # Get
+            # - expired item IDs
+            # - all item IDs from API
+            # - all item IDs from DB
+            expired_item_ids = item_repository.get_expired_item_ids(settings.ITEMS_CRAWLER_FETCH_EXPIRATION_SECONDS)
             api_item_ids = await self.gw2_client.get_all_item_ids()
             db_item_ids = set(await item_repository.get_all_ids())
 
             # Filter out items that already exist in the database
             new_item_ids = [item_id for item_id in api_item_ids if item_id not in db_item_ids]
 
+            expired_item_ids = await expired_item_ids
             logger.info(f"Found {len(new_item_ids)} new items to sync.")
+            logger.info(f"Found {len(expired_item_ids)} expired items to refresh.")
 
-            if not new_item_ids:
+            # Combine new and expired item IDs
+            ids = new_item_ids + expired_item_ids
+            if not ids:
                 logger.info("No new items to sync.")
                 elapsed = time.time() - start_time
                 logger.info(f"Items synchronization completed in {elapsed:.2f}s")
                 return
 
             # Process items in chunks
-            for chunk in chunked(new_item_ids, 150):
+            for chunk in chunked(new_item_ids, 175):
                 # Fetch item details for all languages
                 items_merged = await asyncio.gather(
                     *(self.gw2_client.get_item_details(chunk, lang=lang) for lang in Constants.LANGS)
@@ -71,13 +79,13 @@ class ItemsService:
                                 name_de=item.name,
                                 name_fr=item.name,
                                 chat_link=item.chat_link,
-                                rarity_id=self._map_rarity_to_id(item.rarity),
+                                rarity_id=map_rarity_to_id(item.rarity),
                                 description_en=item.description,
                                 description_es=item.description,
                                 description_de=item.description,
                                 description_fr=item.description,
                                 icon_url=item.icon,
-                                item_type_id=self._map_type_to_id(item.type),
+                                item_type_id=map_type_to_id(item.type),
                                 required_level=item.level,
                                 vendor_value=item.vendor_value or 0,
                                 details=item.details,
@@ -102,27 +110,3 @@ class ItemsService:
 
         elapsed = time.time() - start_time
         logger.info(f"Items synchronization completed in {elapsed:.2f}s")
-
-    def _map_rarity_to_id(self, rarity: str | None) -> int:
-        """Map GW2 rarity string to database rarity ID using seed data."""
-        if not rarity:
-            return 2  # Default to Basic
-
-        # Build mapping from seed data
-        for rarity_model in RARITIES_DATA:
-            if rarity_model.name_en == rarity:
-                return rarity_model.id
-
-        return 2  # Default to Basic if not found
-
-    def _map_type_to_id(self, item_type: str | None) -> int:
-        """Map GW2 item type string to database item_type ID using seed data."""
-        if not item_type:
-            return 0  # Default to Unknown
-
-        # Build mapping from seed data
-        for type_model in ITEM_TYPES_DATA:
-            if type_model.name_en == item_type:
-                return type_model.id
-
-        return 0  # Default to Unknown if not found

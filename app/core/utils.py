@@ -1,6 +1,33 @@
 from typing import Any, Generator
 
 from app.core import settings
+from app.database.seeding.seed_data import RARITIES_DATA, ITEM_TYPES_DATA
+
+
+def map_rarity_to_id(rarity: str | None) -> int:
+    """Map GW2 rarity string to database rarity ID using seed data."""
+    if not rarity:
+        return 2  # Default to Basic
+
+    # Build mapping from seed data
+    for rarity_model in RARITIES_DATA:
+        if rarity_model.name_en == rarity:
+            return rarity_model.id
+
+    return 2  # Default to Basic if not found
+
+
+def map_type_to_id(item_type: str | None) -> int:
+    """Map GW2 item type string to database item_type ID using seed data."""
+    if not item_type:
+        return 0  # Default to Unknown
+
+    # Build mapping from seed data
+    for type_model in ITEM_TYPES_DATA:
+        if type_model.name_en == item_type:
+            return type_model.id
+
+    return 0  # Default to Unknown if not found
 
 
 def chunked(items: list[Any], chunk_size: int) -> Generator[list[Any], Any, None]:

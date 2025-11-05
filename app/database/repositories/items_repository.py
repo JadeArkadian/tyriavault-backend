@@ -4,6 +4,7 @@ from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import settings
 from app.database.models import Items
 from app.database.repositories.base_repository import BaseRepository
 
@@ -88,4 +89,15 @@ class ItemsRepository(BaseRepository[Items]):
     async def get_all_ids(self) -> list[int]:
         """Get all item IDs."""
         result = await self.session.execute(select(Items.id))
+        return list(result.scalars().all())
+
+    async def get_expired_item_ids(self, expiration_time: int = settings.ITEMS_CRAWLER_FETCH_EXPIRATION_SECONDS) -> list[int]:
+        """Get item IDs that have expired based on the given expiration time in seconds."""
+
+        # Using PostgreSQL's interval for date arithmetic
+        query = select(Items.id).where(
+            text(f"CURRENT_TIMESTAMP > last_fetched + INTERVAL '{expiration_time} seconds'")
+        )
+
+        result = await self.session.execute(query)
         return list(result.scalars().all())
