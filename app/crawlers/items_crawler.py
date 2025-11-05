@@ -58,7 +58,8 @@ class ItemsCrawler(BaseCrawler):
                                 "item_type_id": self._map_type_to_id(item.type),
                                 "required_level": item.level,
                                 "vendor_value": item.vendor_value or 0,
-                                "flags": item.flags
+                                "flags": item.flags,
+                                "details": item.details
                             }
                         # Add language-specific fields
                         items_data[item_id][f"name_{lang}"] = item.name or ""
@@ -93,6 +94,27 @@ class ItemsCrawler(BaseCrawler):
 
     def _map_type_to_id(self, item_type: str | None) -> int | None:
         """Map GW2 item type string to database item_type ID."""
-        # TODO: Implement proper mapping once item_types table is populated
-        # For now, return None to allow nullable field
-        return None
+
+        type_map = {
+            "Unknown": 0,
+            "Armor": 1,
+            "Back": 2,
+            "Bag": 3,
+            "Consumable": 4,
+            "Container": 5,
+            "CraftingMaterial": 6,
+            "Gathering": 7,
+            "Gizmo": 8,
+            "JadeTechModule": 9,
+            "Key": 10,
+            "MiniPet": 11,
+            "PowerCore": 12,
+            "Relic": 13,
+            "Tool": 14,
+            "Trait": 15,
+            "Trinket": 16,
+            "Trophy": 17,
+            "UpgradeComponent": 18,
+            "Weapon": 19
+        }
+        return type_map.get(item_type, 0) if item_type else 0  # Default to Unknown

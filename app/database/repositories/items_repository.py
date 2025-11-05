@@ -48,7 +48,8 @@ class ItemsRepository(BaseRepository[Items]):
                 'item_type_id': item.item_type_id,
                 'required_level': item.required_level,
                 'vendor_value': item.vendor_value,
-                'flags': item.flags
+                'flags': item.flags,
+                'details': item.details
             }
             for item in items_data
         ]
@@ -76,6 +77,7 @@ class ItemsRepository(BaseRepository[Items]):
                     'required_level': stmt.excluded.required_level,
                     'vendor_value': stmt.excluded.vendor_value,
                     'flags': stmt.excluded.flags,
+                    'details': stmt.excluded.details,
                     'last_fetched': text('CURRENT_TIMESTAMP')
                 }
             )
