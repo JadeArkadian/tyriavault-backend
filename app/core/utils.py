@@ -1,11 +1,10 @@
 from typing import Any, Generator
 
 from app.core import settings
-from app.database.seeding.seed_data import RARITIES_DATA, ITEM_TYPES_DATA
+from app.database.seeding.seed_data import RARITIES_DATA
 
 # Build mappings once at module level
 _RARITY_NAME_TO_ID = {r.name_en: r.id for r in RARITIES_DATA}
-_TYPE_NAME_TO_ID = {t.name_en: t.id for t in ITEM_TYPES_DATA}
 
 
 def map_rarity_to_id(rarity: str | None) -> int:
@@ -15,7 +14,29 @@ def map_rarity_to_id(rarity: str | None) -> int:
 
 def map_type_to_id(item_type: str | None) -> int:
     """Map GW2 item type string to database item_type ID using seed data."""
-    return _TYPE_NAME_TO_ID.get(item_type, 0)  # Default to Unknown if not found
+    type_map = {
+        "Unknown": 0,
+        "Armor": 1,
+        "Back": 2,
+        "Bag": 3,
+        "Consumable": 4,
+        "Container": 5,
+        "CraftingMaterial": 6,
+        "Gathering": 7,
+        "Gizmo": 8,
+        "JadeTechModule": 9,
+        "Key": 10,
+        "MiniPet": 11,
+        "PowerCore": 12,
+        "Relic": 13,
+        "Tool": 14,
+        "Trait": 15,
+        "Trinket": 16,
+        "Trophy": 17,
+        "UpgradeComponent": 18,
+        "Weapon": 19
+    }
+    return type_map.get(item_type, 0) if item_type else 0  # Default to Unknown
 
 
 def chunked(items: list[Any], chunk_size: int) -> Generator[list[Any], Any, None]:
