@@ -38,14 +38,13 @@ class ItemsService:
             # - expired item IDs
             # - all item IDs from API
             # - all item IDs from DB
-            expired_item_ids = item_repository.get_expired_item_ids(settings.ITEMS_CRAWLER_FETCH_EXPIRATION_SECONDS)
             api_item_ids = await self.gw2_client.get_all_item_ids()
             db_item_ids = set(await item_repository.get_all_ids())
+            expired_item_ids = await item_repository.get_expired_item_ids(settings.ITEMS_CRAWLER_FETCH_EXPIRATION_SECONDS)
 
             # Filter out items that already exist in the database
             new_item_ids = [item_id for item_id in api_item_ids if item_id not in db_item_ids]
 
-            expired_item_ids = await expired_item_ids
             logger.info(f"Found {len(new_item_ids)} new items to sync.")
             logger.info(f"Found {len(expired_item_ids)} expired items to refresh.")
 
@@ -58,7 +57,7 @@ class ItemsService:
                 return
 
             # Process items in chunks
-            for chunk in chunked(new_item_ids, 175):
+            for chunk in chunked(ids, 175):
                 # Fetch item details for all languages
                 items_merged = await asyncio.gather(
                     *(self.gw2_client.get_item_details(chunk, lang=lang) for lang in Constants.LANGS)
