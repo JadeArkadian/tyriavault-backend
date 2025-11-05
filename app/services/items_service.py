@@ -6,9 +6,9 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from app.core.constants import Constants
 from app.core.logging import logger
 from app.core.utils import chunked
-from app.database.models import Items
 from app.database.repositories.items_repository import ItemsRepository
 from app.gw2.client import GW2Client
+from app.services.dtos.items_dto import ItemDTO
 
 
 class ItemsService:
@@ -55,31 +55,42 @@ class ItemsService:
                     *(self.gw2_client.get_item_details(chunk, lang=lang) for lang in Constants.LANGS)
                 )
 
-                # Build Items objects
-                items_data: dict[int, dict] = {}
+                # Build ItemDTOs
+                items_dtos: dict[int, ItemDTO] = {}
 
                 for lang, items in zip(Constants.LANGS, items_merged, strict=True):
                     for item in items:
                         item_id = item.id
-                        if item_id not in items_data:
-                            # Initialize with common fields from first language
-                            items_data[item_id] = {
-                                "id": item.id,
-                                "chat_link": item.chat_link,
-                                "icon_url": item.icon,
-                                "rarity_id": self._map_rarity_to_id(item.rarity),
-                                "item_type_id": self._map_type_to_id(item.type),
-                                "required_level": item.level,
-                                "vendor_value": item.vendor_value or 0,
-                                "flags": item.flags,
-                                "details": item.details
-                            }
-                        # Add language-specific fields
-                        items_data[item_id][f"name_{lang}"] = item.name or ""
-                        items_data[item_id][f"description_{lang}"] = item.description or ""
+                        if item_id not in items_dtos:
+                            # Initialize DTO with common fields from first language
+                            items_dtos[item_id] = ItemDTO(
+                                id=item.id,
+                                name_en=item.name,
+                                name_es=item.name,
+                                name_de=item.name,
+                                name_fr=item.name,
+                                chat_link=item.chat_link,
+                                rarity_id=self._map_rarity_to_id(item.rarity),
+                                description_en=item.description,
+                                description_es=item.description,
+                                description_de=item.description,
+                                description_fr=item.description,
+                                icon_url=item.icon,
+                                item_type_id=self._map_type_to_id(item.type),
+                                required_level=item.level,
+                                vendor_value=item.vendor_value or 0,
+                                details=item.details,
+                                flags=item.flags
+                            )
+                        else:
+                            # Update language-specific fields
+                            dto = items_dtos[item_id]
+                            if lang in Constants.LANGS:
+                                setattr(dto, f"name_{lang}", item.name or "")
+                                setattr(dto, f"description_{lang}", item.description)
 
-                # Create Items model objects
-                items_list = [Items(**data) for data in items_data.values()]
+                # Convert DTOs to ORM models
+                items_list = [dto.to_orm() for dto in items_dtos.values()]
 
                 # Upsert into database
                 start_sql_time = time.time()
