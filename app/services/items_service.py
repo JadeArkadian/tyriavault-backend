@@ -7,6 +7,7 @@ from app.core.constants import Constants
 from app.core.logging import logger
 from app.core.utils import chunked
 from app.database.repositories.items_repository import ItemsRepository
+from app.database.seeding.seed_data import RARITIES_DATA, ITEM_TYPES_DATA
 from app.gw2.client import GW2Client
 from app.services.dtos.items_dto import ItemDTO
 
@@ -103,41 +104,25 @@ class ItemsService:
         logger.info(f"Items synchronization completed in {elapsed:.2f}s")
 
     def _map_rarity_to_id(self, rarity: str | None) -> int:
-        """Map GW2 rarity string to database rarity ID."""
-        rarity_map = {
-            "Junk": 1,
-            "Basic": 2,
-            "Fine": 3,
-            "Masterwork": 4,
-            "Rare": 5,
-            "Exotic": 6,
-            "Ascended": 7,
-            "Legendary": 8,
-        }
-        return rarity_map.get(rarity, 2) if rarity else 2  # Default to Basic
+        """Map GW2 rarity string to database rarity ID using seed data."""
+        if not rarity:
+            return 2  # Default to Basic
 
-    def _map_type_to_id(self, item_type: str | None) -> int | None:
-        """Map GW2 item type string to database item_type ID."""
-        type_map = {
-            "Unknown": 0,
-            "Armor": 1,
-            "Back": 2,
-            "Bag": 3,
-            "Consumable": 4,
-            "Container": 5,
-            "CraftingMaterial": 6,
-            "Gathering": 7,
-            "Gizmo": 8,
-            "JadeTechModule": 9,
-            "Key": 10,
-            "MiniPet": 11,
-            "PowerCore": 12,
-            "Relic": 13,
-            "Tool": 14,
-            "Trait": 15,
-            "Trinket": 16,
-            "Trophy": 17,
-            "UpgradeComponent": 18,
-            "Weapon": 19
-        }
-        return type_map.get(item_type, 0) if item_type else 0  # Default to Unknown
+        # Build mapping from seed data
+        for rarity_model in RARITIES_DATA:
+            if rarity_model.name_en == rarity:
+                return rarity_model.id
+
+        return 2  # Default to Basic if not found
+
+    def _map_type_to_id(self, item_type: str | None) -> int:
+        """Map GW2 item type string to database item_type ID using seed data."""
+        if not item_type:
+            return 0  # Default to Unknown
+
+        # Build mapping from seed data
+        for type_model in ITEM_TYPES_DATA:
+            if type_model.name_en == item_type:
+                return type_model.id
+
+        return 0  # Default to Unknown if not found
