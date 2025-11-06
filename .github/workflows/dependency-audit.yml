@@ -1,0 +1,91 @@
+name: dependency-audit.yml
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  dependency_audit:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: 🧭 Checkout repository
+        uses: actions/checkout@v5
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: 🛠️ Install pip-audit
+        run: pip install pip-audit pip-review
+
+      - name: ⬇️ Install project dependencies
+        run: pip install .
+
+      - name: 🔍 Check for outdated dependencies
+        id: outdated
+        continue-on-error: true
+        run: |
+          echo "## 📦 Outdated dependencies" > outdated.md
+          pip list --outdated --format=json > outdated.json
+          if [ -s outdated.json ] && [ "$(cat outdated.json)" != "[]" ]; then
+            echo "There are updates available:" >> outdated.md
+            python -c "
+          import json
+          with open('outdated.json') as f:
+              pkgs = json.load(f)
+          for pkg in pkgs:
+              print(f\"- **{pkg['name']}**: {pkg['version']} → {pkg['latest_version']}\")
+          " >> outdated.md
+          else
+            echo "All dependencies are all up to date! ✅" >> outdated.md
+          fi
+
+      - name: 🔒 Audit dependencies for vulnerabilities
+        id: audit
+        continue-on-error: true
+        run: |
+          echo "## 🛡️ Secutiry audit" > audit.md
+          pip-audit --format json > audit.json || true
+          if [ -s audit.json ] && grep -q '"vulnerabilities":' audit.json; then
+            echo "⚠️ **Found vulnerabilities:**" >> audit.md
+            python -c "
+          import json
+          with open('audit.json') as f:
+              data = json.load(f)
+          for vuln in data.get('vulnerabilities', []):
+              print(f\"- **{vuln['name']}** v{vuln['version']}: {vuln['id']} - {vuln['description'][:100]}...\")
+          " >> audit.md
+            echo "HAS_VULNERABILITIES=true" >> $GITHUB_ENV
+          else
+            echo "No vulnerabilities have been found! ✅" >> audit.md
+            echo "HAS_VULNERABILITIES=false" >> $GITHUB_ENV
+          fi
+
+      - name: 💬 Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const outdated = fs.readFileSync('outdated.md', 'utf8');
+            const audit = fs.readFileSync('audit.md', 'utf8');
+            
+            const body = `# 🔍 Dependencies check\n\n${outdated}\n\n${audit}`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: ❌ Fail if vulnerabilities found
+        if: env.HAS_VULNERABILITIES == 'true'
+        run: |
+          echo "::error::Vulerabilities found on dependencies."
+          exit 1
