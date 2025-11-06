@@ -8,7 +8,7 @@ version = "0.1.1"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi==0.119.0",
-    "uvicorn[standard]==0.37.0",
+    "uvicorn[standard]==0.38.0",
     "pydantic==2.12.2",
     "fastapi-cache2==0.2.2",
     "pydantic-settings==2.11.0",
