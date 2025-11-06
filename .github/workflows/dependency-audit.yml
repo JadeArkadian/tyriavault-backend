@@ -1,18 +1,12 @@
-name: dependency-audit.yml
+name: Dependency Audit
 
 on:
   pull_request:
     types: [ opened, synchronize, reopened ]
-  push:
-    branches:
-      - '**'
-    paths:
-      - 'pyproject.toml'
 
 jobs:
   dependency_audit:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.event.pull_request != null)
     permissions:
       contents: read
       pull-requests: write
@@ -20,19 +14,42 @@ jobs:
     steps:
       - name: 🧭 Checkout repository
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # Need history to check changed files
+
+      - name: 🎯 Check if should run
+        id: should_run
+        run: |
+          if [[ "${{ github.event.action }}" == "opened" || "${{ github.event.action }}" == "reopened" ]]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "Running on PR ${{ github.event.action }}"
+          elif [[ "${{ github.event.action }}" == "synchronize" ]]; then
+            # Check if pyproject.toml was modified in this push
+            if git diff --name-only HEAD^ HEAD | grep -q "^pyproject\.toml$"; then
+              echo "should_run=true" >> $GITHUB_OUTPUT
+              echo "pyproject.toml was modified"
+            else
+              echo "should_run=false" >> $GITHUB_OUTPUT
+              echo "pyproject.toml was not modified, skipping"
+            fi
+          fi
 
       - name: 🐍 Set up Python
+        if: steps.should_run.outputs.should_run == 'true'
         uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
       - name: 🛠️ Install pip-audit
+        if: steps.should_run.outputs.should_run == 'true'
         run: pip install pip-audit pip-review
 
       - name: ⬇️ Install project dependencies
+        if: steps.should_run.outputs.should_run == 'true'
         run: pip install .
 
       - name: 🔍 Check for outdated dependencies
+        if: steps.should_run.outputs.should_run == 'true'
         id: outdated
         continue-on-error: true
         run: |
@@ -52,6 +69,7 @@ jobs:
           fi
 
       - name: 🔒 Audit dependencies for vulnerabilities
+        if: steps.should_run.outputs.should_run == 'true'
         id: audit
         continue-on-error: true
         run: |
@@ -73,6 +91,7 @@ jobs:
           fi
 
       - name: 💬 Comment on PR
+        if: steps.should_run.outputs.should_run == 'true'
         uses: actions/github-script@v8
         with:
           script: |
