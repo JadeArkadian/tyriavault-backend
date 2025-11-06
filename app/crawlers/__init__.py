@@ -2,5 +2,6 @@
 
 from app.crawlers.items_crawler import ItemsCrawler
 from app.crawlers.scheduler import CrawlerScheduler
+from app.crawlers.status import CrawlerStatus, CrawlerState
 
-__all__ = ["CrawlerScheduler", "ItemsCrawler"]
+__all__ = ["CrawlerScheduler", "ItemsCrawler", "CrawlerStatus", "CrawlerState"]

@@ -125,16 +125,20 @@ CREATE  TABLE schema_tyriavault.items (
 	rarity_id            integer  NOT NULL  ,
 	required_level       integer    ,
 	vendor_value         integer DEFAULT 0   ,
+	details              jsonb    ,
 	flags                jsonb    ,
 	last_fetched         timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL  ,
+	added_timestamp      timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL  ,
 	CONSTRAINT pk_items_cache PRIMARY KEY ( id ),
 	CONSTRAINT fk_items_cache_item_type FOREIGN KEY ( item_type_id ) REFERENCES schema_tyriavault.item_types( id ) ON DELETE CASCADE ON UPDATE CASCADE ,
 	CONSTRAINT fk_items_cache_rarities FOREIGN KEY ( rarity_id ) REFERENCES schema_tyriavault.rarities( id ) ON DELETE CASCADE ON UPDATE CASCADE 
  );
 
-CREATE INDEX idx_items_cache_1 ON schema_tyriavault.items  ( rarity_id );
+CREATE INDEX idx_items_rarity ON schema_tyriavault.items  ( rarity_id );
 
-CREATE INDEX idx_items_cache_0 ON schema_tyriavault.items  ( item_type_id );
+CREATE INDEX idx_item_type ON schema_tyriavault.items  ( item_type_id );
+
+CREATE INDEX idx_details_items ON schema_tyriavault.items USING GIN ( details );
 
 CREATE  TABLE schema_tyriavault.miniatures ( 
 	id                   integer  NOT NULL  ,
@@ -252,15 +256,6 @@ CREATE  TABLE schema_tyriavault.emotes (
 	CONSTRAINT unq_emotes_name UNIQUE ( name ) ,
 	CONSTRAINT fk_emotes_items_cache FOREIGN KEY ( unlocking_item_id ) REFERENCES schema_tyriavault.items( id ) ON DELETE SET NULL ON UPDATE CASCADE 
  );
-
-CREATE  TABLE schema_tyriavault.item_details ( 
-	item_id              bigint  NOT NULL  ,
-	details              jsonb  NOT NULL  ,
-	CONSTRAINT pk_item_details PRIMARY KEY ( item_id ),
-	CONSTRAINT fk_item_details_items_cache FOREIGN KEY ( item_id ) REFERENCES schema_tyriavault.items( id ) ON DELETE CASCADE ON UPDATE CASCADE 
- );
-
-CREATE INDEX idx_item_details ON schema_tyriavault.item_details USING GIN ( details );
 
 CREATE  TABLE schema_tyriavault.unlocked_emotes ( 
 	game_account_uuid    uuid  NOT NULL  ,
@@ -411,9 +406,13 @@ COMMENT ON COLUMN schema_tyriavault.items.required_level IS 'The minimum level r
 
 COMMENT ON COLUMN schema_tyriavault.items.vendor_value IS 'The value in coins when selling to a vendor. (Can be non-zero even when the item has the NoSell flag.)';
 
+COMMENT ON COLUMN schema_tyriavault.items.details IS 'The details of the item';
+
 COMMENT ON COLUMN schema_tyriavault.items.flags IS 'Flags applying to the item.';
 
 COMMENT ON COLUMN schema_tyriavault.items.last_fetched IS 'Last time the data of this item was fetched from the API';
+
+COMMENT ON COLUMN schema_tyriavault.items.added_timestamp IS 'The timestamps telling us when this items was registered on the DB for the firsttime';
 
 COMMENT ON TABLE schema_tyriavault.miniatures IS 'Table enumerating every mini found in the game';
 

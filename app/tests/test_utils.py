@@ -154,3 +154,63 @@ def test_chunked_chunk_size_negative():
     with pytest.raises(ValueError) as exc:
         list(chunked(items, -1))
     assert "chunk_size must be a positive integer" in str(exc.value)
+
+
+# Tests for map_rarity_to_id function
+
+def test_map_rarity_to_id_junk():
+    from app.core.utils import map_rarity_to_id
+    result = map_rarity_to_id("Junk")
+    assert result == 1
+
+
+def test_map_rarity_to_id_none():
+    from app.core.utils import map_rarity_to_id
+    result = map_rarity_to_id(None)
+    assert result == 2  # Default to Basic
+
+
+def test_map_rarity_to_id_unknown():
+    from app.core.utils import map_rarity_to_id
+    result = map_rarity_to_id("UnknownRarity")
+    assert result == 2  # Default to Basic
+
+
+def test_map_rarity_to_id_case_sensitive():
+    from app.core.utils import map_rarity_to_id
+    # The function is case-sensitive, so lowercase should not match
+    result = map_rarity_to_id("exotic")
+    assert result == 2  # Default to Basic (not found)
+
+
+# Tests for map_type_to_id function
+
+def test_map_type_to_id_unknown():
+    from app.core.utils import map_type_to_id
+    result = map_type_to_id("Unknown")
+    assert result == 0
+
+
+def test_map_type_to_id_back():
+    from app.core.utils import map_type_to_id
+    result = map_type_to_id("Back")
+    assert result == 2
+
+
+def test_map_type_to_id_none():
+    from app.core.utils import map_type_to_id
+    result = map_type_to_id(None)
+    assert result == 0  # Default to Unknown
+
+
+def test_map_type_to_id_not_found():
+    from app.core.utils import map_type_to_id
+    result = map_type_to_id("NonExistentType")
+    assert result == 0  # Default to Unknown
+
+
+def test_map_type_to_id_case_sensitive():
+    from app.core.utils import map_type_to_id
+    # The function is case-sensitive, so lowercase should not match
+    result = map_type_to_id("armor")
+    assert result == 0  # Default to Unknown (not found)
