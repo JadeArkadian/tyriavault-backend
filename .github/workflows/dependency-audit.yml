@@ -25,7 +25,7 @@ jobs:
             echo "Running on PR ${{ github.event.action }}"
           elif [[ "${{ github.event.action }}" == "synchronize" ]]; then
             # Check if pyproject.toml was modified in this push
-            if git diff --name-only HEAD^ HEAD | grep -q "^pyproject\.toml$"; then
+            if git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD | grep -q "^pyproject\.toml$"; then
               echo "should_run=true" >> $GITHUB_OUTPUT
               echo "pyproject.toml was modified"
             else
