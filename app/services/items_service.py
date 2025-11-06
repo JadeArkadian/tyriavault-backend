@@ -57,7 +57,7 @@ class ItemsService:
                 return
 
             # Process items in chunks
-            for chunk in chunked(ids, 175):
+            for chunk in chunked(ids, 200):
                 # Fetch item details for all languages
                 items_merged = await asyncio.gather(
                     *(self.gw2_client.get_item_details(chunk, lang=lang) for lang in Constants.LANGS)
