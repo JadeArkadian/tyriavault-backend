@@ -93,9 +93,8 @@ class ItemsService:
                         else:
                             # Update language-specific fields
                             dto = items_dtos[item_id]
-                            if lang in Constants.LANGS:
-                                setattr(dto, f"name_{lang}", item.name or "")
-                                setattr(dto, f"description_{lang}", item.description)
+                            setattr(dto, f"name_{lang}", item.name or "")
+                            setattr(dto, f"description_{lang}", item.description)
 
                 # Convert DTOs to ORM models
                 items_list = [dto.to_orm() for dto in items_dtos.values()]

@@ -26,7 +26,7 @@ def map_type_to_id(item_type: str | None) -> int:
         "Gizmo": 8,
         "JadeTechModule": 9,
         "Key": 10,
-        "MiniPet": 11,
+        "Miniature": 11,
         "PowerCore": 12,
         "Relic": 13,
         "Tool": 14,
