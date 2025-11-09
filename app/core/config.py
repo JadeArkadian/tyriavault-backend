@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     PROJECT_VERSION: str = "0.1.0"
     DATABASE_URL: str
     FRONTEND_URL: str
+    GW2_API_BASE_URL: str = "https://api.guildwars2.com/v2"
     CACHE_TTL_STATIC_SECONDS: int = 2592000  # 30 days
     CACHE_TTL_NORMAL_SECONDS: int = 300  # 5 minutes
     LOG_LEVEL: str = "INFO"
