@@ -20,7 +20,7 @@ if sys.platform != 'win32':
     import uvloop
 
     logger.info("Using uvloop for improved performance...")
-    uvloop.install()
+    uvloop.run()
 
 log_filename = f"tyriavault_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 log_filepath = os.path.join(os.path.dirname(__file__), log_filename)
