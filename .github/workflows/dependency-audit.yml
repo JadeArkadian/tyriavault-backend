@@ -1,0 +1,115 @@
+name: Dependency Audit
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  dependency_audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: 🧭 Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # Need history to check changed files
+
+      - name: 🎯 Check if should run
+        id: should_run
+        run: |
+          if [[ "${{ github.event.action }}" == "opened" || "${{ github.event.action }}" == "reopened" ]]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "Running on PR ${{ github.event.action }}"
+          elif [[ "${{ github.event.action }}" == "synchronize" ]]; then
+            # Check if pyproject.toml was modified in this push
+            if git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD | grep -q "^pyproject\.toml$"; then
+              echo "should_run=true" >> $GITHUB_OUTPUT
+              echo "pyproject.toml was modified"
+            else
+              echo "should_run=false" >> $GITHUB_OUTPUT
+              echo "pyproject.toml was not modified, skipping"
+            fi
+          fi
+
+      - name: 🐍 Set up Python
+        if: steps.should_run.outputs.should_run == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: 🛠️ Install pip-audit
+        if: steps.should_run.outputs.should_run == 'true'
+        run: pip install pip-audit pip-review
+
+      - name: ⬇️ Install project dependencies
+        if: steps.should_run.outputs.should_run == 'true'
+        run: pip install .
+
+      - name: 🔍 Check for outdated dependencies
+        if: steps.should_run.outputs.should_run == 'true'
+        id: outdated
+        continue-on-error: true
+        run: |
+          echo "## 📦 Outdated dependencies" > outdated.md
+          pip list --outdated --format=json > outdated.json
+          if [ -s outdated.json ] && [ "$(cat outdated.json)" != "[]" ]; then
+            echo "There are updates available:" >> outdated.md
+            python -c "
+          import json
+          with open('outdated.json') as f:
+              pkgs = json.load(f)
+          for pkg in pkgs:
+              print(f\"- **{pkg['name']}**: {pkg['version']} → {pkg['latest_version']}\")
+          " >> outdated.md
+          else
+            echo "All dependencies are all up to date! ✅" >> outdated.md
+          fi
+
+      - name: 🔒 Audit dependencies for vulnerabilities
+        if: steps.should_run.outputs.should_run == 'true'
+        id: audit
+        continue-on-error: true
+        run: |
+          echo "## 🛡️ Security audit" > audit.md
+          pip-audit --format json > audit.json || true
+          if [ -s audit.json ] && grep -q '"vulnerabilities":' audit.json; then
+            echo "⚠️ **Found vulnerabilities:**" >> audit.md
+            python -c "
+          import json
+          with open('audit.json') as f:
+              data = json.load(f)
+          for vuln in data.get('vulnerabilities', []):
+              print(f\"- **{vuln['name']}** v{vuln['version']}: {vuln['id']} - {vuln['description'][:100]}...\")
+          " >> audit.md
+            echo "HAS_VULNERABILITIES=true" >> $GITHUB_ENV
+          else
+            echo "No vulnerabilities have been found! ✅" >> audit.md
+            echo "HAS_VULNERABILITIES=false" >> $GITHUB_ENV
+          fi
+
+      - name: 💬 Comment on PR
+        if: steps.should_run.outputs.should_run == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const outdated = fs.readFileSync('outdated.md', 'utf8');
+            const audit = fs.readFileSync('audit.md', 'utf8');
+            
+            const body = `# 🔍 Dependencies check\n\n${outdated}\n\n${audit}`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: ❌ Fail if vulnerabilities found
+        if: env.HAS_VULNERABILITIES == 'true'
+        run: |
+          echo "::error::Vulnerabilities found on dependencies."
+          exit 1

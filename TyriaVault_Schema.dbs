@@ -281,19 +281,6 @@
 				<column name="id" />
 			</index>
 		</table>
-		<table name="item_details" prior="item_detai" generator_rows="225" spec="" >
-			<column name="item_id" type="bigint" mandatory="y" />
-			<column name="details" type="jsonb" mandatory="y" />
-			<index name="pk_item_details" unique="PRIMARY_KEY" >
-				<column name="item_id" />
-			</index>
-			<index name="idx_item_details" unique="NORMAL" spec="USING GIN" >
-				<column name="details" />
-			</index>
-			<fk name="fk_item_details_items_cache" to_schema="schema_tyriavault" to_table="items" delete_action="cascade" update_action="cascade" >
-				<fk_column name="item_id" pk="id" />
-			</fk>
-		</table>
 		<table name="item_types" prior="item_type" generator_rows="100" >
 			<column name="id" type="integer" length="32" mandatory="y" >
 				<identity><![CDATA[GENERATED  BY DEFAULT AS IDENTITY]]></identity>
@@ -353,6 +340,9 @@
 				<defo><![CDATA[0]]></defo>
 				<comment><![CDATA[The value in coins when selling to a vendor. (Can be non-zero even when the item has the NoSell flag.)]]></comment>
 			</column>
+			<column name="details" type="jsonb" >
+				<comment><![CDATA[The details of the item]]></comment>
+			</column>
 			<column name="flags" type="jsonb" >
 				<comment><![CDATA[Flags applying to the item.]]></comment>
 			</column>
@@ -360,14 +350,21 @@
 				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
 				<comment><![CDATA[Last time the data of this item was fetched from the API]]></comment>
 			</column>
+			<column name="added_timestamp" type="timestamptz" mandatory="y" >
+				<defo><![CDATA[CURRENT_TIMESTAMP]]></defo>
+				<comment><![CDATA[The timestamps telling us when this items was registered on the DB for the firsttime]]></comment>
+			</column>
 			<index name="pk_items_cache" unique="PRIMARY_KEY" >
 				<column name="id" />
 			</index>
-			<index name="idx_items_cache_1" unique="NORMAL" >
+			<index name="idx_items_rarity" unique="NORMAL" >
 				<column name="rarity_id" />
 			</index>
-			<index name="idx_items_cache_0" unique="NORMAL" >
+			<index name="idx_item_type" unique="NORMAL" >
 				<column name="item_type_id" />
+			</index>
+			<index name="idx_details_items" unique="NORMAL" spec="USING GIN" >
+				<column name="details" />
 			</index>
 			<fk name="fk_items_cache_item_type" to_schema="schema_tyriavault" to_table="item_types" delete_action="cascade" update_action="cascade" >
 				<fk_column name="item_type_id" pk="id" />
@@ -629,14 +626,13 @@
 		<entity schema="schema_tyriavault" name="miniatures" color="C1D8EE" x="646" y="1178" />
 		<entity schema="schema_tyriavault" name="genders" color="EEC1C8" x="1406" y="893" />
 		<entity schema="schema_tyriavault" name="worlds" color="C1D8EE" x="1292" y="342" />
-		<entity schema="schema_tyriavault" name="item_details" color="FFFF39" x="2223" y="950" />
 		<entity schema="schema_tyriavault" name="wallet_history" color="C8EEC1" x="532" y="456" />
 		<entity schema="schema_tyriavault" name="wallet" color="C8EEC1" x="532" y="285" />
 		<entity schema="schema_tyriavault" name="unlocked_minis" color="C1D8EE" x="589" y="741" />
 		<entity schema="schema_tyriavault" name="unlocked_emotes" color="C1D8EE" x="855" y="741" />
 		<entity schema="schema_tyriavault" name="unlocked_dyes" color="C1D8EE" x="1140" y="114" />
 		<entity schema="schema_tyriavault" name="item_types" color="FFFF39" x="1748" y="1425" />
-		<entity schema="schema_tyriavault" name="items" color="FFFF39" x="1862" y="950" />
 		<entity schema="schema_tyriavault" name="achievements" color="EED8C1" x="57" y="1064" />
+		<entity schema="schema_tyriavault" name="items" color="FFFF39" x="1862" y="950" />
 	</layout>
 </project>

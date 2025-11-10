@@ -2,6 +2,7 @@
 GW2 API Items response models.
 Documentation: https://wiki.guildwars2.com/wiki/API:2/items
 """
+from typing import Union
 
 from pydantic import BaseModel, Field
 
@@ -36,23 +37,9 @@ class GW2ApiItem(BaseModel):
     upgrades_into: list[dict] | None = Field(default=None, description="Lists what items this item can be upgraded into")
     upgrades_from: list[dict] | None = Field(default=None, description="Lists what items this item can be upgraded from")
 
-    # Details - Union of all possible detail types
-    # TODO: Details are way too complex to do properly right now -> will be done later
-    # See gw2api_items_details.py.wip for individual detail models
-    """
+    # Details - just droping as a dict for flexibility
+    # See https://wiki.guildwars2.com/wiki/API:2/items for individual detail models
     details: Union[
-        ArmorDetails,
-        WeaponDetails,
-        TrinketDetails,
-        BackDetails,
-        ConsumableDetails,
-        ContainerDetails,
-        GatheringDetails,
-        BagDetails,
-        UpgradeComponentDetails,
-        SalvageKitDetails,
-        MiniatureDetails,
         dict,
         None
     ] = Field(default=None, description="Additional item details (type-specific)")
-    """

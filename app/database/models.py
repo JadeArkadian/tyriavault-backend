@@ -227,22 +227,26 @@ class Items(Base):
         ForeignKeyConstraint(['rarity_id'], ['schema_tyriavault.rarities.id'], ondelete='CASCADE', onupdate='CASCADE',
                              name='fk_items_cache_rarities'),
         PrimaryKeyConstraint('id', name='pk_items_cache'),
-        Index('idx_items_cache_0', 'item_type_id'),
-        Index('idx_items_cache_1', 'rarity_id'),
+        Index('idx_details_items', 'details'),
+        Index('idx_item_type', 'item_type_id'),
+        Index('idx_items_rarity', 'rarity_id'),
         {'schema': 'schema_tyriavault'}
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, comment='The item ID, given by the GW2 API')
-    chat_link: Mapped[str] = mapped_column(String, nullable=False, comment='String with the ingame chat link')
     name_es: Mapped[str] = mapped_column(String(200), nullable=False, comment='Name in spanish')
     name_fr: Mapped[str] = mapped_column(String(200), nullable=False, comment='Name in french')
     name_en: Mapped[str] = mapped_column(String(200), nullable=False, comment='Name in english')
     name_de: Mapped[str] = mapped_column(String(200), nullable=False, comment='Name in german')
+    chat_link: Mapped[str] = mapped_column(String, nullable=False, comment='String with the ingame chat link')
     rarity_id: Mapped[int] = mapped_column(Integer, nullable=False, comment='The rarity of the item')
     last_fetched: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('CURRENT_TIMESTAMP'),
                                                             comment='Last time the data of this item was fetched from the API')
-    description_es: Mapped[Optional[str]] = mapped_column(Text, comment='Description in spanish')
+    added_timestamp: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('CURRENT_TIMESTAMP'),
+                                                               comment='The timestamps telling us when this items was registered on the DB for the firsttime')
+    item_type_id: Mapped[Optional[int]] = mapped_column(Integer, comment='The id of the Item Type')
     icon_url: Mapped[Optional[str]] = mapped_column(Text, comment='Icon URL')
+    description_es: Mapped[Optional[str]] = mapped_column(Text, comment='Description in spanish')
     description_fr: Mapped[Optional[str]] = mapped_column(Text, comment='Description in french')
     description_en: Mapped[Optional[str]] = mapped_column(Text, comment='Description in english')
     description_de: Mapped[Optional[str]] = mapped_column(Text, comment='Description in german')
@@ -250,6 +254,7 @@ class Items(Base):
     required_level: Mapped[Optional[int]] = mapped_column(Integer, comment='The minimum level required level to use this item')
     vendor_value: Mapped[Optional[int]] = mapped_column(Integer, server_default=text('0'),
                                                         comment='The value in coins when selling to a vendor. (Can be non-zero even when the item has the NoSell flag.)')
+    details: Mapped[Optional[dict]] = mapped_column(JSONB, comment='The details of the item')
     flags: Mapped[Optional[dict]] = mapped_column(JSONB, comment='Flags applying to the item.')
 
     item_type: Mapped[Optional['ItemTypes']] = relationship('ItemTypes', back_populates='items')
@@ -372,20 +377,6 @@ class Emotes(Base):
 
     unlocking_item: Mapped[Optional['Items']] = relationship('Items', back_populates='emotes')
     unlocked_emotes: Mapped[list['UnlockedEmotes']] = relationship('UnlockedEmotes', back_populates='emote')
-
-
-class ItemDetails(Items):
-    __tablename__ = 'item_details'
-    __table_args__ = (
-        ForeignKeyConstraint(['item_id'], ['schema_tyriavault.items.id'], ondelete='CASCADE', onupdate='CASCADE',
-                             name='fk_item_details_items_cache'),
-        PrimaryKeyConstraint('item_id', name='pk_item_details'),
-        Index('idx_item_details', 'details'),
-        {'schema': 'schema_tyriavault'}
-    )
-
-    item_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    details: Mapped[dict] = mapped_column(JSONB, nullable=False)
 
 
 class Miniatures(Base):

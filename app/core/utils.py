@@ -1,6 +1,60 @@
 from typing import Any, Generator
 
 from app.core import settings
+from app.database.seeding.seed_data import RARITIES_DATA
+
+# Build mappings once at module level
+_RARITY_NAME_TO_ID = {r.name_en: r.id for r in RARITIES_DATA}
+
+
+def map_rarity_to_id(rarity: str | None) -> int:
+    """Map GW2 rarity string to database rarity ID using seed data."""
+    return _RARITY_NAME_TO_ID.get(rarity, 2)  # Default to Basic if not found
+
+
+def map_type_to_id(item_type: str | None) -> int:
+    """Map GW2 item type string to database item_type ID using seed data."""
+    type_map = {
+        "Unknown": 0,
+        "Armor": 1,
+        "Back": 2,
+        "Bag": 3,
+        "Consumable": 4,
+        "Container": 5,
+        "CraftingMaterial": 6,
+        "Gathering": 7,
+        "Gizmo": 8,
+        "JadeTechModule": 9,
+        "Key": 10,
+        "Miniature": 11,
+        "PowerCore": 12,
+        "Relic": 13,
+        "Tool": 14,
+        "Trait": 15,
+        "Trinket": 16,
+        "Trophy": 17,
+        "UpgradeComponent": 18,
+        "Weapon": 19
+    }
+    return type_map.get(item_type, 0) if item_type else 0  # Default to Unknown
+
+
+def chunked(items: list[Any], chunk_size: int) -> Generator[list[Any], Any, None]:
+    """
+    Splits a list of items into smaller chunks of a specified size.
+
+    Args:
+        items (list[Any]): The list of items to be chunked.
+        chunk_size (int): The size of each chunk.
+
+    Yields:
+        list[Any]: A chunk of the original list.
+    """
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be a positive integer")
+
+    for i in range(0, len(items), chunk_size):
+        yield items[i:i + chunk_size]
 
 
 def chunked(items: list[Any], chunk_size: int) -> Generator[list[Any], Any, None]:
