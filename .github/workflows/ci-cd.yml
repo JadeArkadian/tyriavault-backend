@@ -45,7 +45,7 @@ jobs:
           ENV: test
         run: |
           chmod +x run_integration_tests.sh
-          .run_integration_tests.sh
+          ./run_integration_tests.sh
 
       - name: 📂 Upload coverage report
         uses: actions/upload-artifact@v4
