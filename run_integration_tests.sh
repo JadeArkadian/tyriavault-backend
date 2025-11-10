@@ -52,7 +52,7 @@ sleep 5
 
 echo ""
 echo "[6/6] Running integration tests..."
-pytest app/tests/integration/test_status.py -v -m integration --tb=short
+pytest app/tests/integration/test_status.py -v --tb=short
 
 TEST_RESULT=$?
 
@@ -81,12 +81,6 @@ if [ $TEST_RESULT -eq 0 ]; then
 else
     echo -e "${RED}========================================${NC}"
     echo -e "${RED} ❌ TESTS FAILED${NC}"
-    echo -e "${RED}========================================${NC}"
-fi
-
-exit $TEST_RESULT
-    echo -e "${RED}========================================${NC}"
-    echo -e "${RED} ❌ TESTS FALLARON${NC}"
     echo -e "${RED}========================================${NC}"
 fi
 
