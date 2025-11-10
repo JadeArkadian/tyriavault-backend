@@ -42,7 +42,7 @@ fi
 echo ""
 echo "[5/6] Starting application in background..."
 export ENV=test
-uvicorn app.main:api --host 0.0.0.0 --port 8000 --env-file .env.test > /tmp/tyriavault_app.log 2>&1 &
+uvicorn app.main:api --host 0.0.0.0 --loop uvloop --port 8000 --env-file .env.test > /tmp/tyriavault_app.log 2>&1 &
 APP_PID=$!
 echo "Application started with PID: $APP_PID"
 

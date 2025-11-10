@@ -1,5 +1,4 @@
 import os
-import sys
 from contextlib import asynccontextmanager
 from datetime import datetime
 
@@ -77,10 +76,3 @@ api.add_middleware(
 )
 
 api.include_router(api_router, prefix="/api/v1")
-
-# Install uvloop for better async performance (Unix-like systems only)
-if sys.platform != 'win32':
-    import uvloop
-
-    logger.info("Using uvloop for improved performance...")
-    uvloop.run(lifespan(api))
