@@ -2,11 +2,8 @@ from typing import Annotated
 
 from fastapi import HTTPException
 from fastapi.params import Depends, Header
-from fastapi_cache.decorator import cache
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import settings
-from app.core.cache import cache_key_builder
 from app.core.logging import logger
 from app.core.utils import split_bearer_token
 from app.database.repositories.account_repository import AccountRepository
@@ -70,7 +67,6 @@ def get_wallet_service(db: Annotated[AsyncSession, Depends(get_db)], apikey: str
     return WalletService(wallet_repository, currencies_repository, gw2_client)
 
 
-@cache(expire=settings.CACHE_TTL_NORMAL_SECONDS, namespace="apikey", key_builder=cache_key_builder)
 async def validate_api_key(
         authorization: str = Header(..., description="Authorization header: Bearer <API_KEY>"),
         api_key_service: ApiKeyService = Depends(get_api_key_service)) -> ApiKeyDTO:

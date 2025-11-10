@@ -78,6 +78,13 @@
             "description": "A karmic currency earned by helping others.",
             "icon": "https://render.guildwars2.com/file/test-karma.png",
             "order": 2
+          },
+          {
+            "id": 4,
+            "name": "Gems",
+            "description": "Gems are a premium currency.",
+            "icon": "https://render.guildwars2.com/file/test-gems.png",
+            "order": 4
           }
         ],
         "headers": {
@@ -263,6 +270,38 @@
           "monthly_ap": 5000,
           "wvw_rank": 500
         },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "GW2 API - Wallet",
+      "request": {
+        "method": "GET",
+        "urlPattern": "/v2/account/wallet",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer .*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": [
+          {
+            "id": 1,
+            "value": 123456789
+          },
+          {
+            "id": 2,
+            "value": 50000
+          },
+          {
+            "id": 4,
+            "value": 1000
+          }
+        ],
         "headers": {
           "Content-Type": "application/json"
         }
