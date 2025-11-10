@@ -1,0 +1,330 @@
+{
+  "mappings": [
+    {
+      "name": "GW2 API - Build",
+      "request": {
+        "method": "GET",
+        "urlPattern": "/v2/build"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "id": 158988
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "GW2 API - Worlds List",
+      "request": {
+        "method": "GET",
+        "urlPattern": "/v2/worlds(\\?.*)?",
+        "queryParameters": {
+          "ids": {
+            "matches": ".*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": [
+          {
+            "id": 1001,
+            "name": "Anvil Rock",
+            "population": "Medium"
+          },
+          {
+            "id": 1002,
+            "name": "Borlis Pass",
+            "population": "High"
+          },
+          {
+            "id": 2001,
+            "name": "Gandara",
+            "population": "Full"
+          }
+        ],
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "GW2 API - Currencies List",
+      "request": {
+        "method": "GET",
+        "urlPattern": "/v2/currencies(\\?.*)?",
+        "queryParameters": {
+          "ids": {
+            "matches": ".*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": [
+          {
+            "id": 1,
+            "name": "Coin",
+            "description": "The primary currency used in Tyria.",
+            "icon": "https://render.guildwars2.com/file/test-icon.png",
+            "order": 1
+          },
+          {
+            "id": 2,
+            "name": "Karma",
+            "description": "A karmic currency earned by helping others.",
+            "icon": "https://render.guildwars2.com/file/test-karma.png",
+            "order": 2
+          },
+          {
+            "id": 4,
+            "name": "Gems",
+            "description": "Gems are a premium currency.",
+            "icon": "https://render.guildwars2.com/file/test-gems.png",
+            "order": 4
+          }
+        ],
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "GW2 API - Colors/Dyes List",
+      "request": {
+        "method": "GET",
+        "urlPattern": "/v2/colors(\\?.*)?",
+        "queryParameters": {
+          "ids": {
+            "matches": ".*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": [
+          {
+            "id": 1,
+            "name": "Dye Remover",
+            "base_rgb": [
+              128,
+              26,
+              26
+            ],
+            "cloth": {
+              "brightness": 15,
+              "contrast": 1.25,
+              "hue": 38,
+              "saturation": 0.28125,
+              "lightness": 1.44531,
+              "rgb": [
+                122,
+                11,
+                0
+              ]
+            },
+            "leather": {
+              "brightness": 15,
+              "contrast": 1.25,
+              "hue": 38,
+              "saturation": 0.28125,
+              "lightness": 1.44531,
+              "rgb": [
+                122,
+                11,
+                0
+              ]
+            },
+            "metal": {
+              "brightness": 15,
+              "contrast": 1.25,
+              "hue": 38,
+              "saturation": 0.28125,
+              "lightness": 1.44531,
+              "rgb": [
+                122,
+                11,
+                0
+              ]
+            },
+            "categories": [
+              "Starter"
+            ]
+          }
+        ],
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "GW2 API - Items List",
+      "request": {
+        "method": "GET",
+        "urlPattern": "/v2/items(\\?.*)?",
+        "queryParameters": {
+          "ids": {
+            "matches": ".*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": [
+          {
+            "id": 12345,
+            "chat_link": "[&AgEBMAAA]",
+            "name": "Test Item",
+            "icon": "https://render.guildwars2.com/file/test-item.png",
+            "description": "A test item for integration testing",
+            "type": "Weapon",
+            "rarity": "Exotic",
+            "level": 80,
+            "vendor_value": 1000,
+            "flags": [
+              "SoulbindOnAcquire"
+            ]
+          }
+        ],
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "GW2 API - Items IDs",
+      "request": {
+        "method": "GET",
+        "urlPattern": "/v2/items$"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": [
+          12345,
+          12346,
+          12347
+        ],
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "GW2 API - TokenInfo",
+      "request": {
+        "method": "GET",
+        "urlPattern": "/v2/tokeninfo",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer .*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "id": "test-token-id",
+          "name": "Test API Key",
+          "permissions": [
+            "account",
+            "characters",
+            "inventories",
+            "wallet"
+          ]
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "GW2 API - Account",
+      "request": {
+        "method": "GET",
+        "urlPattern": "/v2/account",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer .*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "id": "12345678-90AB-CDEF-1234-567890ABCDEF",
+          "name": "TestAccount.1234",
+          "age": 1000000,
+          "world": 2001,
+          "guilds": [],
+          "created": "2015-01-01T00:00:00Z",
+          "access": [
+            "PlayForFree",
+            "GuildWars2"
+          ],
+          "commander": false,
+          "fractal_level": 100,
+          "daily_ap": 10000,
+          "monthly_ap": 5000,
+          "wvw_rank": 500
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "GW2 API - Wallet",
+      "request": {
+        "method": "GET",
+        "urlPattern": "/v2/account/wallet",
+        "headers": {
+          "Authorization": {
+            "matches": "Bearer .*"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": [
+          {
+            "id": 1,
+            "value": 123456789
+          },
+          {
+            "id": 2,
+            "value": 50000
+          },
+          {
+            "id": 4,
+            "value": 1000
+          }
+        ],
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "GW2 API - Fallback",
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPattern": "/v2/.*"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "mock": true,
+          "message": "Generic mock response for GW2 API"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    }
+  ]
+}
+

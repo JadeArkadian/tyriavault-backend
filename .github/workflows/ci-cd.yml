@@ -32,13 +32,20 @@ jobs:
       - name: ⬇️ Install project dependencies
         run: pip install .
 
-      - name: 🧾 Run tests with coverage
+      - name: 🧾 Run unit tests with coverage
         env:
           ENV: test
         run: |
-          coverage run -m pytest
+          coverage run -m pytest app/tests/unit
           coverage xml -o .coverage-reports/coverage-backend.xml
           coverage html -d .coverage-reports/
+
+      - name: 🐳 Run integration tests
+        env:
+          ENV: test
+        run: |
+          chmod +x run_integration_tests.sh
+          ./run_integration_tests.sh
 
       - name: 📂 Upload coverage report
         uses: actions/upload-artifact@v4

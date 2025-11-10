@@ -4,10 +4,9 @@ from typing import Any
 import httpx
 import orjson
 
+from app.core.config import settings
 from app.core.logging import logger
 from app.gw2.responses import GW2ApiAccount, GW2ApiColor, GW2ApiCurrency, GW2ApiTokenInfo, GW2ApiWalletEntry, GW2ApiWorld, GW2ApiItem
-
-BASE_URL = "https://api.guildwars2.com/v2"
 
 _gw2_http_client: httpx.AsyncClient | None = None
 
@@ -25,7 +24,7 @@ def get_gw2_http_client() -> httpx.AsyncClient:
 async def startup_gw2_client():
     """To be called during application startup."""
     global _gw2_http_client
-    _gw2_http_client = httpx.AsyncClient(base_url=BASE_URL, timeout=10.0)
+    _gw2_http_client = httpx.AsyncClient(base_url=settings.GW2_API_BASE_URL, timeout=10.0)
 
 
 async def shutdown_gw2_client():

@@ -1,5 +1,4 @@
 import os
-import sys
 from contextlib import asynccontextmanager
 from datetime import datetime
 
@@ -14,13 +13,6 @@ from app.crawlers import CrawlerScheduler, ItemsCrawler
 from app.database.seeding.seeder import DatabaseSeeder
 from app.database.session import async_session_maker
 from app.gw2.client import startup_gw2_client, shutdown_gw2_client, GW2Client
-
-# Install uvloop for better async performance (Unix-like systems only)
-if sys.platform != 'win32':
-    import uvloop
-
-    logger.info("Using uvloop for improved performance...")
-    uvloop.install()
 
 log_filename = f"tyriavault_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 log_filepath = os.path.join(os.path.dirname(__file__), log_filename)

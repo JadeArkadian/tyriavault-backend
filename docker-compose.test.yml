@@ -1,0 +1,37 @@
+services:
+  postgres-test:
+    image: postgres:17-alpine
+    container_name: tyriavault-postgres-test
+    environment:
+      POSTGRES_DB: tyriavault_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U test_user -d tyriavault_test" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - tyriavault-test-network
+
+  wiremock:
+    build:
+      context: ./app/tests/integration/wiremock
+      dockerfile: Dockerfile
+    container_name: tyriavault-wiremock
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8080/__admin/health" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - tyriavault-test-network
+
+networks:
+  tyriavault-test-network:
+    driver: bridge
+
