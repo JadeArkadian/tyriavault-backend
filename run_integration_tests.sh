@@ -17,6 +17,7 @@ docker compose -f docker-compose.test.yml down -v 2>/dev/null || true
 
 echo ""
 echo "[2/6] Starting services (PostgreSQL and WireMock)..."
+docker compose -f docker-compose.test.yml build --no-cache wiremock
 docker compose -f docker-compose.test.yml up -d
 
 if [ $? -ne 0 ]; then

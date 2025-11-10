@@ -247,7 +247,7 @@
       "response": {
         "status": 200,
         "jsonBody": {
-          "id": "test-account-id",
+          "id": "12345678-90AB-CDEF-1234-567890ABCDEF",
           "name": "TestAccount.1234",
           "age": 1000000,
           "world": 2001,

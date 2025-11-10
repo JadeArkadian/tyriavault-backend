@@ -17,6 +17,7 @@ docker compose -f docker-compose.test.yml down -v 2>nul
 
 echo.
 echo [2/6] Starting services (PostgreSQL and WireMock)...
+docker compose -f docker-compose.test.yml build --no-cache wiremock
 docker compose -f docker-compose.test.yml up -d
 
 if errorlevel 1 (
