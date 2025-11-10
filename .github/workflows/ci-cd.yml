@@ -36,15 +36,16 @@ jobs:
         env:
           ENV: test
         run: |
-          coverage run -m pytest app/tests --ignore=app/tests/integration
+          coverage run -m pytest app/tests/unit
           coverage xml -o .coverage-reports/coverage-backend.xml
           coverage html -d .coverage-reports/
 
-      - name: 🔗 Run integration tests
+      - name: 🔗 Deploy and Run integration tests
         env:
           ENV: test
         run: |
-          pytest app/tests/integration -v
+          chmod +x run_integration_tests.sh
+          .run_integration_tests.sh
 
       - name: 📂 Upload coverage report
         uses: actions/upload-artifact@v4
