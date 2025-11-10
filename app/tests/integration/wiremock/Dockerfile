@@ -1,4 +1,4 @@
-FROM wiremock/wiremock:3.3.1
+FROM wiremock/wiremock:3.13.1
 
 # Copy mappings to container
 COPY mappings /home/wiremock/mappings

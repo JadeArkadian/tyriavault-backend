@@ -40,7 +40,7 @@ jobs:
           coverage xml -o .coverage-reports/coverage-backend.xml
           coverage html -d .coverage-reports/
 
-      - name: 🔗 Deploy and Run integration tests
+      - name: 🐳 Run integration tests
         env:
           ENV: test
         run: |
