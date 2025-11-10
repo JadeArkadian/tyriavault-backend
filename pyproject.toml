@@ -7,7 +7,7 @@ name = "tyriavault-backend"
 version = "0.1.1"
 requires-python = ">=3.13"
 dependencies = [
-    "fastapi==0.121.0",
+    "fastapi==0.121.1",
     "uvicorn[standard]==0.38.0",
     "pydantic==2.12.4",
     "fastapi-cache2==0.2.2",
@@ -20,9 +20,9 @@ dependencies = [
     "httpx==0.28.1",
     "orjson==3.11.4",
     "pytest-mock==3.15.1",
-    "pytest==8.4.2",
+    "pytest==9.0.0",
     "pytest-asyncio==1.2.0",
-    "coverage==7.11.0"
+    "coverage==7.11.3"
 ]
 
 authors = [
