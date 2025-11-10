@@ -62,6 +62,7 @@ class ApplicationClient:
             return None
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_application_startup_and_status():
     """
@@ -95,6 +96,7 @@ async def test_application_startup_and_status():
     print(f"   Response: {content}")
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_status_endpoint_with_wiremock():
     """
@@ -131,6 +133,7 @@ async def test_status_endpoint_with_wiremock():
         print("⚠️  Application responds but reports instability (expected in some cases)")
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_wiremock_connectivity():
     """Test to verify that WireMock is working correctly."""
@@ -151,6 +154,7 @@ async def test_wiremock_connectivity():
         print(f"✅ WireMock has {len(admin_data['mappings'])} mappings configured")
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_database_connectivity():
     """Test to verify that PostgreSQL is working correctly."""

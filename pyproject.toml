@@ -43,3 +43,9 @@ classifiers = [
 uvloop = [
     "uvloop==0.22.1; sys_platform != 'win32'"
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks tests as integration tests",
+]
+asyncio_mode = "auto"

@@ -49,7 +49,7 @@ timeout /t 5 /nobreak >nul
 
 echo.
 echo [6/6] Running integration tests...
-pytest app\tests\integration\test_status.py -v -m integration --tb=short
+pytest app\tests\integration\ -v --tb=short
 
 set TEST_RESULT=%errorlevel%
 

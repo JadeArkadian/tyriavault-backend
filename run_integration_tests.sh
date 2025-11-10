@@ -52,7 +52,7 @@ sleep 5
 
 echo ""
 echo "[6/6] Running integration tests..."
-pytest app/tests/integration/test_status.py -v --tb=short
+pytest app/tests/integration/ -v -m integration --tb=short
 
 TEST_RESULT=$?
 
