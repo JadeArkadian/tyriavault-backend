@@ -15,13 +15,6 @@ from app.database.seeding.seeder import DatabaseSeeder
 from app.database.session import async_session_maker
 from app.gw2.client import startup_gw2_client, shutdown_gw2_client, GW2Client
 
-# Install uvloop for better async performance (Unix-like systems only)
-if sys.platform != 'win32':
-    import uvloop
-
-    logger.info("Using uvloop for improved performance...")
-    uvloop.run()
-
 log_filename = f"tyriavault_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 log_filepath = os.path.join(os.path.dirname(__file__), log_filename)
 
@@ -84,3 +77,10 @@ api.add_middleware(
 )
 
 api.include_router(api_router, prefix="/api/v1")
+
+# Install uvloop for better async performance (Unix-like systems only)
+if sys.platform != 'win32':
+    import uvloop
+
+    logger.info("Using uvloop for improved performance...")
+    uvloop.run(lifespan(api))
