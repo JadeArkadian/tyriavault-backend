@@ -16,6 +16,19 @@ services:
     networks:
       - tyriavault-test-network
 
+  redis-test:
+    image: redis:7-alpine
+    container_name: tyriavault-redis-test
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - tyriavault-test-network
+
   wiremock:
     build:
       context: ./app/tests/integration/wiremock
