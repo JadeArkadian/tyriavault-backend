@@ -50,17 +50,16 @@ async def init_cache() -> None:
             logger.info(f"Attempting to connect to Redis at {settings.REDIS_URL}")
             redis = aioredis.from_url(
                 settings.REDIS_URL,
-                encoding="utf-8",
-                decode_responses=True,
-                socket_connect_timeout=3
+                decode_responses=False,  # RedisBackend requires bytes
+                socket_connect_timeout=5
             )
             # Test connection
             await redis.ping()
             backend = RedisBackend(redis)
             cache_type = "Redis"
-            logger.info("✅ Successfully connected to Redis cache")
+            logger.info("Successfully connected to Redis cache")
         except Exception as e:
-            logger.warning(f"⚠️ Failed to connect to Redis: {e}")
+            logger.warning(f"Failed to connect to Redis: {e}")
             logger.info("Falling back to InMemory cache")
             backend = InMemoryBackend()
     else:
