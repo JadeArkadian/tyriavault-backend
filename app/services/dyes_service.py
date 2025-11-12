@@ -5,7 +5,7 @@ from app.core.logging import logger
 from app.core.utils import rgb_to_hex
 from app.database.repositories.dyes_repository import DyesRepository
 from app.database.session import async_session_maker
-from app.gw2.client import GW2Client
+from app.gw2.gw2_client import GW2Client, GW2ApiError
 from app.services.dtos.dyes_dto import DyeDTO
 
 
@@ -29,7 +29,7 @@ class DyesService:
     async def get_all_dyes(self) -> list[DyeDTO]:
         """
         Get all dyes from GW2 API and sync with database in the background.
-        If API fails, fallback to database.
+        With Circuit Breaker: fails fast to DB when API is down.
         """
         try:
             dyes_data = await self._get_dyes_from_api()
@@ -40,8 +40,11 @@ class DyesService:
             task.add_done_callback(self._background_tasks.discard)
 
             return dyes_data
+        except GW2ApiError as e:
+            logger.info(f"GW2 API unavailable (circuit breaker or timeout), using database fallback: {e}")
+            return await self._get_dyes_from_db()
         except Exception as e:
-            logger.warning(f"Failed to fetch dyes from GW2 API: {e}. Falling back to database.")
+            logger.warning(f"Unexpected error fetching dyes from API: {e}. Falling back to database.")
             return await self._get_dyes_from_db()
 
     async def _get_dyes_from_api(self) -> list[DyeDTO]:

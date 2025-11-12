@@ -4,7 +4,7 @@ from app.core.constants import Constants
 from app.core.logging import logger
 from app.database.repositories.worlds_repository import WorldsRepository
 from app.database.session import async_session_maker
-from app.gw2.client import GW2Client
+from app.gw2.gw2_client import GW2Client, GW2ApiError
 from app.services.dtos.worlds_dto import WorldDTO
 
 
@@ -26,19 +26,35 @@ class WorldsService:
 
     async def get_all_worlds(self) -> list[WorldDTO]:
         """
-        Get all worlds from database. If DB is empty, fetch from GW2 API and sync with database in the background.
+        Get all worlds. Strategy with Circuit Breaker:
+        1 - Try API first (with timeout protection via circuit breaker)
+        2 - If circuit is open or API fails, fallback to DB immediately
+        3 - If API succeeds, sync to DB in background
         """
         try:
-            worlds_data = await self._get_worlds_from_db()
-            return worlds_data
-        except Exception as e:
-            logger.warning(f"No data in DB or failed to fetch worlds from DB: {e}. Falling back to GW2 API.")
+            # Try API - if circuit breaker is open, fails immediately
             worlds_data = await self._get_worlds_from_api()
             # Sync with db in background
             task = asyncio.create_task(self._sync_worlds_to_db(worlds_data))
             self._background_tasks.add(task)
             task.add_done_callback(self._background_tasks.discard)
             return worlds_data
+        except GW2ApiError as e:
+            # Circuit breaker open or API failed -> fast fallback to DB
+            logger.info(f"GW2 API unavailable, using database fallback: {e}")
+            try:
+                return await self._get_worlds_from_db()
+            except Exception as db_error:
+                logger.error(f"Database fallback also failed: {db_error}")
+                raise RuntimeError("Both API and database failed") from db_error
+        except Exception as e:
+            logger.error(f"Unexpected error in get_all_worlds: {e}")
+            # Try DB as last resort
+            try:
+                return await self._get_worlds_from_db()
+            except Exception as db_error:
+                logger.error(f"Database fallback also failed: {db_error}")
+                raise
 
     async def _get_worlds_from_api(self) -> list[WorldDTO]:
         """Fetch worlds from GW2 API in all supported languages and combine the data."""

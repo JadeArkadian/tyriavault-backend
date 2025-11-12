@@ -6,7 +6,7 @@ from app.core.logging import logger
 from app.database.models import GameAccounts, ApiKeys
 from app.database.repositories.apikeys_repository import ApikeysRepository
 from app.database.repositories.worlds_repository import WorldsRepository
-from app.gw2.client import GW2Client
+from app.gw2.gw2_client import GW2Client
 from app.services.dtos.apikey_dto import ApiKeyDTO
 
 

@@ -5,7 +5,7 @@ from app.core.logging import logger
 from app.database.repositories.account_repository import AccountRepository
 from app.database.repositories.worlds_repository import WorldsRepository
 from app.database.session import async_session_maker
-from app.gw2.client import GW2Client
+from app.gw2.gw2_client import GW2Client, GW2ApiError
 from app.gw2.responses import GW2ApiAccount
 from app.services.dtos.account_dto import AccountDTO
 
@@ -29,7 +29,7 @@ class AccountService:
     async def get_account_details(self, account_uuid: UUID) -> AccountDTO:
         """
         Get account details from GW2 API and sync with database in the background.
-        If API fails, fallback to database.
+        With Circuit Breaker: fails fast to DB when API is down.
         """
         try:
             # 1. Try to get fresh data from GW2 API
@@ -43,8 +43,11 @@ class AccountService:
             # 3. Get world info and return DTO
             return await self._build_dto(account_data)
 
+        except GW2ApiError as e:
+            logger.info(f"GW2 API unavailable (circuit breaker or timeout), using database fallback: {e}")
+            return await self._get_account_from_db(account_uuid)
         except Exception as e:
-            logger.warning(f"Failed to fetch account from GW2 API: {e}. Falling back to database.")
+            logger.warning(f"Unexpected error fetching account from API: {e}. Falling back to database.")
             return await self._get_account_from_db(account_uuid)
 
     async def _get_account_from_api(self) -> GW2ApiAccount:

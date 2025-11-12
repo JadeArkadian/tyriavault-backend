@@ -13,7 +13,7 @@ from app.database.repositories.dyes_repository import DyesRepository
 from app.database.repositories.wallet_repository import WalletRepository
 from app.database.repositories.worlds_repository import WorldsRepository
 from app.database.session import get_db
-from app.gw2.client import GW2Client
+from app.gw2.gw2_client import GW2Client
 from app.services.account_service import AccountService
 from app.services.apikey_service import ApiKeyService
 from app.services.currencies_service import CurrenciesService

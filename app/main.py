@@ -12,7 +12,8 @@ from app.core.logging import logger
 from app.crawlers import CrawlerScheduler, ItemsCrawler
 from app.database.seeding.seeder import DatabaseSeeder
 from app.database.session import async_session_maker
-from app.gw2.client import startup_gw2_client, shutdown_gw2_client, GW2Client
+from app.gw2.gw2_client import startup_gw2_client, shutdown_gw2_client
+from app.gw2.gw2_crawler_client import GW2CrawlerClient
 
 log_filename = f"tyriavault_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 log_filepath = os.path.join(os.path.dirname(__file__), log_filename)
@@ -36,8 +37,9 @@ async def lifespan(app: FastAPI):
 
     # Initialize and start crawlers
     logger.info("Initializing crawlers...")
-    gw2_client = GW2Client(max_retries=5, backoff_factor=1.0)
-    items_crawler = ItemsCrawler(gw2_client, async_session_maker)
+    # Use GW2CrawlerClient for persistent retries without circuit breaker
+    crawler_client = GW2CrawlerClient()
+    items_crawler = ItemsCrawler(crawler_client, async_session_maker)
     crawler_scheduler.register_crawler(
         name="items_crawler",
         crawler=items_crawler,

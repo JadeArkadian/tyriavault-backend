@@ -29,6 +29,17 @@ class Settings(BaseSettings):
     ITEMS_CRAWLER_INTERVAL_SECONDS: int = 24 * 60 * 60
     ITEMS_CRAWLER_FETCH_EXPIRATION_SECONDS: int = 30 * 24 * 60 * 60  # 30 days
 
+    # Circuit Breaker Settings for GW2 API
+    GW2_API_TIMEOUT_SECONDS: int = 3
+    GW2_API_CIRCUIT_FAILURE_THRESHOLD: int = 3
+    GW2_API_CIRCUIT_RECOVERY_TIMEOUT: int = 300
+    GW2_API_MAX_RETRIES: int = 2
+
+    # Crawler-specific settings (more aggressive retries, no circuit breaker)
+    GW2_CRAWLER_TIMEOUT_SECONDS: int = 30
+    GW2_CRAWLER_MAX_RETRIES: int = 10
+    GW2_CRAWLER_BACKOFF_FACTOR: float = 2.0
+
     model_config = SettingsConfigDict(env_file=env_file, env_file_encoding="utf-8")
 
 

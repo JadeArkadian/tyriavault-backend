@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from app.gw2.client import GW2Client
+from app.gw2.gw2_client import GW2Client
 from app.services.health_service import HealthService
 
 

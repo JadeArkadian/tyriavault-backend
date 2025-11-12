@@ -8,7 +8,7 @@ from app.core.constants import Constants
 from app.core.logging import logger
 from app.core.utils import chunked, map_rarity_to_id, map_type_to_id
 from app.database.repositories.items_repository import ItemsRepository
-from app.gw2.client import GW2Client
+from app.gw2.gw2_client import GW2Client
 from app.services.dtos.items_dto import ItemDTO
 
 

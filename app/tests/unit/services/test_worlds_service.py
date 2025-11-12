@@ -88,15 +88,23 @@ class TestWorldsService:
     """Test suite for WorldsService"""
 
     @pytest.mark.asyncio
-    async def test_get_all_worlds_success_from_db(
+    async def test_get_all_worlds_success_from_api(
             self,
             worlds_service,
-            mock_repository,
-            sample_db_worlds
+            mock_gw2_client,
+            sample_api_response_en,
+            sample_api_response_es,
+            sample_api_response_de,
+            sample_api_response_fr
     ):
-        """Test: successfully get worlds from the database"""
+        """Test: successfully get worlds from API (new circuit breaker strategy: API first)"""
         # Arrange
-        mock_repository.get_all.return_value = sample_db_worlds
+        mock_gw2_client.get_worlds.side_effect = [
+            sample_api_response_en,
+            sample_api_response_es,
+            sample_api_response_de,
+            sample_api_response_fr
+        ]
 
         # Act
         result = await worlds_service.get_all_worlds()
@@ -113,29 +121,23 @@ class TestWorldsService:
         assert result[1].id == 1002
         assert result[1].name_en == "Borlis Pass"
 
-        # Verify that only the repository was called
-        mock_repository.get_all.assert_called_once()
+        # Verify that API was called for all languages
+        assert mock_gw2_client.get_worlds.call_count == 4
 
     @pytest.mark.asyncio
-    async def test_get_all_worlds_fallback_to_api_when_db_empty(
+    async def test_get_all_worlds_fallback_to_db_when_api_fails(
             self,
             worlds_service,
             mock_repository,
             mock_gw2_client,
-            sample_api_response_en,
-            sample_api_response_es,
-            sample_api_response_de,
-            sample_api_response_fr
+            sample_db_worlds
     ):
-        """Test: get worlds from API when DB is empty"""
-        # Arrange
-        mock_repository.get_all.side_effect = ValueError("No worlds found in database")
-        mock_gw2_client.get_worlds.side_effect = [
-            sample_api_response_en,
-            sample_api_response_es,
-            sample_api_response_de,
-            sample_api_response_fr
-        ]
+        """Test: get worlds from DB when API fails (circuit breaker protection)"""
+        from app.gw2.gw2_client import GW2ApiError
+
+        # Arrange - API fails with GW2ApiError (circuit breaker open or timeout)
+        mock_gw2_client.get_worlds.side_effect = GW2ApiError("Circuit breaker open: API is unavailable")
+        mock_repository.get_all.return_value = sample_db_worlds
 
         # Act
         result = await worlds_service.get_all_worlds()
@@ -145,46 +147,34 @@ class TestWorldsService:
         assert isinstance(result[0], WorldDTO)
         assert result[0].id == 1001
         assert result[0].name_en == "Anvil Rock"
-        assert result[0].name_es == "Roca del Yunque"
-        assert result[0].name_de == "Ambossfelsen"
-        assert result[0].name_fr == "Rocher de l'enclume"
 
-        # Verify that DB was tried first
+        # Verify that API was tried (for first language before falling back)
+        assert mock_gw2_client.get_worlds.call_count >= 1
         mock_repository.get_all.assert_called_once()
 
-        # Verify that API was called for all languages
-        assert mock_gw2_client.get_worlds.call_count == 4
-
     @pytest.mark.asyncio
-    async def test_get_all_worlds_fallback_to_api_when_db_fails(
+    async def test_get_all_worlds_raises_when_both_fail(
             self,
             worlds_service,
             mock_repository,
-            mock_gw2_client,
-            sample_api_response_en,
-            sample_api_response_es,
-            sample_api_response_de,
-            sample_api_response_fr
+            mock_gw2_client
     ):
-        """Test: get worlds from API when DB fails"""
-        # Arrange
+        """Test: raises error when both API and DB fail"""
+        from app.gw2.gw2_client import GW2ApiError
+
+        # Arrange - Both API and DB fail
+        mock_gw2_client.get_worlds.side_effect = GW2ApiError("Circuit breaker open")
         mock_repository.get_all.side_effect = Exception("Database connection error")
-        mock_gw2_client.get_worlds.side_effect = [
-            sample_api_response_en,
-            sample_api_response_es,
-            sample_api_response_de,
-            sample_api_response_fr
-        ]
 
-        # Act
-        result = await worlds_service.get_all_worlds()
+        # Act & Assert
+        with pytest.raises(RuntimeError) as exc:
+            await worlds_service.get_all_worlds()
 
-        # Assert
-        assert len(result) == 2
-        assert isinstance(result[0], WorldDTO)
-        assert result[0].id == 1001
+        assert "Both API and database failed" in str(exc.value)
+
+        # Verify both were attempted
+        assert mock_gw2_client.get_worlds.call_count >= 1
         mock_repository.get_all.assert_called_once()
-        assert mock_gw2_client.get_worlds.call_count == 4
 
     @pytest.mark.asyncio
     async def test_get_worlds_from_api_combines_all_languages(

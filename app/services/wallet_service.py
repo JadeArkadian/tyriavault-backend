@@ -5,7 +5,7 @@ from app.core.logging import logger
 from app.database.repositories.currencies_repository import CurrenciesRepository
 from app.database.repositories.wallet_repository import WalletRepository
 from app.database.session import async_session_maker
-from app.gw2.client import GW2Client
+from app.gw2.gw2_client import GW2Client, GW2ApiError
 from app.gw2.responses import GW2ApiWalletEntry
 from app.services.dtos.wallet_dto import WalletItemDTO
 
@@ -34,7 +34,7 @@ class WalletService:
     async def get_wallet(self, account_uuid: UUID) -> list[WalletItemDTO]:
         """
         Get wallet data from GW2 API and sync with database in the background.
-        If API fails, fallback to database.
+        With Circuit Breaker: fails fast to DB when API is down.
         """
         try:
             wallet_data = await self._get_wallet_from_api()
@@ -44,8 +44,11 @@ class WalletService:
             task.add_done_callback(self._background_tasks.discard)
             return await self._build_response(wallet_data)
 
+        except GW2ApiError as e:
+            logger.info(f"GW2 API unavailable (circuit breaker or timeout), using database fallback: {e}")
+            return await self._get_wallet_from_db(account_uuid)
         except Exception as e:
-            logger.warning(f"Failed to fetch wallet from GW2 API: {e}. Falling back to database.")
+            logger.warning(f"Unexpected error fetching wallet from API: {e}. Falling back to database.")
             return await self._get_wallet_from_db(account_uuid)
 
     async def _get_wallet_from_api(self) -> list[GW2ApiWalletEntry]:

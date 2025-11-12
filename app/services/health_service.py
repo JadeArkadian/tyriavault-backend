@@ -1,4 +1,4 @@
-from app.gw2.client import GW2Client
+from app.gw2.gw2_client import GW2Client
 
 
 class HealthService:
